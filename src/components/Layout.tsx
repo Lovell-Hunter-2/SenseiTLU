@@ -144,6 +144,11 @@ export default function Layout() {
         <Outlet />
       </main>
 
+      {/* Footer */}
+      <footer className="w-full py-6 text-center text-sm text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 mt-auto">
+        <p>© {new Date().getFullYear()} LovellTituss161. All rights reserved.</p>
+      </footer>
+
       {/* Floating Contact Button */}
       {location.pathname === '/' ? (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
