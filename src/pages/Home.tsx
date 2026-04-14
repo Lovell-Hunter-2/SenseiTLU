@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
-import { Search, Plus, Book, Calculator, Code, Globe, Database, Cpu, FileText, Briefcase, Scale, Lightbulb, Brain, PieChart, ShoppingCart, Rocket } from 'lucide-react';
+import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { Search, Plus, Book, Calculator, Code, Globe, Database, Cpu, FileText, Briefcase, Scale, Lightbulb, Brain, PieChart, ShoppingCart, Rocket, Trash2 } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -18,6 +18,7 @@ export default function Home() {
   // Modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newSubject, setNewSubject] = useState({ name: '', description: '', iconName: 'Book' });
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, 'subjects'), orderBy('createdAt', 'desc'));
@@ -50,6 +51,15 @@ export default function Home() {
       setNewSubject({ name: '', description: '', iconName: 'Book' });
     } catch (error) {
       console.error("Error adding subject:", error);
+    }
+  };
+
+  const handleDeleteSubject = async (subjectId: string) => {
+    try {
+      await deleteDoc(doc(db, 'subjects', subjectId));
+      setDeleteConfirmId(null);
+    } catch (error) {
+      console.error("Error deleting subject:", error);
     }
   };
 
@@ -99,7 +109,19 @@ export default function Home() {
           {filteredSubjects.map(subject => {
             const Icon = iconMap[subject.iconName] || Book;
             return (
-              <div key={subject.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full group">
+              <div key={subject.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full group relative">
+                {isAdmin && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setDeleteConfirmId(subject.id);
+                    }}
+                    className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                    title="Xóa môn học"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
                 <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4 text-blue-600 dark:text-blue-400">
                   <Icon className="w-5 h-5" />
                 </div>
@@ -178,6 +200,33 @@ export default function Home() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm p-6 shadow-xl border border-slate-200 dark:border-slate-800 text-center">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">Xóa môn học?</h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-6">Bạn có chắc chắn muốn xóa môn học này? Hành động này không thể hoàn tác.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={() => handleDeleteSubject(deleteConfirmId)}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors font-medium"
+              >
+                Xóa
+              </button>
+            </div>
           </div>
         </div>
       )}
