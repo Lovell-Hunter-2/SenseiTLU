@@ -299,7 +299,7 @@ export default function SubjectDetail() {
                               {expandedFolders[doc.id] ? (
                                 <><ChevronUp className="w-4 h-4" /> Thu gọn</>
                               ) : (
-                                <><ChevronDown className="w-4 h-4" /> Mở rộng</>
+                                <><ChevronDown className="w-4 h-4" /> Xem tài liệu</>
                               )}
                             </button>
                           )}
