@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Moon, Sun, LogIn, LogOut, MessageCircle, Menu, X, Minus } from 'lucide-react';
+import { Moon, Sun, LogIn, LogOut, MessageCircle, Menu, X, Minus, Shield } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import AdminManagerModal from './AdminManagerModal';
 
 export default function Layout() {
   const { theme, setTheme } = useTheme();
-  const { user, login, logout } = useAuth();
+  const { user, isAdmin, login, logout } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showSupportPopover, setShowSupportPopover] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
   // Reset popover state when returning to home
   useEffect(() => {
@@ -86,6 +88,19 @@ export default function Layout() {
                         <p className="text-sm font-medium truncate">{user.displayName}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
                       </div>
+                      
+                      {isAdmin && (
+                        <button
+                          onClick={() => {
+                            setIsProfileOpen(false);
+                            setIsAdminModalOpen(true);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800"
+                        >
+                          <Shield className="w-4 h-4" /> Quản lý Admin
+                        </button>
+                      )}
+
                       <button
                         onClick={() => {
                           setIsProfileOpen(false);
@@ -148,6 +163,11 @@ export default function Layout() {
       <footer className="w-full py-6 text-center text-sm text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 mt-auto">
         <p>© {new Date().getFullYear()} LovellTituss161. All rights reserved.</p>
       </footer>
+
+      <AdminManagerModal 
+        isOpen={isAdminModalOpen} 
+        onClose={() => setIsAdminModalOpen(false)} 
+      />
 
       {/* Floating Contact Button */}
       {location.pathname === '/' ? (
