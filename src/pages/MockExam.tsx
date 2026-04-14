@@ -195,9 +195,17 @@ export default function MockExam() {
       } else {
         throw new Error("Empty response from AI");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating quiz:", error);
-      alert("Có lỗi xảy ra khi tạo đề thi. Vui lòng thử lại.");
+      let errorMessage = "Có lỗi xảy ra khi tạo đề thi. Vui lòng thử lại.";
+      
+      if (error?.message?.includes("429") || error?.status === 429 || error?.message?.toLowerCase().includes("quota")) {
+        errorMessage = "Hệ thống đang quá tải do có nhiều người sử dụng (hết lượt tạo đề). Bạn vui lòng đợi khoảng 1-2 phút rồi thử lại nhé!";
+      } else if (error?.message) {
+        errorMessage = `Lỗi: ${error.message}`;
+      }
+      
+      alert(errorMessage);
       setStatus('setup');
     }
   };
