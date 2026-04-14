@@ -294,9 +294,13 @@ export default function SubjectDetail() {
                           {doc.isFolder && (
                             <button 
                               onClick={() => toggleFolder(doc.id)}
-                              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors shrink-0"
                             >
-                              {expandedFolders[doc.id] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                              {expandedFolders[doc.id] ? (
+                                <><ChevronUp className="w-4 h-4" /> Thu gọn</>
+                              ) : (
+                                <><ChevronDown className="w-4 h-4" /> Mở rộng</>
+                              )}
                             </button>
                           )}
                         </div>
@@ -307,13 +311,13 @@ export default function SubjectDetail() {
                               href={doc.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
                             >
-                              <ExternalLink className="w-3 h-3" /> Mở tài liệu
+                              <ExternalLink className="w-4 h-4" /> Xem tài liệu
                             </a>
                           ) : (
-                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                              <Folder className="w-3 h-3" /> {doc.items?.length || 0} mục
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                              <Folder className="w-4 h-4" /> {doc.items?.length || 0} mục
                             </span>
                           )}
                           
@@ -339,17 +343,29 @@ export default function SubjectDetail() {
 
                     {/* Expanded Folder Items */}
                     {doc.isFolder && expandedFolders[doc.id] && doc.items && doc.items.length > 0 && (
-                      <div className="pl-14 space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <div className="pl-0 sm:pl-14 space-y-2 pt-4 mt-2 border-t border-slate-100 dark:border-slate-800">
                         {doc.items.map((item: any, idx: number) => (
                           <a 
                             key={idx}
                             href={item.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors group"
+                            className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-blue-200 dark:hover:border-blue-900/50 transition-all group"
                           >
-                            <LinkIcon className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500" />
-                            <span className="truncate">{item.title}</span>
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
+                                <LinkIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                              </div>
+                              <span className="truncate text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
+                                {item.title}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">
+                                Xem tài liệu
+                              </span>
+                              <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors shrink-0" />
+                            </div>
                           </a>
                         ))}
                       </div>
