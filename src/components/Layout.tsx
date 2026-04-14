@@ -10,6 +10,7 @@ export default function Layout() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showSupportPopover, setShowSupportPopover] = useState(true);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Reset popover state when returning to home
   useEffect(() => {
@@ -65,23 +66,38 @@ export default function Layout() {
 
             {/* Auth */}
             {user ? (
-              <div className="relative group">
-                <button className="flex items-center gap-2 p-1 pr-3 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <div className="relative">
+                <button 
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-2 p-1 pr-3 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
                   <img src={user.photoURL || ''} alt="Avatar" className="w-8 h-8 rounded-full" referrerPolicy="no-referrer" />
                   <span className="text-sm font-medium hidden sm:block max-w-[120px] truncate">{user.displayName}</span>
                 </button>
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-800 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <div className="p-3 border-b border-slate-200 dark:border-slate-800">
-                    <p className="text-sm font-medium truncate">{user.displayName}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
-                  </div>
-                  <button
-                    onClick={logout}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2"
-                  >
-                    <LogOut className="w-4 h-4" /> Đăng xuất
-                  </button>
-                </div>
+                
+                {isProfileOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsProfileOpen(false)}
+                    ></div>
+                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-800 transition-all duration-200 z-50">
+                      <div className="p-3 border-b border-slate-200 dark:border-slate-800">
+                        <p className="text-sm font-medium truncate">{user.displayName}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          logout();
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 rounded-b-lg"
+                      >
+                        <LogOut className="w-4 h-4" /> Đăng xuất
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               <button
