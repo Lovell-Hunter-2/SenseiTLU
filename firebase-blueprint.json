@@ -1,0 +1,58 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and role",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "user"] },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    },
+    "Subject": {
+      "title": "Subject",
+      "description": "A study subject",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "iconName": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "iconName"]
+    },
+    "Document": {
+      "title": "Document",
+      "description": "A study material document",
+      "type": "object",
+      "properties": {
+        "subjectId": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string", "enum": ["Giáo trình", "Slide", "Đề cương", "File trắc nghiệm", "Khác"] },
+        "url": { "type": "string", "format": "uri" },
+        "chapter": { "type": "string" },
+        "textContent": { "type": "string", "description": "Extracted text for AI" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["subjectId", "title", "type", "url"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles"
+    },
+    "/subjects/{subjectId}": {
+      "schema": { "$ref": "#/entities/Subject" },
+      "description": "Study subjects"
+    },
+    "/documents/{documentId}": {
+      "schema": { "$ref": "#/entities/Document" },
+      "description": "Study documents"
+    }
+  }
+}
