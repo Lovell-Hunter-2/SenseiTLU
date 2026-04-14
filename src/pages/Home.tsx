@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { Search, Plus, Book, Calculator, Code, Globe, Database, Cpu, FileText, Briefcase, Scale, Lightbulb, Brain, PieChart, ShoppingCart, Rocket, Trash2 } from 'lucide-react';
+import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { Search, Plus, Book, Calculator, Code, Globe, Database, Cpu, FileText, Briefcase, Scale, Lightbulb, Brain, PieChart, ShoppingCart, Rocket, Trash2, Edit2 } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -19,6 +19,7 @@ export default function Home() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newSubject, setNewSubject] = useState({ name: '', description: '', iconName: 'Book' });
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [editingSubject, setEditingSubject] = useState<any>(null);
 
   useEffect(() => {
     const q = query(collection(db, 'subjects'), orderBy('createdAt', 'desc'));
@@ -51,6 +52,22 @@ export default function Home() {
       setNewSubject({ name: '', description: '', iconName: 'Book' });
     } catch (error) {
       console.error("Error adding subject:", error);
+    }
+  };
+
+  const handleUpdateSubject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSubject || !editingSubject.name.trim()) return;
+    
+    try {
+      await updateDoc(doc(db, 'subjects', editingSubject.id), {
+        name: editingSubject.name,
+        description: editingSubject.description,
+        iconName: editingSubject.iconName,
+      });
+      setEditingSubject(null);
+    } catch (error) {
+      console.error("Error updating subject:", error);
     }
   };
 
@@ -111,16 +128,28 @@ export default function Home() {
             return (
               <div key={subject.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full group relative">
                 {isAdmin && (
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setDeleteConfirmId(subject.id);
-                    }}
-                    className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                    title="Xóa môn học"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="absolute top-4 right-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setEditingSubject(subject);
+                      }}
+                      className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                      title="Sửa môn học"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setDeleteConfirmId(subject.id);
+                      }}
+                      className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                      title="Xóa môn học"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 )}
                 <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4 text-blue-600 dark:text-blue-400">
                   <Icon className="w-5 h-5" />
@@ -197,6 +226,63 @@ export default function Home() {
                   className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                 >
                   Thêm
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Subject Modal */}
+      {editingSubject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-6 shadow-xl border border-slate-200 dark:border-slate-800">
+            <h3 className="text-xl font-bold mb-4">Sửa môn học</h3>
+            <form onSubmit={handleUpdateSubject} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Tên môn học</label>
+                <input
+                  type="text"
+                  required
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={editingSubject.name}
+                  onChange={e => setEditingSubject({...editingSubject, name: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Mô tả ngắn</label>
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={editingSubject.description}
+                  onChange={e => setEditingSubject({...editingSubject, description: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Icon</label>
+                <select
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={editingSubject.iconName}
+                  onChange={e => setEditingSubject({...editingSubject, iconName: e.target.value})}
+                >
+                  {Object.keys(iconMap).map(key => (
+                    <option key={key} value={key} className="text-slate-900">{key}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setEditingSubject(null)}
+                  className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
+                  Lưu thay đổi
                 </button>
               </div>
             </form>
