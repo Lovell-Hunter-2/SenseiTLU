@@ -99,6 +99,7 @@ export default function SubjectDetail() {
         
         setFolderInputMode('manual');
         setDriveFolderUrl('');
+        setShowDriveApiInput(false);
       } else {
         alert("Thư mục trống hoặc không có quyền truy cập. Hãy đảm bảo thư mục đã được share 'Bất kỳ ai có liên kết'.");
       }
