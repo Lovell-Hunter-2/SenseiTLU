@@ -66,14 +66,40 @@ export default function MockExam() {
   const [numQuestions, setNumQuestions] = useState(10);
   const [selectedChapters, setSelectedChapters] = useState<string[]>([]);
   
+  // Initialize state from sessionStorage if available
+  const STORAGE_KEY = `mockExamState_${id}`;
+  const getInitialState = () => {
+    try {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  };
+  const initialState = getInitialState();
+
   // Quiz State
-  const [status, setStatus] = useState<'setup' | 'generating' | 'active' | 'finished' | 'review'>('setup');
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [userAnswers, setUserAnswers] = useState<Record<number, number>>({});
+  const [status, setStatus] = useState<'setup' | 'generating' | 'active' | 'finished' | 'review'>(initialState?.status || 'setup');
+  const [questions, setQuestions] = useState<Question[]>(initialState?.questions || []);
+  const [currentIndex, setCurrentIndex] = useState(initialState?.currentIndex || 0);
+  const [userAnswers, setUserAnswers] = useState<Record<number, number>>(initialState?.userAnswers || {});
   
   // UI State
   const [isNavOpen, setIsNavOpen] = useState(window.innerWidth >= 1024);
+
+  // Save state to sessionStorage whenever it changes
+  useEffect(() => {
+    if (status !== 'setup' && status !== 'generating') {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+        status,
+        questions,
+        currentIndex,
+        userAnswers
+      }));
+    } else if (status === 'setup') {
+      sessionStorage.removeItem(STORAGE_KEY);
+    }
+  }, [status, questions, currentIndex, userAnswers, STORAGE_KEY]);
 
   useEffect(() => {
     const handleResize = () => {
