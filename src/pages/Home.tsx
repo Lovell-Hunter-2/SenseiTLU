@@ -171,7 +171,7 @@ export default function Home() {
         
         {filteredSubjects.length === 0 && (
           <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-            <p>Không tìm thấy môn học nào phù hợp <br /> Đăng nhập để xem được tài liệu! <br /> Nếu chưa được hãy đợi vài giây hoặc F5 lại trang nhé!</p>
+            <p>Không tìm thấy môn học nào phù hợp <br /> Đăng nhập để xem được tài liệu! <br /> Nếu chưa được hãy đợi vài giây hoặc F5 lại trang nhé!</p> 
           </div>
         )}
       </div>
