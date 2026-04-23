@@ -17,9 +17,8 @@ export default function Layout() {
 
   // Reset popover state when returning to home
   useEffect(() => {
-    if (location.pathname === '/') {
-      setShowSupportPopover(true);
-    }
+    // We intentionally removed the popover reset here so once dismissed by '-', 
+    // it stays dismissed unless hard refresh.
   }, [location.pathname]);
 
   const navLinks = [
@@ -45,7 +44,7 @@ export default function Layout() {
               </button>
             )}
             <Link to="/" className="text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
-              <span className="text-3xl">🎓</span> SenseiTLU
+              <span className="text-3xl">⚡</span> SenseiTLU
             </Link>
 
             {/* Desktop Nav */}
@@ -67,6 +66,19 @@ export default function Layout() {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Support icon next to theme toggle (only on subpages) */}
+            {location.pathname !== '/' && (
+              <a
+                href="https://www.facebook.com/lovelltitussof1910"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+                title="Hỗ trợ"
+              >
+                <MessageCircle className="w-5 h-5" />
+              </a>
+            )}
+
             {/* Theme Toggle */}
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -180,7 +192,7 @@ export default function Layout() {
       />
 
       {/* Floating Contact Button */}
-      {location.pathname === '/' ? (
+      {location.pathname === '/' && (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
           {/* Popover */}
           {showSupportPopover && (
@@ -203,7 +215,7 @@ export default function Layout() {
                 </div>
               </div>
               <p className="text-sm text-slate-300 mb-4 text-center leading-relaxed">
-                Cần hỗ trợ gì không? Mình luôn sẵn sàng giúp bạn! 👋
+                Cần hỗ trợ? Mình luôn sẵn sàng giúp bạn! 👋
               </p>
               <a
                 href="https://www.facebook.com/lovelltitussof1910"
@@ -226,16 +238,6 @@ export default function Layout() {
             <span className="font-bold">Hỗ trợ</span>
           </a>
         </div>
-      ) : (
-        <a
-          href="https://www.facebook.com/lovelltitussof1910"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="fixed bottom-6 right-6 bg-[#ff6b00] hover:bg-[#e66000] text-white px-5 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center gap-2 z-50"
-        >
-          <MessageCircle className="w-5 h-5" />
-          <span className="font-bold">Hỗ trợ</span>
-        </a>
       )}
     </div>
   );
