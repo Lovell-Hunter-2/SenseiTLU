@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BookOpen, Users, Zap, Shield } from 'lucide-react';
 
 export default function About() {
+  useEffect(() => {
+    document.title = "Về chúng tôi TLU";
+  }, []);
+
   return (
     <div className="max-w-4xl mx-auto space-y-12 py-8">
       <div className="text-center space-y-4">
