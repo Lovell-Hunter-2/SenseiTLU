@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
-import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon } from 'lucide-react';
+import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon, ClipboardList, ScrollText, Lightbulb, Sigma } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -10,6 +10,10 @@ const typeIcons: Record<string, React.ElementType> = {
   'Slide': Presentation,
   'Đề cương': FileText,
   'File trắc nghiệm': FileQuestion,
+  'Bài tập': ClipboardList,
+  'Đề thi mẫu': ScrollText,
+  'Tips': Lightbulb,
+  'Công thức': Sigma,
   'Khác': Folder
 };
 
@@ -197,7 +201,7 @@ export default function SubjectDetail() {
     return acc;
   }, {} as Record<string, any[]>);
 
-  const types = ['Giáo trình', 'Slide', 'Đề cương', 'File trắc nghiệm', 'Khác'];
+  const types = ['Giáo trình', 'Slide', 'Đề cương', 'File trắc nghiệm', 'Bài tập', 'Đề thi mẫu', 'Tips', 'Công thức', 'Khác'];
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
