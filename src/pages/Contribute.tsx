@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { UploadCloud, Heart, ArrowRight } from 'lucide-react';
 
 export default function Contribute() {
+  useEffect(() => {
+    document.title = "Đóng góp tài liệu TLU";
+  }, []);
+
   const driveLink = "https://drive.google.com/drive/folders/1L3e4ugId-e5o6qxCA3dfOKTh8S0l4U3q?usp=sharing";
 
   return (
