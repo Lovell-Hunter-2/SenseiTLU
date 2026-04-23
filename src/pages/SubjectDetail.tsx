@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 const typeIcons: Record<string, React.ElementType> = {
   'Giáo trình': Book,
   'Slide': Presentation,
-  'Đề cương': FileText,
+  'Tài liệu tham khảo': FileText,
   'File trắc nghiệm': FileQuestion,
   'Bài tập': ClipboardList,
   'Đề thi mẫu': ScrollText,
