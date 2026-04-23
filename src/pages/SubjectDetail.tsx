@@ -120,7 +120,9 @@ export default function SubjectDetail() {
       const docRef = doc(db, 'subjects', id);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        setSubject({ id: docSnap.id, ...docSnap.data() });
+        const data = docSnap.data();
+        setSubject({ id: docSnap.id, ...data });
+        document.title = `Tài liệu ${data.name} TLU`;
       }
     };
     fetchSubject();
@@ -299,7 +301,7 @@ export default function SubjectDetail() {
                               {expandedFolders[doc.id] ? (
                                 <><ChevronUp className="w-4 h-4" /> Thu gọn</>
                               ) : (
-                                <><ChevronDown className="w-4 h-4" /> Xem tài liệu</>
+                                <><ChevronDown className="w-4 h-4" /> Mở rộng</>
                               )}
                             </button>
                           )}
