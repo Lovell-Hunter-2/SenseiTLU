@@ -22,6 +22,8 @@ export default function Home() {
   const [editingSubject, setEditingSubject] = useState<any>(null);
 
   useEffect(() => {
+    document.title = "SenseiTLU";
+    
     const q = query(collection(db, 'subjects'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const subs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
