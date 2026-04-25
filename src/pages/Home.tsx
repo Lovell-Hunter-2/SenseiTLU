@@ -115,6 +115,9 @@ export default function Home() {
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
             <div className="w-2 h-4 bg-blue-500 rounded-sm"></div>
             Danh sách môn học
+            <span className="ml-2 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 py-0.5 px-2 rounded-full text-xs">
+              {subjects.length}
+            </span>
           </h2>
           {isAdmin && (
             <button
