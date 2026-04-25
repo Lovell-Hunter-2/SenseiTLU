@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { Search, Plus, Book, Calculator, Code, Globe, Database, Cpu, FileText, Briefcase, Scale, Lightbulb, Brain, PieChart, ShoppingCart, Rocket, Trash2, Edit2, Atom, Beaker, Microchip, Monitor, ChartBar, PenTool, Music, Video, Map, Languages, Stethoscope, Activity, Building, Leaf, Shield, History, Compass, GraduationCap, Microscope, Palette, Landmark, Camera, PenBox, Fingerprint } from 'lucide-react';
+import { Search, Plus, Book, Calculator, Code, Globe, Database, Cpu, FileText, Briefcase, Scale, Lightbulb, Brain, PieChart, ShoppingCart, Rocket, Trash2, Edit2, ChartBar, PenTool, Milestone, Activity, Building, Leaf, Shield, History, Compass, GraduationCap, Microscope, Palette, Landmark, Component, Cloud, DatabaseZap, DollarSign, Euro, Frame, Users, Target, Network, Layers, LayoutDashboard, LineChart, FileSpreadsheet, Bitcoin, CandlestickChart } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
 // Icon mapping helper
 const iconMap: Record<string, React.ElementType> = {
   Book, Calculator, Code, Globe, Database, Cpu, FileText, Briefcase, Scale, Lightbulb, Brain, PieChart, ShoppingCart, Rocket,
-  Atom, Beaker, Microchip, Monitor, ChartBar, PenTool, Music, Video, Map, Languages, Stethoscope, Activity, Building, Leaf, Shield, History, Compass, GraduationCap, Microscope, Palette, Landmark, Camera, PenBox, Fingerprint
+  ChartBar, PenTool, Milestone, Activity, Building, Leaf, Shield, History, Compass, GraduationCap, Microscope, Palette, Landmark, 
+  Component, Cloud, DatabaseZap, DollarSign, Euro, Frame, Users, Target, Network, Layers, LayoutDashboard, LineChart, FileSpreadsheet, Bitcoin, CandlestickChart
 };
 
 export default function Home() {
