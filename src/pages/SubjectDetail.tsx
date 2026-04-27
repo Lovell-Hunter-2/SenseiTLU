@@ -293,7 +293,7 @@ export default function SubjectDetail() {
                             </h4>
                             {!doc.isFolder && doc.chapter && (
                               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                Chương: {doc.chapter}
+                                {doc.chapter}
                               </p>
                             )}
                           </div>
