@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc, setDoc } from 'firebase/firestore';
 import { ThumbsUp, Trash2, MessageCircle, Send } from 'lucide-react';
 import { db } from '../firebase';
@@ -17,6 +17,19 @@ const REACTION_EMOJIS = {
   angry: '😡'
 };
 
+const formatDate = (timestamp: any) => {
+  if (!timestamp) return 'Đang gửi...';
+  try {
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    if (isNaN(date.getTime())) return 'Đang gửi...';
+    return new Intl.DateTimeFormat('vi-VN', { 
+      hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' 
+    }).format(date);
+  } catch (e) {
+    return '...';
+  }
+};
+
 export default function BlogInteractions({ postId }: Props) {
   const { user, isAdmin } = useAuth();
   const [reactions, setReactions] = useState<any[]>([]);
@@ -24,6 +37,9 @@ export default function BlogInteractions({ postId }: Props) {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [showReactionPicker, setShowReactionPicker] = useState(false);
+  
+  const pressTimer = useRef<NodeJS.Timeout | null>(null);
+  const hoverTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Listen to reactions
@@ -97,6 +113,50 @@ export default function BlogInteractions({ postId }: Props) {
     }
   };
 
+  // Touch / Hold events for Reaction picker
+  const startPress = () => {
+    pressTimer.current = setTimeout(() => {
+      setShowReactionPicker(true);
+    }, 400); // 400ms long press
+  };
+
+  const cancelPress = () => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+  };
+
+  const handleMouseEnter = () => {
+    // Show picker on hover after delay
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    hoverTimer.current = setTimeout(() => {
+      setShowReactionPicker(true);
+    }, 500);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    // Give a short grace period before hiding picker
+    hoverTimer.current = setTimeout(() => {
+      setShowReactionPicker(false);
+    }, 300);
+  };
+
+  const handlePickerEnter = () => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    setShowReactionPicker(true);
+  };
+
+  const handleClickLikeButton = (e: React.MouseEvent) => {
+    // If picker is open from hover/long-press, don't trigger click
+    if (showReactionPicker) {
+      e.preventDefault();
+      return;
+    }
+    handleReact(myReaction?.type ? myReaction.type : 'like');
+  };
+
   const myReaction = reactions.find(r => r.userId === user?.uid);
   
   // Aggregate reactions
@@ -134,11 +194,16 @@ export default function BlogInteractions({ postId }: Props) {
       <div className="flex items-center gap-2 border-y border-slate-100 dark:border-slate-800 py-2 relative">
         <div 
           className="relative"
-          onMouseEnter={() => setShowReactionPicker(true)}
-          onMouseLeave={() => setShowReactionPicker(false)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           <button 
-            onClick={() => handleReact('like')}
+            onMouseDown={startPress}
+            onMouseUp={cancelPress}
+            onMouseLeave={cancelPress}
+            onTouchStart={startPress}
+            onTouchEnd={cancelPress}
+            onClick={handleClickLikeButton}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
               myReaction 
                 ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
@@ -155,7 +220,11 @@ export default function BlogInteractions({ postId }: Props) {
           
           {/* Reaction Picker Popup */}
           {showReactionPicker && (
-            <div className="absolute bottom-full left-0 pb-2 z-10 animate-in fade-in slide-in-from-bottom-2">
+            <div 
+              onMouseEnter={handlePickerEnter}
+              onMouseLeave={handleMouseLeave}
+              className="absolute bottom-full left-0 pb-2 z-10 animate-in fade-in slide-in-from-bottom-2"
+            >
               <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-full px-2 py-1 flex items-center gap-1">
                 {Object.entries(REACTION_EMOJIS).map(([type, emoji]) => (
                   <button
@@ -199,11 +268,7 @@ export default function BlogInteractions({ postId }: Props) {
                     <p className="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap">{comment.content}</p>
                   </div>
                   <div className="flex items-center gap-4 mt-1 px-4 text-xs text-slate-500">
-                    <span>
-                      {comment.createdAt?.toDate ? new Intl.DateTimeFormat('vi-VN', { 
-                        hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' 
-                      }).format(comment.createdAt.toDate()) : 'Đang gửi...'}
-                    </span>
+                    <span>{formatDate(comment.createdAt)}</span>
                     {(isAdmin || user?.uid === comment.userId) && (
                       <button 
                         onClick={() => handleDeleteComment(comment.id)}
@@ -244,3 +309,4 @@ export default function BlogInteractions({ postId }: Props) {
     </div>
   );
 }
+
