@@ -1,156 +1,169 @@
 import React, { useState, useEffect } from 'react';
-import { X, Image as ImageIcon, UploadCloud } from 'lucide-react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { Shield, Trash2, UserPlus, X, Search } from 'lucide-react';
 import { db } from '../firebase';
 
-interface Props {
+interface AdminManagerModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function HeroImageManagerModal({ isOpen, onClose }: Props) {
-  const [leftUrl, setLeftUrl] = useState('');
-  const [rightUrl, setRightUrl] = useState('');
-  const [saving, setSaving] = useState(false);
+export default function AdminManagerModal({ isOpen, onClose }: AdminManagerModalProps) {
+  const [admins, setAdmins] = useState<any[]>([]);
+  const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const fetchAdmins = async () => {
+    try {
+      const q = query(collection(db, 'users'), where('role', '==', 'admin'));
+      const querySnapshot = await getDocs(q);
+      const adminList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setAdmins(adminList);
+    } catch (err) {
+      console.error("Error fetching admins:", err);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
-      const fetchImages = async () => {
-        const docRef = doc(db, 'settings', 'heroImages');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setLeftUrl(docSnap.data().leftUrl || '');
-          setRightUrl(docSnap.data().rightUrl || '');
-        }
-      };
-      fetchImages();
+      fetchAdmins();
+      setError('');
+      setSuccess('');
+      setNewAdminEmail('');
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
-  const handleSave = async (e: React.FormEvent) => {
+  const handleAddAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
+    if (!newAdminEmail.trim()) return;
+    
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
     try {
-      await setDoc(doc(db, 'settings', 'heroImages'), {
-        leftUrl,
-        rightUrl,
-      }, { merge: true });
-      onClose();
-    } catch (error) {
-      console.error('Error saving hero images:', error);
-      alert('Đã xảy ra lỗi khi lưu.');
+      // Find user by email
+      const q = query(collection(db, 'users'), where('email', '==', newAdminEmail.trim()));
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        setError('Người dùng này chưa từng đăng nhập vào hệ thống. Vui lòng yêu cầu họ đăng nhập ít nhất 1 lần trước khi cấp quyền.');
+        setLoading(false);
+        return;
+      }
+
+      const userDoc = querySnapshot.docs[0];
+      
+      if (userDoc.data().role === 'admin') {
+        setError('Người dùng này đã là quản trị viên.');
+        setLoading(false);
+        return;
+      }
+
+      // Update role to admin
+      await updateDoc(doc(db, 'users', userDoc.id), {
+        role: 'admin'
+      });
+
+      setSuccess('Đã thêm quản trị viên thành công!');
+      setNewAdminEmail('');
+      fetchAdmins(); // Refresh list
+    } catch (err) {
+      console.error("Error adding admin:", err);
+      setError('Có lỗi xảy ra khi thêm quản trị viên.');
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
-  const handleFileUpload = (side: 'left' | 'right') => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 1024 * 600) { // Giới hạn khoảng 600KB
-      alert('Vui lòng chọn ảnh có dung lượng nhỏ hơn 600KB hoặc dán link ảnh trực tiếp!');
+  const handleRemoveAdmin = async (userId: string, email: string) => {
+    // Prevent removing the hardcoded root admins just in case
+    if (email === 'taikhoanphubg4@gmail.com' || email === 'ngominhthuanbg1612007@gmail.com') {
+      alert('Không thể xóa quyền của quản trị viên gốc!');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      if (side === 'left') setLeftUrl(base64String);
-      else setRightUrl(base64String);
-    };
-    reader.readAsDataURL(file);
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa quyền quản trị của ${email}?`)) {
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        role: 'user'
+      });
+      fetchAdmins(); // Refresh list
+    } catch (err) {
+      console.error("Error removing admin:", err);
+      alert('Có lỗi xảy ra khi xóa quyền quản trị viên.');
+    }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm shadow-xl">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 shadow-xl border border-slate-200 dark:border-slate-800">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold flex items-center gap-2">
-            <ImageIcon className="w-6 h-6 text-blue-500" />
-            Hình ảnh hoạt họa & Khung tìm kiếm
+            <Shield className="w-6 h-6 text-blue-500" /> Quản lý Admin
           </h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSave} className="space-y-6">
-          {/* Left Image */}
-          <div className="space-y-3 p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900/50">
-            <h4 className="font-semibold text-sm text-slate-700 dark:text-slate-300">Ảnh trang trí (Bên trái)</h4>
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">Link ảnh (URL)</label>
-              <input
-                type="text"
-                placeholder="https://example.com/image.png"
-                className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-950 focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                value={leftUrl.startsWith('data:') ? '' : leftUrl}
-                onChange={e => setLeftUrl(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-slate-500">Hoặc tải lên</span>
-              <label className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors text-sm font-medium">
-                <UploadCloud className="w-4 h-4" /> Kéo thả/Tải ảnh
-                <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload('left')} />
-              </label>
-            </div>
-            {leftUrl && (
-              <div className="mt-2 text-center bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 p-2 rounded-lg relative group">
-                <img src={leftUrl} alt="Trái" className="h-20 object-contain mx-auto rounded" />
-                <button type="button" onClick={() => setLeftUrl('')} className="absolute top-1 right-1 p-1 bg-red-100 text-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-3 h-3" /></button>
-              </div>
-            )}
-          </div>
-
-          {/* Right Image */}
-          <div className="space-y-3 p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900/50">
-            <h4 className="font-semibold text-sm text-slate-700 dark:text-slate-300">Ảnh trang trí (Bên phải)</h4>
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">Link ảnh (URL)</label>
-              <input
-                type="text"
-                placeholder="https://example.com/image.png"
-                className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-950 focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                value={rightUrl.startsWith('data:') ? '' : rightUrl}
-                onChange={e => setRightUrl(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-slate-500">Hoặc tải lên</span>
-              <label className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors text-sm font-medium">
-                <UploadCloud className="w-4 h-4" /> Kéo thả/Tải ảnh
-                <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload('right')} />
-              </label>
-            </div>
-            {rightUrl && (
-              <div className="mt-2 text-center bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 p-2 rounded-lg relative group">
-                <img src={rightUrl} alt="Phải" className="h-20 object-contain mx-auto rounded" />
-                <button type="button" onClick={() => setRightUrl('')} className="absolute top-1 right-1 p-1 bg-red-100 text-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-3 h-3" /></button>
-              </div>
-            )}
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium text-slate-700 dark:text-slate-300"
-            >
-              Hủy
-            </button>
+        {/* Add Admin Form */}
+        <form onSubmit={handleAddAdmin} className="mb-8">
+          <label className="block text-sm font-medium mb-2">Thêm quản trị viên mới</label>
+          <div className="flex gap-2">
+            <input
+              type="email"
+              required
+              placeholder="Nhập email người dùng..."
+              className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
+              value={newAdminEmail}
+              onChange={e => setNewAdminEmail(e.target.value)}
+            />
             <button
               type="submit"
-              disabled={saving}
-              className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium disabled:opacity-50"
+              disabled={loading}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
             >
-              {saving ? 'Đang lưu...' : 'Lưu cài đặt ảnh'}
+              <UserPlus className="w-4 h-4" /> Thêm
             </button>
           </div>
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+          {success && <p className="text-green-500 text-sm mt-2">{success}</p>}
         </form>
+
+        {/* Admin List */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <h4 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+            Danh sách quản trị viên ({admins.length})
+          </h4>
+          <div className="space-y-3">
+            {admins.map(admin => (
+              <div key={admin.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <img src={admin.photoURL || `https://ui-avatars.com/api/?name=${admin.email}`} alt="" className="w-10 h-10 rounded-full shrink-0" referrerPolicy="no-referrer" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate">{admin.displayName || 'Người dùng'}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{admin.email}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleRemoveAdmin(admin.id, admin.email)}
+                  className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors shrink-0"
+                  title="Xóa quyền quản trị"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
