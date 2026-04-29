@@ -50,16 +50,39 @@ export default function HeroImageManagerModal({ isOpen, onClose }: Props) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 1024 * 600) { // Giới hạn khoảng 600KB
-      alert('Vui lòng chọn ảnh có dung lượng nhỏ hơn 600KB hoặc dán link ảnh trực tiếp!');
-      return;
-    }
-
     const reader = new FileReader();
     reader.onloadend = () => {
-      const base64String = reader.result as string;
-      if (side === 'left') setLeftUrl(base64String);
-      else setRightUrl(base64String);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        // Max dimensions
+        const MAX_SIZE = 800;
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        // Compress to webp 0.7
+        const compressedBase64 = canvas.toDataURL('image/webp', 0.7);
+        if (side === 'left') setLeftUrl(compressedBase64);
+        else setRightUrl(compressedBase64);
+      };
+      img.src = reader.result as string;
     };
     reader.readAsDataURL(file);
   };
