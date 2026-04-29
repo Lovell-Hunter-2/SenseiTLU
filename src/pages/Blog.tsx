@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc, setDoc } from 'firebase/firestore';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Trash2, Calendar, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2, Calendar, Image as ImageIcon, ShieldCheck, User as UserIcon, ToggleLeft, ToggleRight } from 'lucide-react';
 import BlogInteractions from '../components/BlogInteractions';
 
 const isImageUrl = (url: string) => {
@@ -13,7 +13,8 @@ const isImageUrl = (url: string) => {
 
 export default function Blog() {
   const [posts, setPosts] = useState<any[]>([]);
-  const { isAdmin } = useAuth();
+  const [allowPublicPosting, setAllowPublicPosting] = useState(false);
+  const { user, isAdmin } = useAuth();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newPost, setNewPost] = useState({ title: '', content: '', imageUrl: '' });
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -21,22 +22,44 @@ export default function Blog() {
   useEffect(() => {
     document.title = "Blog TLU";
     const q = query(collection(db, 'blog'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribePosts = onSnapshot(q, (snapshot) => {
       const fetchedPosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setPosts(fetchedPosts);
     });
-    return unsubscribe;
+
+    const unsubscribeSettings = onSnapshot(doc(db, 'settings', 'blog'), (docSnap) => {
+      if (docSnap.exists()) {
+        setAllowPublicPosting(docSnap.data().allowPublicPosting || false);
+      }
+    });
+
+    return () => {
+      unsubscribePosts();
+      unsubscribeSettings();
+    };
   }, []);
+
+  const togglePublicPosting = async () => {
+    if (!isAdmin) return;
+    try {
+      await setDoc(doc(db, 'settings', 'blog'), { allowPublicPosting: !allowPublicPosting }, { merge: true });
+    } catch (error) {
+      console.error("Error toggling public posting:", error);
+    }
+  };
 
   const handleAddPost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPost.title.trim() || !newPost.content.trim()) return;
+    if (!newPost.title.trim() || !newPost.content.trim() || !user) return;
     
     try {
       await addDoc(collection(db, 'blog'), {
         title: newPost.title,
         content: newPost.content,
         imageUrl: newPost.imageUrl,
+        authorId: user.uid,
+        authorEmail: user.email || 'Anonymous',
+        isAdminPost: isAdmin,
         createdAt: serverTimestamp()
       });
       setIsAddModalOpen(false);
@@ -57,25 +80,41 @@ export default function Blog() {
 
   const formatDate = (timestamp: any) => {
     if (!timestamp) return '';
-    const date = timestamp.toDate();
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    if (isNaN(date.getTime())) return '';
     return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
   };
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold mb-2">Blog & Cập nhật</h1>
-          <p className="text-slate-500 dark:text-slate-400">Thông tin mới nhất, thông báo và chia sẻ từ quản trị viên.</p>
+          <p className="text-slate-500 dark:text-slate-400">Thông tin mới nhất, thông báo và chia sẻ.</p>
         </div>
-        {isAdmin && (
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-medium transition-colors"
-          >
-            <Plus className="w-5 h-5" /> Viết bài mới
-          </button>
-        )}
+        <div className="flex items-center gap-4">
+          {isAdmin && (
+            <button
+              onClick={togglePublicPosting}
+              className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            >
+              <div className="text-sm font-medium">Bật đăng bài công khai:</div>
+              {allowPublicPosting ? (
+                <ToggleRight className="w-6 h-6 text-green-500" />
+              ) : (
+                <ToggleLeft className="w-6 h-6 text-slate-400" />
+              )}
+            </button>
+          )}
+          {(isAdmin || allowPublicPosting) && (
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-medium transition-colors"
+            >
+              <Plus className="w-5 h-5" /> Viết bài mới
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-8">
@@ -88,11 +127,25 @@ export default function Blog() {
             )}
             <div className="p-6 sm:p-8">
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                  <Calendar className="w-4 h-4" />
-                  {formatDate(post.createdAt)}
+                <div className="flex items-center gap-4 text-sm">
+                  {post.isAdminPost ? (
+                    <div className="flex items-center gap-1.5 font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-3 py-1 rounded-full">
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>Admin</span>
+                    </div>
+                  ) : post.authorEmail ? (
+                    <div className="flex items-center gap-1.5 font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-full">
+                      <UserIcon className="w-4 h-4" />
+                      <span>{post.authorEmail.split('@')[0]}</span>
+                    </div>
+                  ) : null}
+
+                  <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                    <Calendar className="w-4 h-4" />
+                    {formatDate(post.createdAt)}
+                  </div>
                 </div>
-                {isAdmin && (
+                {(isAdmin || post.authorId === user?.uid) && (
                   <button onClick={() => setDeleteConfirmId(post.id)} className="text-red-500 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </button>
