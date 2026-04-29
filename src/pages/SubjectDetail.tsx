@@ -9,7 +9,7 @@ const typeIcons: Record<string, React.ElementType> = {
   'Giáo trình': Book,
   'Slide': Presentation,
   'Đề cương': FileText,
-  'Trắc nghiệm': FileQuestion,
+  'Trắc nghiệm ôn tập': FileQuestion,
   'Bài tập': ClipboardList,
   'Đề thi mẫu': ScrollText,
   'Tips': Lightbulb,
@@ -36,7 +36,7 @@ export default function SubjectDetail() {
   const [folderInputMode, setFolderInputMode] = useState<'manual' | 'auto'>('manual');
   const [driveFolderUrl, setDriveFolderUrl] = useState('');
   const [isScanningDrive, setIsScanningDrive] = useState(false);
-  const [driveApiKey, setDriveApiKey] = useState(localStorage.getItem('driveApiKey') || import.meta.env.VITE_GOOGLE_DRIVE_API_KEY || '');
+  const [driveApiKey, setDriveApiKey] = useState(localStorage.getItem('driveApiKey') || (import.meta as any).env.VITE_GOOGLE_DRIVE_API_KEY || '');
   const [showDriveApiInput, setShowDriveApiInput] = useState(!driveApiKey);
 
   const toggleFolder = (docId: string) => {
@@ -293,7 +293,7 @@ export default function SubjectDetail() {
                             </h4>
                             {!doc.isFolder && doc.chapter && (
                               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                {doc.chapter}
+                                Chương: {doc.chapter}
                               </p>
                             )}
                           </div>
