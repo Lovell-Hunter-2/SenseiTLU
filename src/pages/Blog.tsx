@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Plus, Trash2, Calendar, Image as ImageIcon } from 'lucide-react';
+import BlogInteractions from '../components/BlogInteractions';
 
 const isImageUrl = (url: string) => {
   return /\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i.test(url) || url.includes('drive.google.com/uc') || url.includes('images');
@@ -116,6 +117,7 @@ export default function Blog() {
                   {post.content}
                 </Markdown>
               </div>
+              <BlogInteractions postId={post.id} />
             </div>
           </article>
         ))}
