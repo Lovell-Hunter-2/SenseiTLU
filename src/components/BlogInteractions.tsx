@@ -132,10 +132,12 @@ export default function BlogInteractions({ postId }: Props) {
 
       {/* Actions */}
       <div className="flex items-center gap-2 border-y border-slate-100 dark:border-slate-800 py-2 relative">
-        <div className="relative">
+        <div 
+          className="relative"
+          onMouseEnter={() => setShowReactionPicker(true)}
+          onMouseLeave={() => setShowReactionPicker(false)}
+        >
           <button 
-            onMouseEnter={() => setShowReactionPicker(true)}
-            onMouseLeave={() => setTimeout(() => setShowReactionPicker(false), 300)} // short delay
             onClick={() => handleReact('like')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
               myReaction 
@@ -153,24 +155,22 @@ export default function BlogInteractions({ postId }: Props) {
           
           {/* Reaction Picker Popup */}
           {showReactionPicker && (
-            <div 
-              onMouseEnter={() => setShowReactionPicker(true)}
-              onMouseLeave={() => setShowReactionPicker(false)}
-              className="absolute bottom-full left-0 mb-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-full px-2 py-1 flex items-center gap-1 z-10 animate-in fade-in slide-in-from-bottom-2"
-            >
-              {Object.entries(REACTION_EMOJIS).map(([type, emoji]) => (
-                <button
-                  key={type}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleReact(type);
-                  }}
-                  className="text-2xl hover:scale-125 hover:-translate-y-1 transition-transform p-1"
-                  title={type}
-                >
-                  {emoji}
-                </button>
-              ))}
+            <div className="absolute bottom-full left-0 pb-2 z-10 animate-in fade-in slide-in-from-bottom-2">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-full px-2 py-1 flex items-center gap-1">
+                {Object.entries(REACTION_EMOJIS).map(([type, emoji]) => (
+                  <button
+                    key={type}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleReact(type);
+                    }}
+                    className="text-2xl hover:scale-125 hover:-translate-y-1 transition-transform p-1"
+                    title={type}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -191,11 +191,11 @@ export default function BlogInteractions({ postId }: Props) {
             {comments.map((comment) => (
               <div key={comment.id} className="flex gap-3">
                 <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm shrink-0">
-                  {comment.userEmail.charAt(0).toUpperCase()}
+                  {((comment.userEmail || comment.userId)?.toString() || 'A').charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
                   <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl px-4 py-2 inline-block">
-                    <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">{comment.userEmail.split('@')[0]}</p>
+                    <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">{(comment.userEmail || 'Anonymous').split('@')[0]}</p>
                     <p className="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap">{comment.content}</p>
                   </div>
                   <div className="flex items-center gap-4 mt-1 px-4 text-xs text-slate-500">
@@ -204,7 +204,7 @@ export default function BlogInteractions({ postId }: Props) {
                         hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' 
                       }).format(comment.createdAt.toDate()) : 'Đang gửi...'}
                     </span>
-                    {(isAdmin || currentUser?.uid === comment.userId) && (
+                    {(isAdmin || user?.uid === comment.userId) && (
                       <button 
                         onClick={() => handleDeleteComment(comment.id)}
                         className="hover:text-red-500 transition-colors"
@@ -220,7 +220,7 @@ export default function BlogInteractions({ postId }: Props) {
 
           <form onSubmit={handleAddComment} className="flex gap-2 items-center">
             <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm shrink-0">
-              {currentUser?.email?.charAt(0).toUpperCase()}
+              {(user?.email || 'A').charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 relative">
               <input
