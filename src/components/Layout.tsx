@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Moon, Sun, LogIn, LogOut, MessageCircle, Menu, X, Minus, Shield, ArrowLeft } from 'lucide-react';
+import { Moon, Sun, LogIn, LogOut, MessageCircle, Menu, X, Minus, Shield, ArrowLeft, Image as ImageIcon } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import AdminManagerModal from './AdminManagerModal';
+import HeroImageManagerModal from './HeroImageManagerModal';
 
 export default function Layout() {
   const { theme, setTheme } = useTheme();
@@ -14,6 +15,7 @@ export default function Layout() {
   const [showSupportPopover, setShowSupportPopover] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [isHeroImageModalOpen, setIsHeroImageModalOpen] = useState(false);
 
   // Reset popover state when returning to home
   useEffect(() => {
@@ -44,7 +46,7 @@ export default function Layout() {
               </button>
             )}
             <Link to="/" className="text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
-              <span className="text-3xl">🎓</span> SenseiTLU
+              <span className="text-3xl">⚡</span> SenseiTLU
             </Link>
 
             {/* Desktop Nav */}
@@ -77,6 +79,17 @@ export default function Layout() {
               >
                 <MessageCircle className="w-5 h-5" />
               </a>
+            )}
+
+            {/* Admin only: Hero Image Manager */}
+            {isAdmin && (
+              <button
+                onClick={() => setIsHeroImageModalOpen(true)}
+                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-blue-600 dark:text-blue-400"
+                title="Quản lý ảnh trang trí"
+              >
+                <ImageIcon className="w-5 h-5" />
+              </button>
             )}
 
             {/* Theme Toggle */}
@@ -189,6 +202,11 @@ export default function Layout() {
       <AdminManagerModal 
         isOpen={isAdminModalOpen} 
         onClose={() => setIsAdminModalOpen(false)} 
+      />
+
+      <HeroImageManagerModal
+        isOpen={isHeroImageModalOpen}
+        onClose={() => setIsHeroImageModalOpen(false)}
       />
 
       {/* Floating Contact Button */}
