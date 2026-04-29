@@ -830,7 +830,16 @@ export default function MockExam() {
                     setCurrentIndex(prev => Math.min(questions.length - 1, prev + 1))
                   }
                 }} 
-                disabled={currentIndex === questions.length - 1 || (status === 'retake_wrong' && questions.findLastIndex((q, i) => userAnswers[i] !== q.correctIndex) === currentIndex)}
+                disabled={currentIndex === questions.length - 1 || (status === 'retake_wrong' && (() => {
+                  let idx = -1;
+                  for (let i = questions.length - 1; i >= 0; i--) {
+                    if (userAnswers[i] !== questions[i].correctIndex) {
+                      idx = i;
+                      break;
+                    }
+                  }
+                  return idx;
+                })() === currentIndex)}
                 className="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-medium disabled:opacity-50 transition-colors"
               >
                 Sau →
