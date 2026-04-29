@@ -39,6 +39,18 @@ service cloud.firestore {
     match /blog/{blogId} {
       allow read: if isAuthenticated();
       allow create, update, delete: if isAdmin();
+
+      match /reactions/{userId} {
+        allow read: if isAuthenticated();
+        allow write: if isOwner(userId) || isAdmin();
+      }
+
+      match /comments/{commentId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+        allow update: if isAuthenticated() && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid;
+        allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      }
     }
 
     match /settings/{settingId} {
