@@ -22,10 +22,18 @@ export default function Home() {
   const [newSubject, setNewSubject] = useState({ name: '', description: '', iconName: 'Book' });
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingSubject, setEditingSubject] = useState<any>(null);
+  const [heroImages, setHeroImages] = useState<{ leftUrl: string, rightUrl: string }>({ leftUrl: '', rightUrl: '' });
 
   useEffect(() => {
     document.title = "SenseiTLU";
     
+    // Fetch hero images
+    const unsubImages = onSnapshot(doc(db, 'settings', 'heroImages'), (docsnap) => {
+      if (docsnap.exists()) {
+        setHeroImages(docsnap.data() as { leftUrl: string, rightUrl: string });
+      }
+    });
+
     const q = query(collection(db, 'subjects'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const subs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -33,7 +41,10 @@ export default function Home() {
     }, (error) => {
       console.error("Error fetching subjects:", error);
     });
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      unsubImages();
+    };
   }, []);
 
   const filteredSubjects = subjects.filter(sub => 
@@ -87,26 +98,43 @@ export default function Home() {
   return (
     <div className="space-y-8">
       {/* Hero / Search Section */}
-      <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-          📚 Tài liệu <span className="text-blue-600 dark:text-blue-400">SenseiTLU</span>
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400 max-w-xl">
-          Nền tảng chia sẻ tài liệu học tập, giáo trình, đề cương và thi thử trực tuyến dành cho sinh viên.
-        </p>
-        
-        <div className="relative w-full max-w-xl mt-4">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-slate-400" />
+      <div className="relative flex items-center justify-center py-12 px-4">
+        {/* Left Image */}
+        {heroImages.leftUrl && (
+          <div className="hidden lg:block absolute left-8 xl:left-16 w-48 xl:w-64 z-0 animate-in fade-in zoom-in duration-700">
+            <img src={heroImages.leftUrl} alt="Trái" className="w-full h-auto object-contain rounded-2xl drop-shadow-2xl" />
           </div>
-          <input
-            type="text"
-            className="block w-full pl-11 pr-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-            placeholder="Tìm môn học..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        )}
+        
+        {/* Main Center Content */}
+        <div className="flex flex-col items-center justify-center space-y-6 text-center z-10 w-full max-w-xl">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+            📚 Tài liệu <span className="text-blue-600 dark:text-blue-400">SenseiTLU</span>
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400">
+            Nền tảng chia sẻ tài liệu học tập, giáo trình, đề cương và thi thử trực tuyến dành cho sinh viên.
+          </p>
+          
+          <div className="relative w-full mt-4">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-slate-400" />
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-11 pr-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+              placeholder="Tìm môn học..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
+
+        {/* Right Image */}
+        {heroImages.rightUrl && (
+          <div className="hidden lg:block absolute right-8 xl:right-16 w-48 xl:w-64 z-0 animate-in fade-in zoom-in duration-700 delay-150">
+            <img src={heroImages.rightUrl} alt="Phải" className="w-full h-auto object-contain rounded-2xl drop-shadow-2xl" />
+          </div>
+        )}
       </div>
 
       {/* Subjects Section */}
