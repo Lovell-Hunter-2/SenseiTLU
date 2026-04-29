@@ -38,7 +38,8 @@ service cloud.firestore {
 
     match /blog/{blogId} {
       allow read: if isAuthenticated();
-      allow create, update, delete: if isAdmin();
+      allow create: if isAdmin() || (isAuthenticated() && request.resource.data.authorId == request.auth.uid && exists(/databases/$(database)/documents/settings/blog) && get(/databases/$(database)/documents/settings/blog).data.allowPublicPosting == true);
+      allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.authorId == request.auth.uid);
 
       match /reactions/{userId} {
         allow read: if isAuthenticated();
