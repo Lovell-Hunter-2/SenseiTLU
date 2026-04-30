@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Moon, Sun, LogIn, LogOut, MessageCircle, Menu, X, Minus, Shield, ArrowLeft, Image as ImageIcon } from 'lucide-react';
+import { Moon, Sun, LogIn, LogOut, MessageCircle, Menu, X, Minus, Shield, ArrowLeft, Image as ImageIcon, Users } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import AdminManagerModal from './AdminManagerModal';
+import UserManagerModal from './UserManagerModal';
 import HeroImageManagerModal from './HeroImageManagerModal';
 import avtTlu from '../assets/avt_tlu.jpg';
 
@@ -16,6 +17,7 @@ export default function Layout() {
   const [showSupportPopover, setShowSupportPopover] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [isUserManagerModalOpen, setIsUserManagerModalOpen] = useState(false);
   const [isHeroImageModalOpen, setIsHeroImageModalOpen] = useState(false);
 
   // Reset popover state when returning to home
@@ -126,15 +128,26 @@ export default function Layout() {
                       </div>
                       
                       {isAdmin && (
-                        <button
-                          onClick={() => {
-                            setIsProfileOpen(false);
-                            setIsAdminModalOpen(true);
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800"
-                        >
-                          <Shield className="w-4 h-4" /> Quản lý Admin
-                        </button>
+                        <>
+                          <button
+                            onClick={() => {
+                              setIsProfileOpen(false);
+                              setIsAdminModalOpen(true);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800"
+                          >
+                            <Shield className="w-4 h-4" /> Quản lý Admin
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsProfileOpen(false);
+                              setIsUserManagerModalOpen(true);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800"
+                          >
+                            <Users className="w-4 h-4" /> Quản lý Người dùng
+                          </button>
+                        </>
                       )}
 
                       <button
@@ -204,6 +217,10 @@ export default function Layout() {
         isOpen={isAdminModalOpen} 
         onClose={() => setIsAdminModalOpen(false)} 
       />
+
+      {isUserManagerModalOpen && (
+        <UserManagerModal onClose={() => setIsUserManagerModalOpen(false)} />
+      )}
 
       <HeroImageManagerModal
         isOpen={isHeroImageModalOpen}
