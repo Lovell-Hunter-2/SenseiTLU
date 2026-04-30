@@ -1,15 +1,81 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { Search, Plus, Book, Calculator, Code, Globe, Database, Cpu, FileText, Briefcase, Scale, Lightbulb, Brain, PieChart, ShoppingCart, Rocket, Trash2, Edit2, ChartBar, PenTool, Milestone, Activity, Building, Leaf, Shield, History, Compass, GraduationCap, Microscope, Palette, Landmark, Component, Cloud, DatabaseZap, DollarSign, Euro, Frame, Users, Target, Network, Layers, LayoutDashboard, LineChart, FileSpreadsheet, Bitcoin, CandlestickChart } from 'lucide-react';
+import { Search, Plus, Book, Calculator, Code, Globe, Database, Cpu, FileText, Briefcase, Scale, Lightbulb, Brain, PieChart, ShoppingCart, Rocket, Trash2, Edit2, ChartBar, PenTool, Milestone, Activity, Building, Leaf, Shield, History, Compass, GraduationCap, Microscope, Palette, Landmark, Component, Cloud, DatabaseZap, DollarSign, Euro, Frame, Users, Target, Network, Layers, LayoutDashboard, LineChart, FileSpreadsheet, Bitcoin, CandlestickChart, TrendingUp, BadgeDollarSign, Receipt, Gavel, Building2, HandCoins, MessageCircle, Globe2, Map as MapIcon, HeartHandshake, Vote, MonitorPlay, Smartphone, Terminal, Server, Wifi, Fingerprint, Microchip, Bot } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
 // Icon mapping helper
+const iconLabels: Record<string, string> = {
+  Book: 'Sách (Lý thuyết chung)',
+  Calculator: 'Máy tính (Toán/Kế toán)',
+  Code: 'Mã nguồn (Lập trình)',
+  Globe: 'Địa cầu (Địa lý/Quốc tế)',
+  Database: 'CSDL (Cơ sở dữ liệu)',
+  Cpu: 'CPU (Phần cứng)',
+  FileText: 'Văn bản (Ngữ văn/Tài liệu)',
+  Briefcase: 'Cặp xách (Quản trị kinh doanh)',
+  Scale: 'Cán cân (Luật học)',
+  Lightbulb: 'Bóng đèn (Ý tưởng/Khởi nghiệp)',
+  Brain: 'Bộ não (Tâm lý học/AI)',
+  PieChart: 'Biểu đồ tròn (Thống kê)',
+  ShoppingCart: 'Giỏ hàng (Thương mại điện tử)',
+  Rocket: 'Tên lửa (Khởi nghiệp/Đổi mới)',
+  ChartBar: 'Biểu đồ cột (Tài chính)',
+  PenTool: 'Bút vẽ (Thiết kế đồ họa)',
+  Milestone: 'Cột mốc (Lịch sử/Dự án)',
+  Activity: 'Nhịp tim (Y tế/Sức khỏe)',
+  Building: 'Tòa nhà (Kiến trúc/Xây dựng)',
+  Leaf: 'Chiếc lá (Môi trường/Nông nghiệp)',
+  Shield: 'Khiên chắn (An ninh mạng)',
+  History: 'Đồng hồ (Lịch sử)',
+  Compass: 'La bàn (Điều hướng/Hàng hải)',
+  GraduationCap: 'Mũ tốt nghiệp (Giáo dục)',
+  Microscope: 'Kính hiển vi (Sinh học/Hóa học)',
+  Palette: 'Bảng màu (Nghệ thuật/Thiết kế)',
+  Landmark: 'Đền thờ (Ngân hàng/Chính trị)',
+  Component: 'Thành phần (Giao diện UI/UX)',
+  Cloud: 'Đám mây (Điện toán đám mây)',
+  DatabaseZap: 'CSDL Nhanh (Big Data)',
+  DollarSign: 'Đô la (Kinh tế)',
+  Euro: 'Euro (Kinh tế quốc tế)',
+  Frame: 'Khung ảnh (Nhiếp ảnh/Thiết kế)',
+  Users: 'Nhóm người (Xã hội học/Nhân sự)',
+  Target: 'Mục tiêu (Marketing)',
+  Network: 'Mạng lưới (Mạng máy tính)',
+  Layers: 'Nhiều lớp (Kiến trúc/Đồ họa)',
+  LayoutDashboard: 'Bảng điều khiển (UI/UX)',
+  LineChart: 'Biểu đồ đường (Chứng khoán)',
+  FileSpreadsheet: 'Bảng tính (Excel/Kế toán)',
+  Bitcoin: 'Bitcoin (Tiền điện tử)',
+  CandlestickChart: 'Biểu đồ nến (Tài chính/Forex)',
+  // Added icons
+  TrendingUp: 'Tăng trưởng (Kinh tế vi mô/vĩ mô)',
+  BadgeDollarSign: 'Huy hiệu Đô la (Tài chính doanh nghiệp)',
+  Receipt: 'Hóa đơn (Kế toán/Thuế)',
+  Gavel: 'Búa tòa (Luật kinh tế)',
+  Building2: 'Công ty (Quản trị doanh nghiệp)',
+  HandCoins: 'Bàn tay đồng xu (Đầu tư/Tài chính)',
+  MessageCircle: 'Bong bóng chat (Ngôn ngữ học/Truyền thông)',
+  Globe2: 'Địa cầu chi tiết (Quan hệ quốc tế)',
+  MapIcon: 'Bản đồ (Địa lý/Quy hoạch)',
+  HeartHandshake: 'Bắt tay (Công tác xã hội)',
+  Vote: 'Bầu cử (Chính trị học)',
+  MonitorPlay: 'Màn hình phát (Truyền thông đa phương tiện)',
+  Smartphone: 'Điện thoại (Lập trình di động)',
+  Terminal: 'Dòng lệnh (Hệ điều hành)',
+  Server: 'Máy chủ (Quản trị mạng)',
+  Wifi: 'Wifi (Mạng viễn thông)',
+  Fingerprint: 'Vân tay (An toàn thông tin)',
+  Microchip: 'Vi mạch (Kiến trúc máy tính)',
+  Bot: 'Robot (Trí tuệ nhân tạo)'
+};
+
 const iconMap: Record<string, React.ElementType> = {
   Book, Calculator, Code, Globe, Database, Cpu, FileText, Briefcase, Scale, Lightbulb, Brain, PieChart, ShoppingCart, Rocket,
   ChartBar, PenTool, Milestone, Activity, Building, Leaf, Shield, History, Compass, GraduationCap, Microscope, Palette, Landmark, 
-  Component, Cloud, DatabaseZap, DollarSign, Euro, Frame, Users, Target, Network, Layers, LayoutDashboard, LineChart, FileSpreadsheet, Bitcoin, CandlestickChart
+  Component, Cloud, DatabaseZap, DollarSign, Euro, Frame, Users, Target, Network, Layers, LayoutDashboard, LineChart, FileSpreadsheet, Bitcoin, CandlestickChart,
+  TrendingUp, BadgeDollarSign, Receipt, Gavel, Building2, HandCoins, MessageCircle, Globe2, MapIcon, HeartHandshake, Vote, MonitorPlay, Smartphone, Terminal, Server, Wifi, Fingerprint, Microchip, Bot
 };
 
 export default function Home() {
@@ -112,7 +178,7 @@ export default function Home() {
             📚 Tài liệu <span className="text-blue-600 dark:text-blue-400">SenseiTLU</span>
           </h1>
           <p className="text-slate-600 dark:text-slate-400">
-            Nền tảng chia sẻ tài liệu học tập, giáo trình, đề cương và thi thử trực tuyến dành cho sinh viên Trường Đại học Thủy lợi.
+            Nền tảng chia sẻ tài liệu học tập, giáo trình, đề cương và thi thử trực tuyến dành cho sinh viên.
           </p>
           
           <div className="relative w-full mt-4">
@@ -244,7 +310,9 @@ export default function Home() {
                   onChange={e => setNewSubject({...newSubject, iconName: e.target.value})}
                 >
                   {Object.keys(iconMap).map(key => (
-                    <option key={key} value={key} className="text-slate-900">{key}</option>
+                    <option key={key} value={key} className="text-slate-900">
+                      {key} {iconLabels[key] ? `- ${iconLabels[key]}` : ''}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -301,7 +369,9 @@ export default function Home() {
                   onChange={e => setEditingSubject({...editingSubject, iconName: e.target.value})}
                 >
                   {Object.keys(iconMap).map(key => (
-                    <option key={key} value={key} className="text-slate-900">{key}</option>
+                    <option key={key} value={key} className="text-slate-900">
+                      {key} {iconLabels[key] ? `- ${iconLabels[key]}` : ''}
+                    </option>
                   ))}
                 </select>
               </div>
