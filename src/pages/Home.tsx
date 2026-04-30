@@ -100,9 +100,10 @@ export default function Home() {
       }
     });
 
-    const q = query(collection(db, 'subjects'), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'subjects'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const subs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      subs.sort((a: any, b: any) => (a.name || '').localeCompare(b.name || '', 'vi'));
       setSubjects(subs);
     }, (error) => {
       console.error("Error fetching subjects:", error);
