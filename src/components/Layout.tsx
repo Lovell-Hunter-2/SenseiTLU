@@ -5,6 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import AdminManagerModal from './AdminManagerModal';
 import HeroImageManagerModal from './HeroImageManagerModal';
+import avtTlu from '../assets/avt_tlu.jpg';
 
 export default function Layout() {
   const { theme, setTheme } = useTheme();
@@ -209,43 +210,41 @@ export default function Layout() {
         onClose={() => setIsHeroImageModalOpen(false)}
       />
 
-      {/* Floating Contact Button */}
+      {/* Floating Mascot & Support Button */}
       {location.pathname === '/' && (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
-          {/* Popover */}
+          {/* Mascot Popover */}
           {showSupportPopover && (
-            <div className="bg-[#1a1d2d] dark:bg-[#131524] rounded-2xl p-5 shadow-2xl border border-slate-800 text-white w-[280px] animate-in slide-in-from-bottom-4 fade-in duration-300 relative">
+            <div className="relative group animate-in fade-in slide-in-from-bottom-4 duration-300">
+              {/* Close button */}
               <button 
                 onClick={() => setShowSupportPopover(false)}
-                className="absolute top-3 right-3 text-slate-400 hover:text-white transition-colors"
+                className="absolute -top-2 -right-2 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 p-1 rounded-full z-10 shadow-md opacity-0 group-hover:opacity-100 transition-all duration-200"
                 aria-label="Đóng"
               >
                 <Minus className="w-4 h-4" />
               </button>
-              <div className="flex items-center gap-3 mb-3">
-                <img src="https://graph.facebook.com/100021966144577/picture?type=large" alt="Thuận Ngô" className="w-12 h-12 rounded-full border-2 border-slate-700 object-cover" />
-                <div>
-                  <h4 className="font-bold text-base">Thuận Ngô</h4>
-                  <div className="flex items-center gap-1.5 text-sm text-green-400">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    Đang online
-                  </div>
-                </div>
-              </div>
-              <p className="text-sm text-slate-300 mb-4 text-center leading-relaxed">
-                Cần hỗ trợ? Mình luôn sẵn sàng giúp bạn! 👋
-              </p>
+              
+              {/* Mascot Link */}
               <a
                 href="https://www.facebook.com/lovelltitussof1910"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full bg-[#0084ff] hover:bg-[#0073e6] text-white font-medium py-2.5 rounded-xl transition-colors text-sm"
+                className="block cursor-pointer"
+                title="Cần hỗ trợ? Nhấn vào đây!"
               >
-                <MessageCircle className="w-4 h-4 fill-current" /> Nhắn Messenger
+                <div className="animate-wobble origin-bottom hover:scale-105 transition-transform duration-300">
+                  <img 
+                    src={avtTlu} 
+                    alt="Hỗ trợ viên Capybara" 
+                    className="w-24 h-24 sm:w-28 sm:h-28 object-contain drop-shadow-xl mix-blend-multiply dark:mix-blend-normal rounded-full dark:bg-white"
+                  />
+                </div>
               </a>
             </div>
           )}
-          {/* Icon */}
+
+          {/* Orange Support Button */}
           <a
             href="https://www.facebook.com/lovelltitussof1910"
             target="_blank"
