@@ -44,12 +44,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               displayName: currentUser.displayName,
               photoURL: currentUser.photoURL,
               role: adminStatus ? 'admin' : 'user',
-              createdAt: new Date().toISOString()
+              createdAt: new Date().toISOString(),
+              lastLoginAt: new Date().toISOString(),
+              isOnline: true
             });
           } else {
             if (userSnap.data().role === 'admin') {
               adminStatus = true;
             }
+            await setDoc(userRef, {
+              displayName: currentUser.displayName,
+              photoURL: currentUser.photoURL,
+              lastLoginAt: new Date().toISOString(),
+              isOnline: true
+            }, { merge: true });
           }
         } catch (error) {
           console.error("Error syncing user:", error);
