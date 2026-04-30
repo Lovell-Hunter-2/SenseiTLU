@@ -82,11 +82,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
+      if (user) {
+        const userRef = doc(db, 'users', user.uid);
+        await setDoc(userRef, { isOnline: false }, { merge: true });
+      }
       await signOut(auth);
     } catch (error) {
       console.error("Logout failed", error);
     }
   };
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (user) {
+        const userRef = doc(db, 'users', user.uid);
+        if (document.visibilityState === 'hidden') {
+          setDoc(userRef, { isOnline: false }, { merge: true });
+        } else {
+          setDoc(userRef, { isOnline: true, lastLoginAt: new Date().toISOString() }, { merge: true });
+        }
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      if (user) {
+        const userRef = doc(db, 'users', user.uid);
+        setDoc(userRef, { isOnline: false }, { merge: true });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, isAdmin, loading, login, logout }}>
