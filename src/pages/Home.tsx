@@ -216,7 +216,7 @@ export default function Home() {
             📚 Tài liệu <span className="text-blue-600 dark:text-blue-400">SenseiTLU</span>
           </h1>
           <p className="text-slate-600 dark:text-slate-400">
-            Nền tảng chia sẻ tài liệu học tập, giáo trình, đề cương và thi thử trực tuyến dành cho sinh viên.
+            Nền tảng chia sẻ tài liệu học tập, giáo trình, đề cương và thi thử trực tuyến dành cho sinh viên Trường Đại học Thủy lợi.
           </p>
           
           <div className="relative w-full mt-4" ref={searchContainerRef}>
