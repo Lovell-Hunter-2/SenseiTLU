@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { Search, Plus, Book, Calculator, Code, Globe, Database, Cpu, FileText, Briefcase, Scale, Lightbulb, Brain, PieChart, ShoppingCart, Rocket, Trash2, Edit2, ChartBar, PenTool, Milestone, Activity, Building, Leaf, Shield, History, Compass, GraduationCap, Microscope, Palette, Landmark, Component, Cloud, DatabaseZap, DollarSign, Euro, Frame, Users, Target, Network, Layers, LayoutDashboard, LineChart, FileSpreadsheet, Bitcoin, CandlestickChart, TrendingUp, BadgeDollarSign, Receipt, Gavel, Building2, HandCoins, MessageCircle, Globe2, Map as MapIcon, HeartHandshake, Vote, MonitorPlay, Smartphone, Terminal, Server, Wifi, Fingerprint, Microchip, Bot } from 'lucide-react';
+import { Search, Plus, Book, Calculator, Code, Globe, Database, Cpu, FileText, Briefcase, Scale, Lightbulb, Brain, PieChart, ShoppingCart, Rocket, Trash2, Edit2, ChartBar, PenTool, Milestone, Activity, Building, Leaf, Shield, History, Compass, GraduationCap, Microscope, Palette, Landmark, Component, Cloud, DatabaseZap, DollarSign, Euro, Frame, Users, Target, Network, Layers, LayoutDashboard, LineChart, FileSpreadsheet, Bitcoin, CandlestickChart, TrendingUp, BadgeDollarSign, Receipt, Gavel, Building2, HandCoins, MessageCircle, Globe2, Map as MapIcon, HeartHandshake, Vote, MonitorPlay, Smartphone, Terminal, Server, Wifi, Fingerprint, Microchip, Bot, Star } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -81,6 +81,13 @@ const iconMap: Record<string, React.ElementType> = {
 export default function Home() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    const saved = localStorage.getItem('favoriteSubjects');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const { isAdmin } = useAuth();
   
   // Modal state
@@ -89,6 +96,20 @@ export default function Home() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingSubject, setEditingSubject] = useState<any>(null);
   const [heroImages, setHeroImages] = useState<{ leftUrl: string, rightUrl: string }>({ leftUrl: '', rightUrl: '' });
+
+  useEffect(() => {
+    localStorage.setItem('favoriteSubjects', JSON.stringify(favorites));
+  }, [favorites]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     document.title = "SenseiTLU";
@@ -114,10 +135,26 @@ export default function Home() {
     };
   }, []);
 
-  const filteredSubjects = subjects.filter(sub => 
-    sub.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (sub.description && sub.description.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredSubjects = subjects
+    .filter(sub => 
+      sub.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (sub.description && sub.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
+    .sort((a, b) => {
+      const aFav = favorites.includes(a.id);
+      const bFav = favorites.includes(b.id);
+      if (aFav && !bFav) return -1;
+      if (!aFav && bFav) return 1;
+      return 0; // The original list is already sorted by name
+    });
+
+  const toggleFavorite = (subjectId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setFavorites(prev => 
+      prev.includes(subjectId) ? prev.filter(id => id !== subjectId) : [...prev, subjectId]
+    );
+  };
 
   const handleAddSubject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,7 +219,7 @@ export default function Home() {
             Nền tảng chia sẻ tài liệu học tập, giáo trình, đề cương và thi thử trực tuyến dành cho sinh viên.
           </p>
           
-          <div className="relative w-full mt-4">
+          <div className="relative w-full mt-4" ref={searchContainerRef}>
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-slate-400" />
             </div>
@@ -191,8 +228,35 @@ export default function Home() {
               className="block w-full pl-11 pr-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
               placeholder="Tìm môn học..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSuggestions(true);
+              }}
+              onFocus={() => setShowSuggestions(true)}
             />
+            {/* Autocomplete Dropdown */}
+            {showSuggestions && searchQuery && (
+              <div className="absolute w-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg z-50 overflow-hidden max-h-60 overflow-y-auto hidden-scrollbar">
+                {filteredSubjects.length > 0 ? (
+                  filteredSubjects.map(sub => (
+                    <button
+                      key={`suggestion-${sub.id}`}
+                      onClick={() => {
+                        setSearchQuery(sub.name);
+                        setShowSuggestions(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors flex items-center gap-3"
+                    >
+                      <Search className="w-4 h-4 text-slate-400" />
+                      <span>{sub.name}</span>
+                      {favorites.includes(sub.id) && <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 ml-auto" />}
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-4 py-3 text-slate-500 text-sm">Không tìm thấy "{searchQuery}"</div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -227,10 +291,22 @@ export default function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredSubjects.map(subject => {
             const Icon = iconMap[subject.iconName] || Book;
+            const isFav = favorites.includes(subject.id);
             return (
               <div key={subject.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full group relative">
+                <button
+                  onClick={(e) => toggleFavorite(subject.id, e)}
+                  className={`absolute top-4 right-4 p-2 rounded-xl transition-all z-10 ${
+                    isFav 
+                      ? 'text-yellow-500 bg-yellow-50 dark:bg-yellow-500/10 opacity-100' 
+                      : 'text-slate-300 dark:text-slate-600 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-500/10 opacity-0 group-hover:opacity-100'
+                  }`}
+                  title={isFav ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+                >
+                  <Star className={`w-5 h-5 ${isFav ? 'fill-current' : ''}`} />
+                </button>
                 {isAdmin && (
-                  <div className="absolute top-4 right-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className={`absolute top-4 ${isFav ? 'right-14' : 'right-4 group-hover:right-14'} flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all z-10`}>
                     <button
                       onClick={(e) => {
                         e.preventDefault();
