@@ -8,6 +8,8 @@ import MockExam from './pages/MockExam';
 import About from './pages/About';
 import Contribute from './pages/Contribute';
 import Blog from './pages/Blog';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 export default function App() {
   return (
@@ -22,6 +24,8 @@ export default function App() {
               <Route path="about" element={<About />} />
               <Route path="contribute" element={<Contribute />} />
               <Route path="blog" element={<Blog />} />
+              <Route path="privacy" element={<PrivacyPolicy />} />
+              <Route path="terms" element={<TermsOfService />} />
             </Route>
           </Routes>
         </BrowserRouter>
