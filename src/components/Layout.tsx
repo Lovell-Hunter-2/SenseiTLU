@@ -209,8 +209,18 @@ export default function Layout() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-6 text-center text-sm text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 mt-auto">
-        <p>© {new Date().getFullYear()} LovellTituss161. All rights reserved.</p>
+      <footer className="w-full py-8 text-center text-sm text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 mt-auto bg-slate-50 dark:bg-slate-900 border-b">
+        <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p>© {new Date().getFullYear()} LovellTituss161. All rights reserved.</p>
+          <div className="flex gap-6">
+            <Link to="/privacy" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              Chính sách bảo mật
+            </Link>
+            <Link to="/terms" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              Điều khoản dịch vụ
+            </Link>
+          </div>
+        </div>
       </footer>
 
       <AdminManagerModal 
@@ -254,7 +264,7 @@ export default function Layout() {
                   <img 
                     src={avtTlu} 
                     alt="Hỗ trợ viên Capybara" 
-                    className="w-20 h-20 sm:w-24 sm:h-24 object-contain drop-shadow-xl mix-blend-multiply dark:mix-blend-normal rounded-full dark:bg-white"
+                    className="w-24 h-24 sm:w-28 sm:h-28 object-contain drop-shadow-xl mix-blend-multiply dark:mix-blend-normal rounded-full dark:bg-white"
                   />
                 </div>
               </a>
