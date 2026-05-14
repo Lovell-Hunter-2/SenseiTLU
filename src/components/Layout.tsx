@@ -210,9 +210,8 @@ export default function Layout() {
 
       {/* Footer */}
       <footer className="w-full py-8 text-center text-sm text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 mt-auto bg-slate-50 dark:bg-slate-900 border-b">
-        <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p>© {new Date().getFullYear()} LovellTituss161. All rights reserved.</p>
-          <div className="flex gap-6">
+        <div className="container mx-auto px-4 flex flex-col items-center justify-center gap-2">
+          <div className="flex gap-6 mb-2">
             <Link to="/privacy" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               Chính sách bảo mật
             </Link>
@@ -220,6 +219,7 @@ export default function Layout() {
               Điều khoản dịch vụ
             </Link>
           </div>
+          <p>© {new Date().getFullYear()} LovellTituss161. All rights reserved.</p>
         </div>
       </footer>
 
@@ -246,7 +246,7 @@ export default function Layout() {
               {/* Close button */}
               <button 
                 onClick={() => setShowSupportPopover(false)}
-                className="absolute -top-2 -right-2 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 p-1 rounded-full z-10 shadow-md opacity-0 group-hover:opacity-100 transition-all duration-200"
+                className="absolute -top-2 -right-2 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 p-1 rounded-full z-10 shadow-md transition-all duration-200"
                 aria-label="Đóng"
               >
                 <Minus className="w-4 h-4" />
