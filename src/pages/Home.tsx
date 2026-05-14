@@ -219,7 +219,7 @@ export default function Home() {
             Nền tảng chia sẻ tài liệu học tập, giáo trình, đề cương và thi thử trực tuyến dành cho sinh viên Trường Đại học Thủy lợi.
           </p>
           
-          <div className="relative w-full mt-4" ref={searchContainerRef}>
+          <div className="relative w-full mt-4 z-50" ref={searchContainerRef}>
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-slate-400" />
             </div>
