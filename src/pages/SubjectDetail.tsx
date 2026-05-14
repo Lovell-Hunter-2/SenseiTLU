@@ -9,7 +9,7 @@ const typeIcons: Record<string, React.ElementType> = {
   'Giáo trình': Book,
   'Slide': Presentation,
   'Đề cương': FileText,
-  'Trắc nghiệm ôn tập': FileQuestion,
+  'File trắc nghiệm': FileQuestion,
   'Bài tập': ClipboardList,
   'Đề thi mẫu': ScrollText,
   'Tips': Lightbulb,
@@ -26,7 +26,7 @@ export default function SubjectDetail() {
   // Modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [uploadMode, setUploadMode] = useState<'file' | 'folder'>('file');
-  const [newDoc, setNewDoc] = useState({ title: '', type: 'Giáo trình', url: '', chapter: '' });
+  const [newDoc, setNewDoc] = useState({ title: '', type: 'Giáo trình', url: '', chapter: '', isHidden: false });
   const [folderItems, setFolderItems] = useState([{ title: '', url: '' }]);
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -51,7 +51,8 @@ export default function SubjectDetail() {
       title: doc.title,
       type: doc.type,
       url: doc.url || '',
-      chapter: doc.chapter || ''
+      chapter: doc.chapter || '',
+      isHidden: doc.isHidden || false
     });
     setFolderItems(doc.items && doc.items.length > 0 ? doc.items : [{ title: '', url: '' }]);
     setIsAddModalOpen(true);
@@ -152,6 +153,7 @@ export default function SubjectDetail() {
         subjectId: id,
         title: newDoc.title,
         type: newDoc.type,
+        isHidden: newDoc.isHidden || false,
       };
 
       if (uploadMode === 'file') {
@@ -175,7 +177,7 @@ export default function SubjectDetail() {
 
       setIsAddModalOpen(false);
       setEditingDocId(null);
-      setNewDoc({ title: '', type: 'Giáo trình', url: '', chapter: '' });
+      setNewDoc({ title: '', type: 'Giáo trình', url: '', chapter: '', isHidden: false });
       setFolderItems([{ title: '', url: '' }]);
       setUploadMode('file');
     } catch (error) {
@@ -196,6 +198,7 @@ export default function SubjectDetail() {
 
   // Group documents by type
   const groupedDocs = documents.reduce((acc, doc) => {
+    if (doc.isHidden && !isAdmin) return acc;
     if (!acc[doc.type]) acc[doc.type] = [];
     acc[doc.type].push(doc);
     return acc;
@@ -225,7 +228,7 @@ export default function SubjectDetail() {
           <button
             onClick={() => {
               setEditingDocId(null);
-              setNewDoc({ title: '', type: 'Giáo trình', url: '', chapter: '' });
+              setNewDoc({ title: '', type: 'Giáo trình', url: '', chapter: '', isHidden: false });
               setFolderItems([{ title: '', url: '' }]);
               setUploadMode('file');
               setIsAddModalOpen(true);
@@ -288,12 +291,13 @@ export default function SubjectDetail() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <h4 className="font-medium text-slate-900 dark:text-slate-100 truncate" title={doc.title}>
+                            <h4 className="font-medium text-slate-900 dark:text-slate-100 truncate flex items-center gap-2" title={doc.title}>
                               {doc.title}
+                              {doc.isHidden && <span className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Đang ẩn</span>}
                             </h4>
                             {!doc.isFolder && doc.chapter && (
                               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                {doc.chapter}
+                                Chương: {doc.chapter}
                               </p>
                             )}
                           </div>
@@ -584,7 +588,21 @@ export default function SubjectDetail() {
                   )}
                 </div>
               )}
-              <div className="flex gap-3 pt-4">
+              
+              <div className="flex items-center gap-2 mt-4 pb-2">
+                <input
+                  type="checkbox"
+                  id="isHidden"
+                  checked={newDoc.isHidden}
+                  onChange={e => setNewDoc({...newDoc, isHidden: e.target.checked})}
+                  className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="isHidden" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Ẩn tài liệu này (Chỉ QTV mới thấy)
+                </label>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
