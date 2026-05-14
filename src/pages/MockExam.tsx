@@ -61,6 +61,7 @@ export default function MockExam() {
   const { user } = useAuth();
   const [subject, setSubject] = useState<any>(null);
   const [availableChapters, setAvailableChapters] = useState<string[]>([]);
+  const [documentTitles, setDocumentTitles] = useState<string[]>([]);
   
   // Quiz Settings
   const [numQuestions, setNumQuestions] = useState(10);
@@ -176,11 +177,14 @@ export default function MockExam() {
       const q = query(collection(db, 'documents'), where('subjectId', '==', id));
       const querySnapshot = await getDocs(q);
       const chapters = new Set<string>();
+      const titles = new Set<string>();
       querySnapshot.forEach((doc) => {
         const data = doc.data();
+        if (data.title) titles.add(data.title.trim());
         if (data.isFolder && data.items) {
           data.items.forEach((item: any) => {
             if (item.title) chapters.add(item.title.trim());
+            if (item.title) titles.add(item.title.trim());
           });
         } else if (data.chapter) {
           data.chapter.split(',').forEach((c: string) => {
@@ -193,6 +197,7 @@ export default function MockExam() {
       const chapterList = Array.from(chapters).sort();
       setAvailableChapters(chapterList);
       setSelectedChapters(chapterList);
+      setDocumentTitles(Array.from(titles));
     };
     
     fetchData();
@@ -212,10 +217,16 @@ export default function MockExam() {
 
     try {
       const prompt = `
-        Tạo một bài trắc nghiệm đại học môn "${subject.name}".
-        ${selectedChapters.length > 0 ? `Tập trung vào các phần/chương: ${selectedChapters.join(', ')}.` : ''}
+        Tạo một bài trắc nghiệm đại học chuyên ngành cho môn học: "${subject.name}".
+        Ngữ cảnh môn học (dựa trên tên các tài liệu giáo trình và tài liệu tham khảo đã có): ${documentTitles.length > 0 ? documentTitles.join('; ') : 'Không có thông tin tài liệu'}.
+        ${selectedChapters.length > 0 ? `Tập trung câu hỏi vào các phần/chương: ${selectedChapters.join(', ')}.` : ''}
         Số lượng câu hỏi: ${numQuestions}.
-        Trả về kết quả dưới dạng mảng JSON hợp lệ, không có markdown formatting (không có \`\`\`json).
+        
+        QUY TẮC QUAN TRỌNG:
+        1. TUYỆT ĐỐI CHỈ ĐẶT CÂU HỎI TRONG PHẠM VI MÔN "${subject.name}" VÀ NGỮ CẢNH TÀI LIỆU CUNG CẤP.
+        2. Ví dụ: Nếu môn học là kinh tế, lập trình Python, Java, v.v., hãy nội suy chính xác ngôn ngữ và nội dung qua tên bài học/tài liệu. KHÔNG ĐƯA KIẾN THỨC BÊN NGOÀI (ví dụ: không đưa C++ vào môn học Python/Kinh tế số nếu không có trong tài liệu).
+        3. Trả về kết quả dưới dạng mảng JSON hợp lệ, KHÔNG có markdown formatting (không có \`\`\`json).
+        
         Mỗi phần tử trong mảng là một object có cấu trúc:
         {
           "question": "Nội dung câu hỏi",
@@ -225,18 +236,88 @@ export default function MockExam() {
         }
       `;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          temperature: 0.7,
-          responseMimeType: "application/json",
-        }
-      });
+      let parsedQuestions: Question[] | null = null;
+      let aiError: any = null;
 
-      const text = response.text;
-      if (text) {
-        const parsedQuestions = JSON.parse(text) as Question[];
+      try {
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+          config: {
+            temperature: 0.7,
+            responseMimeType: "application/json",
+          }
+        });
+
+        const text = response.text;
+        if (text) {
+          parsedQuestions = JSON.parse(text) as Question[];
+        } else {
+          throw new Error("Empty response from Gemini AI");
+        }
+      } catch (error: any) {
+        console.error("Gemini failed:", error);
+        aiError = error;
+      }
+
+      // Fallback to DeepSeek if Gemini fails and key is provided
+      if (!parsedQuestions && process.env.DEEPSEEK_API_KEY) {
+        console.log("Sử dụng DeepSeek API làm phương án dự phòng...");
+        try {
+          const res = await fetch("https://api.deepseek.com/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
+            },
+            body: JSON.stringify({
+              model: "deepseek-chat",
+              messages: [
+                {
+                  role: "system",
+                  content: "Bạn là một giáo viên kinh nghiệm soạn đề trắc nghiệm đại học. Bạn phải CỰC KỲ TUÂN THỦ TÊN MÔN HỌC và NGỮ CẢNH TÀI LIỆU được cung cấp, không được tự ý sinh nội dung từ công nghệ/ngôn ngữ khác nếu không được nhắc đến. Luôn trả về kết quả ĐÚNG định dạng JSON array hợp lệ. KHÔNG có text xung quanh, KHÔNG có markdown block. Kết quả phải bắt đầu bằng [ và kết thúc bằng ]."
+                },
+                { role: "user", content: prompt }
+              ],
+              temperature: 0.7,
+              response_format: { type: "json_object" }
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            let text = data.choices[0].message.content.trim();
+            if (text.startsWith('```json')) text = text.replace(/^```json/, '').replace(/```$/, '').trim();
+            else if (text.startsWith('```')) text = text.replace(/^```/, '').replace(/```$/, '').trim();
+            
+            const parsed = JSON.parse(text);
+            if (Array.isArray(parsed)) {
+              parsedQuestions = parsed as Question[];
+            } else if (parsed.questions && Array.isArray(parsed.questions)) {
+              parsedQuestions = parsed.questions as Question[];
+            } else if (parsed.data && Array.isArray(parsed.data)) {
+              parsedQuestions = parsed.data as Question[];
+            }
+
+            if (!parsedQuestions) throw new Error("Invalid format from DeepSeek");
+            
+            // Clear originally recorded error since DeepSeek succeeded
+            aiError = null;
+          } else {
+            const errorData = await res.text();
+            throw new Error(`DeepSeek error: ${res.status} ${errorData}`);
+          }
+        } catch (deepseekError: any) {
+          console.error("Deepseek fallback failed:", deepseekError);
+          // If DeepSeek also fails, keep the original aiError
+        }
+      }
+
+      if (aiError && !parsedQuestions) {
+        throw aiError;
+      }
+
+      if (parsedQuestions && parsedQuestions.length > 0) {
         setQuestions(parsedQuestions);
         setStatus('active');
         setCurrentIndex(0);
@@ -244,14 +325,14 @@ export default function MockExam() {
         setTimeRemaining(timeLimit > 0 ? timeLimit * 60 : null);
         if (window.innerWidth < 1024) setIsNavOpen(false);
       } else {
-        throw new Error("Empty response from AI");
+        throw new Error("Không thể tạo câu hỏi hợp lệ");
       }
     } catch (error: any) {
       console.error("Error generating quiz:", error);
       let errorMessage = "Có lỗi xảy ra khi tạo đề thi. Vui lòng thử lại.";
       
-      if (error?.message?.includes("429") || error?.status === 429 || error?.message?.toLowerCase().includes("quota")) {
-        errorMessage = "Hệ thống đang quá tải do có nhiều người sử dụng (hết lượt tạo đề). Bạn vui lòng đợi khoảng 1-2 phút rồi thử lại nhé!";
+      if (error?.message?.includes("429") || error?.status === 429 || error?.message?.toLowerCase().includes("quota") || error?.message?.includes("429 Too Many Requests")) {
+        errorMessage = "Hệ thống đang quá tải do có nhiều người sử dụng (hết lượng request API). Cậu vào phần Cài đặt của app này (kéo xuống chỗ biến môi trường), và điền DEEPSEEK_API_KEY vào để có thêm phương án dự phòng khi Gemini bị nghẽn nhé!";
       } else if (error?.message) {
         errorMessage = `Lỗi: ${error.message}`;
       }
