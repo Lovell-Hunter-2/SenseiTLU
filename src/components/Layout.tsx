@@ -49,7 +49,7 @@ export default function Layout() {
               </button>
             )}
             <Link to="/" className="text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
-              <span className="text-3xl">⚡</span> SenseiTLU
+              <span className="text-3xl">🎓</span> SenseiTLU
             </Link>
 
             {/* Desktop Nav */}
