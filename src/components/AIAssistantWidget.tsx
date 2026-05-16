@@ -19,11 +19,11 @@ export function AIAssistantWidget() {
   const [isMinimized, setIsMinimized] = useState(false);
   const [ping, setPing] = useState(false);
   
-  // Vị trí mặc định ở góc dưới cùng bên phải
+  // Vị trí mặc định ở góc trên cùng bên phải (dưới header)
   const padding = 16;
   const [position, setPosition] = useState({ 
     x: typeof window !== 'undefined' ? window.innerWidth - 64 - padding : 300, 
-    y: typeof window !== 'undefined' ? window.innerHeight - 80 - padding : 500 
+    y: 80 
   });
   const isDragging = useRef(false);
 
