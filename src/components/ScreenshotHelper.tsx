@@ -44,6 +44,7 @@ export function ScreenshotHelper({ onCapture, onCancel }: ScreenshotHelperProps)
 
     if (width < 10 || height < 10) {
       // Too small, ignore
+      onCancel();
       return;
     }
 
@@ -51,13 +52,14 @@ export function ScreenshotHelper({ onCapture, onCancel }: ScreenshotHelperProps)
 
     setTimeout(async () => {
       try {
-        const canvas = await html2canvas(document.body, {
+        const docHtml = document.documentElement;
+        const canvas = await html2canvas(docHtml, {
           x: x + window.scrollX,
           y: y + window.scrollY,
           width,
           height,
           useCORS: true,
-          allowTaint: true, // Also allow taint just in case to prevent CORS death entirely on tainted canvases (though toDataURL might fail if tainted)
+          imageTimeout: 5000,
           scale: window.devicePixelRatio, // keep good quality
           ignoreElements: (element) => {
              return element.id === 'screenshot-overlay';
@@ -67,6 +69,7 @@ export function ScreenshotHelper({ onCapture, onCancel }: ScreenshotHelperProps)
         onCapture(dataUrl);
       } catch (e) {
         console.error("Screenshot capture failed:", e);
+        alert("Lỗi khi chụp màn hình. Vui lòng thử lại.");
         onCancel();
       }
     }, 50); // delay let state update
