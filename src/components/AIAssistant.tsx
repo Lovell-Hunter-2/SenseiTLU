@@ -95,7 +95,7 @@ Nếu người dùng hỏi về chức năng hoặc cách làm bài, hãy dựa 
   return (
     <motion.div
       drag
-      dragConstraints={{ top: 0, left: 0, right: window.innerWidth - 320, bottom: window.innerHeight - 400 }}
+      dragConstraints={{ top: 0, left: 0, right: typeof window !== 'undefined' ? window.innerWidth - 320 : 0, bottom: typeof window !== 'undefined' ? window.innerHeight - 500 : 0 }}
       dragElastic={0.1}
       dragMomentum={false}
       initial={{ opacity: 0, scale: 0.8, y: 50 }}
