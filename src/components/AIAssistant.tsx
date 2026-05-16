@@ -19,7 +19,9 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [subjectsList, setSubjectsList] = useState<{ id: string, name: string }[]>([]);
   const [subjectsStr, setSubjectsStr] = useState("");
+  const [smartPrompts, setSmartPrompts] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   
@@ -32,14 +34,44 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
   }, [messages, isVisible]);
 
   useEffect(() => {
+    const pathParts = location.pathname.split('/');
+    if (pathParts[1] === 'subject' && pathParts[2]) {
+      setSmartPrompts([
+        "Tóm tắt môn học này",
+        "Tạo đề ôn tập",
+        "Học môn này cần lưu ý gì?"
+      ]);
+    } else if (pathParts[1] === 'mock-exam') {
+      setSmartPrompts([
+        "Làm sao để được điểm cao?",
+        "Giải thích câu khó",
+      ]);
+    } else if (pathParts[1] === '') {
+      setSmartPrompts([
+        "Môn nào đang hot?",
+        "Tìm tài liệu Toán",
+        "Hướng dẫn ôn thi"
+      ]);
+    } else {
+      setSmartPrompts([
+        "Sensei ơi giúp mình",
+        "Tìm tài liệu",
+      ]);
+    }
+  }, [location.pathname]);
+
+  useEffect(() => {
     const fetchSubjects = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, 'subjects'));
-        const list = querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          return `- ${data.name} (Link: /subject/${doc.id})`;
-        });
-        setSubjectsStr(list.join('\n'));
+        const list = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          name: doc.data().name
+        }));
+        setSubjectsList(list);
+        
+        const listStr = list.map(item => `- ${item.name} (Link: /subject/${item.id})`);
+        setSubjectsStr(listStr.join('\n'));
       } catch (error) {
         console.error("Lỗi khi fetch subject cho AI", error);
       }
@@ -47,24 +79,39 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
     fetchSubjects();
   }, []);
 
-  const handleSend = async () => {
-    if (!inputValue.trim() || isLoading) return;
+  const handleSend = async (textOverride?: string) => {
+    // If the event object from React is passed accidentally, we don't want to use it
+    const textToProcess = typeof textOverride === 'string' ? textOverride : inputValue;
+    if (!textToProcess.trim() || isLoading) return;
     
-    const userMessage: AIMessage = { role: 'user', content: inputValue };
+    const userMessage: AIMessage = { role: 'user', content: textToProcess };
     setMessages(prev => [...prev, userMessage]);
     setInputValue("");
     setIsLoading(true);
     
+    // Tìm context chính xác
+    let currentContext = `Đường dẫn trang hiện tại: ${location.pathname}`;
+    const pathParts = location.pathname.split('/');
+    if (pathParts[1] === 'subject' && pathParts[2]) {
+      const subjectId = pathParts[2];
+      const foundSubject = subjectsList.find(s => s.id === subjectId);
+      if (foundSubject) {
+        currentContext = `Người dùng đang ở trong trang của môn học: "${foundSubject.name}". Nếu người dùng hỏi các câu hỏi mở (ví dụ: "môn này như nào", "có gì hay"), hãy CHỈ TẬP TRUNG trả lời về MÔN HỌC NÀY, đừng lan man sang các chủ đề hoặc môn học khác trừ khi người dùng yêu cầu.`;
+      }
+    } else if (pathParts[1] === '') {
+      currentContext = `Người dùng đang ở Trang Chủ (Home).`;
+    }
+
     try {
       const systemMessage: AIMessage = { 
         role: 'system', 
-        content: `Bạn là trợ lý AI tên là "Sensei AI" được tích hợp trên ứng dụng SenseiTLU (nền tảng chia sẻ tài liệu và ôn thi).
-1. Hãy trả lời ngắn gọn, thân thiện và xúc tích.
-2. Dưới đây là danh sách các môn học hiện có trong hệ thống và đường dẫn của nó:
+        content: `Bạn là trợ lý AI "Sensei AI" trên nền tảng ôn thi SenseiTLU.
+1. Hãy trả lời cực kỳ NGẮN GỌN, CHÍNH XÁC, đi thẳng vào vấn đề. KHÔNG dài dòng, KHÔNG tự ý gợi ý những thứ người dùng không hỏi.
+2. Dưới đây là danh sách các môn học (để tạo link khi cần):
 ${subjectsStr}
-Khi người dùng tìm kiếm môn học hoặc tài liệu, hãy sử dụng Link Markdown để gắn link truy cập nhanh thẳng vào môn học cho họ bấm vào. Ví dụ: [Tên môn học](/subject/ID). Tuyệt đối không bịa ra hoặc nhầm lẫn tên môn học không có trong list được cung cấp.
-Nếu người dùng hỏi về chức năng hoặc cách làm bài, hãy dựa vào đường dẫn trang hiện tại của người dùng để tư vấn. Người dùng đang ở: ${location.pathname}
-3. Giải đáp các câu hỏi học tập bằng kiến thức sư phạm và chuyên môn.`
+Khi nhắc đến môn học, có thể dùng format Link Markdown để người dùng bấm vào: [Tên môn](/subject/ID).
+3. NGỮ CẢNH HIỆN TẠI (Vô cùng quan trọng): ${currentContext}
+4. Giải đáp kiến thức bằng chuyên môn sư phạm. Luôn bám sát ngữ cảnh hiện tại trước tiên.`
       };
       
       const chatMessages = [
@@ -83,10 +130,26 @@ Nếu người dùng hỏi về chức năng hoặc cách làm bài, hãy dựa 
     }
   };
 
+  useEffect(() => {
+    const handleFill = (e: any) => {
+      const text = e.detail;
+      if (text) {
+        setInputValue(text);
+        setTimeout(() => {
+          handleSend(text);
+        }, 300);
+      }
+    };
+    window.addEventListener('ai-assistant-fill', handleFill);
+    return () => window.removeEventListener('ai-assistant-fill', handleFill);
+  }, [handleSend]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    } else if (e.key === 'Escape') {
+      onMinimize();
     }
   };
 
@@ -184,7 +247,22 @@ Nếu người dùng hỏi về chức năng hoặc cách làm bài, hãy dựa 
       </div>
 
       {/* Input */}
-      <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+      <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-2 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] z-10">
+        {/* Smart Prompts */}
+        {smartPrompts.length > 0 && messages.length < 5 && (
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+            {smartPrompts.map((prompt, index) => (
+              <button
+                key={index}
+                onClick={() => handleSend(prompt)}
+                className="whitespace-nowrap text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-full px-3 py-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                disabled={isLoading}
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="relative">
           <textarea
             value={inputValue}
@@ -196,7 +274,7 @@ Nếu người dùng hỏi về chức năng hoặc cách làm bài, hãy dựa 
             style={{ minHeight: '44px', maxHeight: '120px' }}
           />
           <button 
-            onClick={handleSend}
+            onClick={() => handleSend()}
             disabled={!inputValue.trim() || isLoading}
             className="absolute right-2 bottom-2 p-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
           >
