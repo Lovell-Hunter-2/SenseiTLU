@@ -277,7 +277,7 @@ export default function Layout() {
                   <img 
                     src={avtTlu} 
                     alt="Hỗ trợ viên Capybara" 
-                    className="w-24 h-24 sm:w-28 sm:h-28 object-contain drop-shadow-xl mix-blend-multiply dark:mix-blend-normal rounded-full dark:bg-white"
+                    className="w-18 h-18 sm:w-20 sm:h-20 object-contain drop-shadow-xl mix-blend-multiply dark:mix-blend-normal rounded-full dark:bg-white"
                   />
                 </div>
               </a>
