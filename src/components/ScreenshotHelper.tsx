@@ -49,17 +49,15 @@ export function ScreenshotHelper({ onCapture, onCancel }: ScreenshotHelperProps)
 
     setIsCapturing(true);
 
-    try {
-      // Small delay to allow the overlay to hide if we want it to, 
-      // but if we do this, React needs to unmount this overlay, meaning we shouldn't render the dark bg while capturing.
-      // So we can hide the dark bg in UI based on isCapturing state.
-      setTimeout(async () => {
+    setTimeout(async () => {
+      try {
         const canvas = await html2canvas(document.body, {
           x: x + window.scrollX,
           y: y + window.scrollY,
           width,
           height,
           useCORS: true,
+          allowTaint: true, // Also allow taint just in case to prevent CORS death entirely on tainted canvases (though toDataURL might fail if tainted)
           scale: window.devicePixelRatio, // keep good quality
           ignoreElements: (element) => {
              return element.id === 'screenshot-overlay';
@@ -67,11 +65,11 @@ export function ScreenshotHelper({ onCapture, onCancel }: ScreenshotHelperProps)
         });
         const dataUrl = canvas.toDataURL('image/png');
         onCapture(dataUrl);
-      }, 50); // delay let state update
-    } catch (e) {
-      console.error(e);
-      onCancel();
-    }
+      } catch (e) {
+        console.error("Screenshot capture failed:", e);
+        onCancel();
+      }
+    }, 50); // delay let state update
   };
 
   // Calculate box dimensions
@@ -83,7 +81,7 @@ export function ScreenshotHelper({ onCapture, onCancel }: ScreenshotHelperProps)
   return (
     <div 
       id="screenshot-overlay"
-      className="fixed inset-0 z-[100] cursor-crosshair touch-none"
+      className={`fixed inset-0 z-[100] ${isCapturing ? 'pointer-events-none' : 'cursor-crosshair touch-none'}`}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
