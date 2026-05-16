@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
 import { X } from 'lucide-react';
 
 interface ScreenshotHelperProps {
@@ -52,34 +52,41 @@ export function ScreenshotHelper({ onCapture, onCancel }: ScreenshotHelperProps)
     // Give React time to re-render and hide the overlay and chat box completely
     setTimeout(async () => {
       try {
-        const docHtml = document.documentElement;
-        
-        // Add a safety timeout promise
-        const capturePromise = html2canvas(docHtml, {
-          x: x + window.scrollX,
-          y: y + window.scrollY,
-          width,
-          height,
-          useCORS: true,
-          imageTimeout: 5000,
-          scale: 1, // Reduce scale to 1 for faster capture and fewer issues
-          ignoreElements: (element) => {
-             return element.id === 'screenshot-overlay' || element.id === 'ai-assistant-container';
+        const fullCanvas = await htmlToImage.toCanvas(document.body, {
+          cacheBust: true,
+          pixelRatio: window.devicePixelRatio,
+          filter: (node) => {
+            // Exclude the overlay and the AI assistant
+            return node.id !== 'screenshot-overlay' && node.id !== 'ai-assistant-container';
           }
         });
 
-        // Timeout after 10s if html2canvas gets completely stuck
-        const timeoutPromise = new Promise<null>((_, reject) => 
-          setTimeout(() => reject(new Error("Capture timeout")), 10000)
-        );
-
-        const canvas = await Promise.race([capturePromise, timeoutPromise]) as HTMLCanvasElement;
+        // Now crop it
+        const cropCanvas = document.createElement('canvas');
+        const dpr = window.devicePixelRatio || 1;
+        cropCanvas.width = width * dpr;
+        cropCanvas.height = height * dpr;
         
-        const dataUrl = canvas.toDataURL('image/png', 0.9);
+        const ctx = cropCanvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(
+            fullCanvas,
+            (x + window.scrollX) * dpr, // source x
+            (y + window.scrollY) * dpr, // source y
+            width * dpr, // source width
+            height * dpr, // source height
+            0, // dest x
+            0, // dest y
+            cropCanvas.width, // dest width
+            cropCanvas.height // dest height
+          );
+        }
+
+        const dataUrl = cropCanvas.toDataURL('image/png', 0.9);
         onCapture(dataUrl);
       } catch (e) {
-        console.error("Screenshot capture failed or timed out:", e);
-        alert("Lỗi khi chụp màn hình (Có thể do trang web có ảnh bị lỗi CORS). Vui lòng thử lại vùng nhỏ hơn định dạng text hoặc tải ảnh lên.");
+        console.error("Screenshot capture failed:", e);
+        alert("Lỗi khi chụp màn hình. Có thể do thành phần không được hỗ trợ hoặc lỗi CORS. Vui lòng thử lại vùng khác hoặc tải ảnh trực tiếp.");
         onCancel();
       }
     }, 150); // increased delay to ensure UI is updated before heavy CPU blocking task
