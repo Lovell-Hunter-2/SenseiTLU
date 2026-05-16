@@ -5,11 +5,13 @@ const gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
+  image?: string;
 }
 
 export interface AIGenerateOptions {
   messages: AIMessage[];
   jsonMode?: boolean;
+  attachedImage?: string; // base64 data URL
 }
 
 /**
@@ -57,11 +59,25 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
         const systemMsg = options.messages.filter(m => m.role === 'system').map(m => m.content).join("\n");
         const userMsg = options.messages.filter(m => m.role === 'user').map(m => m.content).join("\n");
         
-        const prompt = systemMsg ? `${systemMsg}\n\n${userMsg}` : userMsg;
+        let contentsParts: any = systemMsg ? `${systemMsg}\n\n${userMsg}` : userMsg;
+        if (options.attachedImage) {
+          const match = options.attachedImage.match(/^data:(image\/[\w+.-]+);base64,(.*)$/);
+          if (match) {
+            contentsParts = [
+              {
+                inlineData: {
+                  data: match[2],
+                  mimeType: match[1]
+                }
+              },
+              systemMsg ? `${systemMsg}\n\n${userMsg}` : userMsg
+            ];
+          }
+        }
 
         const response = await gemini.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: prompt,
+        contents: contentsParts,
         config: {
             temperature: 0.7,
             responseMimeType: options.jsonMode ? "application/json" : "text/plain",
