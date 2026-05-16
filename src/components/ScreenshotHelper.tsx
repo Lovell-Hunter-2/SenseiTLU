@@ -43,36 +43,46 @@ export function ScreenshotHelper({ onCapture, onCancel }: ScreenshotHelperProps)
     const height = Math.abs(currentPos.y - startPos.y);
 
     if (width < 10 || height < 10) {
-      // Too small, ignore
       onCancel();
       return;
     }
 
     setIsCapturing(true);
 
+    // Give React time to re-render and hide the overlay and chat box completely
     setTimeout(async () => {
       try {
         const docHtml = document.documentElement;
-        const canvas = await html2canvas(docHtml, {
+        
+        // Add a safety timeout promise
+        const capturePromise = html2canvas(docHtml, {
           x: x + window.scrollX,
           y: y + window.scrollY,
           width,
           height,
           useCORS: true,
           imageTimeout: 5000,
-          scale: window.devicePixelRatio, // keep good quality
+          scale: 1, // Reduce scale to 1 for faster capture and fewer issues
           ignoreElements: (element) => {
-             return element.id === 'screenshot-overlay';
+             return element.id === 'screenshot-overlay' || element.id === 'ai-assistant-container';
           }
         });
-        const dataUrl = canvas.toDataURL('image/png');
+
+        // Timeout after 10s if html2canvas gets completely stuck
+        const timeoutPromise = new Promise<null>((_, reject) => 
+          setTimeout(() => reject(new Error("Capture timeout")), 10000)
+        );
+
+        const canvas = await Promise.race([capturePromise, timeoutPromise]) as HTMLCanvasElement;
+        
+        const dataUrl = canvas.toDataURL('image/png', 0.9);
         onCapture(dataUrl);
       } catch (e) {
-        console.error("Screenshot capture failed:", e);
-        alert("Lỗi khi chụp màn hình. Vui lòng thử lại.");
+        console.error("Screenshot capture failed or timed out:", e);
+        alert("Lỗi khi chụp màn hình (Có thể do trang web có ảnh bị lỗi CORS). Vui lòng thử lại vùng nhỏ hơn định dạng text hoặc tải ảnh lên.");
         onCancel();
       }
-    }, 50); // delay let state update
+    }, 150); // increased delay to ensure UI is updated before heavy CPU blocking task
   };
 
   // Calculate box dimensions
