@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Moon, Sun, LogIn, LogOut, MessageCircle, Menu, X, Minus, Shield, ArrowLeft, Image as ImageIcon, Users } from 'lucide-react';
+import { Moon, Sun, LogIn, LogOut, MessageCircle, Menu, X, Minus, Shield, ArrowLeft, Image as ImageIcon, Users, Sparkles } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import AdminManagerModal from './AdminManagerModal';
 import UserManagerModal from './UserManagerModal';
 import HeroImageManagerModal from './HeroImageManagerModal';
+import { AIAssistantWidget, toggleAIAssistant, pingAIAssistant } from './AIAssistantWidget';
 import avtTlu from '../assets/avt_tlu.jpg';
 
 export default function Layout() {
@@ -49,7 +50,7 @@ export default function Layout() {
               </button>
             )}
             <Link to="/" className="text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
-              <span className="text-3xl">🎓</span> SenseiTLU
+              <span className="text-3xl">⚡</span> SenseiTLU
             </Link>
 
             {/* Desktop Nav */}
@@ -94,6 +95,18 @@ export default function Layout() {
                 <ImageIcon className="w-5 h-5" />
               </button>
             )}
+
+            {/* AIAssistant Toggle */}
+            <button
+              onClick={() => {
+                toggleAIAssistant();
+                pingAIAssistant();
+              }}
+              className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-blue-600 dark:text-blue-400"
+              title="Trợ lý AI"
+            >
+              <Sparkles className="w-5 h-5" />
+            </button>
 
             {/* Theme Toggle */}
             <button
@@ -283,6 +296,8 @@ export default function Layout() {
           </a>
         </div>
       )}
+      
+      <AIAssistantWidget />
     </div>
   );
 }
