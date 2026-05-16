@@ -291,7 +291,7 @@ export default function Layout() {
             rel="noopener noreferrer"
             className="bg-[#ff6b00] hover:bg-[#e66000] text-white px-5 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center gap-2"
           >
-            <MessageCircle className="w-5 h-5" />
+            <MessageCircle className="w-3 h-3" />
             <span className="font-bold">Hỗ trợ</span>
           </a>
         </div>
