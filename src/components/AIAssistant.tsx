@@ -4,7 +4,7 @@ import { X, Search, Sparkles, Send, Minimize2, Minimize, Minus } from 'lucide-re
 import { generateWithFallback, AIMessage } from '../services/aiService';
 import ReactMarkdown from 'react-markdown';
 import { Link, useLocation } from 'react-router-dom';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 
 interface AIAssistantProps {
@@ -96,7 +96,26 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
       const subjectId = pathParts[2];
       const foundSubject = subjectsList.find(s => s.id === subjectId);
       if (foundSubject) {
-        currentContext = `Người dùng đang ở trong trang của môn học: "${foundSubject.name}". Nếu người dùng hỏi các câu hỏi mở (ví dụ: "môn này như nào", "có gì hay"), hãy CHỈ TẬP TRUNG trả lời về MÔN HỌC NÀY, đừng lan man sang các chủ đề hoặc môn học khác trừ khi người dùng yêu cầu.`;
+        let docsInfo = "Chưa có tài liệu nào.";
+        try {
+          const q = query(collection(db, 'documents'), where('subjectId', '==', subjectId));
+          const snap = await getDocs(q);
+          if (!snap.empty) {
+            const docs = snap.docs.map(d => {
+              const data = d.data();
+              return `- [${data.type || 'Tài liệu'}] ${data.title} ${data.url ? `(Link: ${data.url})` : ''}`;
+            });
+            docsInfo = docs.join('\n');
+          }
+        } catch (error) {
+          console.error("Lỗi khi fetch docs cho AI:", error);
+        }
+        
+        currentContext = `Người dùng đang ở trong trang của môn học: "${foundSubject.name}".
+Hiện tại môn học này có các tài liệu sau trên hệ thống:
+${docsInfo}
+
+YÊU CẦU ĐẶC BIỆT: Nếu người dùng hỏi về tài liệu môn này có gì, hoặc tóm tắt môn này, hãy TẬP TRUNG tư vấn dựa trên TÀI LIỆU CỦA MÔN "${foundSubject.name}" ở trên. KHÔNG gợi ý sang các môn khác trừ khi được yêu cầu. Dùng format markdown link để dẫn link tài liệu.`;
       }
     } else if (pathParts[1] === '') {
       currentContext = `Người dùng đang ở Trang Chủ (Home).`;
