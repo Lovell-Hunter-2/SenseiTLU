@@ -289,7 +289,7 @@ export default function Layout() {
             href="https://www.facebook.com/lovelltitussof1910"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-[#ff6b00] hover:bg-[#e66000] text-white px-5 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center gap-2"
+            className="bg-[#ff6b00] hover:bg-[#e66000] text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center gap-2"
           >
             <MessageCircle className="w-3 h-3" />
             <span className="font-bold">Hỗ trợ</span>
