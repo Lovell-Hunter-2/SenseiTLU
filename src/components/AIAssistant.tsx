@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Search, Sparkles, Send, Minimize2, Minimize, Minus } from 'lucide-react';
+import { X, Search, Sparkles, Send, Minimize2, Minimize, Minus, Image as ImageIcon, Camera, Trash2 } from 'lucide-react';
 import { generateWithFallback, AIMessage } from '../services/aiService';
 import ReactMarkdown from 'react-markdown';
 import { Link, useLocation } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
+import { ScreenshotHelper } from './ScreenshotHelper';
 
 interface AIAssistantProps {
   isVisible: boolean;
@@ -22,7 +23,10 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
   const [subjectsList, setSubjectsList] = useState<{ id: string, name: string }[]>([]);
   const [subjectsStr, setSubjectsStr] = useState("");
   const [smartPrompts, setSmartPrompts] = useState<string[]>([]);
+  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
   
   const scrollToBottom = () => {
@@ -82,11 +86,13 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
   const handleSend = async (textOverride?: string) => {
     // If the event object from React is passed accidentally, we don't want to use it
     const textToProcess = typeof textOverride === 'string' ? textOverride : inputValue;
-    if (!textToProcess.trim() || isLoading) return;
+    if ((!textToProcess.trim() && !attachedImage) || isLoading) return;
     
-    const userMessage: AIMessage = { role: 'user', content: textToProcess };
+    const userMessage: AIMessage = { role: 'user', content: textToProcess, image: attachedImage || undefined };
     setMessages(prev => [...prev, userMessage]);
     setInputValue("");
+    const imageToSend = attachedImage;
+    setAttachedImage(null);
     setIsLoading(true);
     
     // Tìm context chính xác
@@ -139,7 +145,10 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
         userMessage
       ];
 
-      const responseText = await generateWithFallback({ messages: chatMessages });
+      const responseText = await generateWithFallback({ 
+        messages: chatMessages,
+        attachedImage: imageToSend || undefined
+      });
       
       setMessages(prev => [...prev, { role: 'assistant', content: responseText }]);
     } catch (error: any) {
@@ -175,17 +184,18 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
   if (!isVisible) return null;
 
   return (
-    <motion.div
-      drag
-      dragConstraints={{ top: 0, left: 0, right: typeof window !== 'undefined' ? window.innerWidth - 320 : 0, bottom: typeof window !== 'undefined' ? window.innerHeight - 500 : 0 }}
-      dragElastic={0.1}
-      dragMomentum={false}
-      initial={{ opacity: 0, scale: 0.8, y: 50 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.8, y: 50 }}
-      className="fixed z-50 bottom-4 right-4 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col"
-      style={{ height: '500px', maxHeight: '80vh' }}
-    >
+    <>
+      <motion.div
+        drag
+        dragConstraints={{ top: 0, left: 0, right: typeof window !== 'undefined' ? window.innerWidth - 320 : 0, bottom: typeof window !== 'undefined' ? window.innerHeight - 500 : 0 }}
+        dragElastic={0.1}
+        dragMomentum={false}
+        initial={{ opacity: 0, scale: 0.8, y: 50 }}
+        animate={{ opacity: isCapturing ? 0 : 1, scale: 1, y: 0, pointerEvents: isCapturing ? 'none' : 'auto' }}
+        exit={{ opacity: 0, scale: 0.8, y: 50 }}
+        className="fixed z-50 bottom-4 right-4 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col"
+        style={{ height: '500px', maxHeight: '80vh' }}
+      >
       {/* Header (Drag Handle) */}
       <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 cursor-move rounded-t-2xl">
         <div className="flex items-center gap-2 pointer-events-none">
@@ -225,7 +235,12 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
               }`}
             >
               {msg.role === 'user' ? (
-                msg.content
+                <>
+                  {msg.image && (
+                    <img src={msg.image} alt="User attachment" className="w-full h-auto rounded-lg mb-2 object-contain bg-white/10" style={{ maxHeight: '200px' }} />
+                  )}
+                  {msg.content}
+                </>
               ) : (
                 <div className="text-sm">
                   <ReactMarkdown
@@ -282,25 +297,80 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
             ))}
           </div>
         )}
-        <div className="relative">
+
+        {/* Selected Image Preview */}
+        {attachedImage && (
+          <div className="relative inline-block w-fit mb-1 mt-1">
+            <img src={attachedImage} alt="Selected preview" className="h-16 w-auto rounded-lg border border-slate-200 dark:border-slate-700 object-cover" />
+            <button 
+              onClick={() => setAttachedImage(null)}
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-sm hover:bg-red-600"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        )}
+
+        <div className="relative flex items-end gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
+          <input 
+            type="file" 
+            accept="image/*" 
+            ref={fileInputRef} 
+            className="hidden" 
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => setAttachedImage(reader.result as string);
+                reader.readAsDataURL(file);
+              }
+              if (e.target) e.target.value = '';
+            }} 
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="p-2 mb-1 text-slate-500 hover:text-blue-600 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors shrink-0"
+            title="Đăng ảnh"
+          >
+            <ImageIcon className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setIsCapturing(true)}
+            className="p-2 mb-1 text-slate-500 hover:text-blue-600 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors shrink-0"
+            title="Chụp màn hình"
+          >
+            <Camera className="w-5 h-5" />
+          </button>
+
           <textarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Hỏi AI..."
-            className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl pl-4 pr-12 py-3 text-sm focus:ring-2 focus:ring-blue-500 resize-none"
+            className="flex-1 bg-transparent border-none focus:ring-0 resize-none py-2 px-2 text-sm"
             rows={1}
-            style={{ minHeight: '44px', maxHeight: '120px' }}
+            style={{ minHeight: '36px', maxHeight: '120px' }}
           />
+
           <button 
             onClick={() => handleSend()}
-            disabled={!inputValue.trim() || isLoading}
-            className="absolute right-2 bottom-2 p-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+            disabled={(!inputValue.trim() && !attachedImage) || isLoading}
+            className="p-2 mb-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors shrink-0 mr-1"
           >
             <Send className="w-4 h-4" />
           </button>
         </div>
       </div>
     </motion.div>
+    {isCapturing && (
+      <ScreenshotHelper 
+        onCapture={(base64) => {
+          setAttachedImage(base64);
+          setIsCapturing(false);
+        }}
+        onCancel={() => setIsCapturing(false)}
+      />
+    )}
+    </>
   );
 }
