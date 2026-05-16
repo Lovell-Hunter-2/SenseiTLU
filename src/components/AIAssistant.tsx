@@ -2,6 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Search, Sparkles, Send, Minimize2, Minimize, Minus } from 'lucide-react';
 import { generateWithFallback, AIMessage } from '../services/aiService';
+import ReactMarkdown from 'react-markdown';
+import { Link, useLocation } from 'react-router-dom';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebase';
 
 interface AIAssistantProps {
   isVisible: boolean;
@@ -11,11 +15,13 @@ interface AIAssistantProps {
 
 export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps) {
   const [messages, setMessages] = useState<AIMessage[]>([
-    { role: 'assistant', content: 'Xin chào! Mình là trợ lý AI ở đây để giúp bạn sử dụng các tài liệu, tạo đề, hoặc giải thích kiến thức.' }
+    { role: 'assistant', content: 'Xin chào! Mình là trợ lý AI ở đây để giúp bạn sử dụng các tài liệu, tìm môn học, tạo đề, hoặc giải thích kiến thức.' }
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [subjectsStr, setSubjectsStr] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
   
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -24,6 +30,22 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
   useEffect(() => {
     scrollToBottom();
   }, [messages, isVisible]);
+
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'subjects'));
+        const list = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return `- ${data.name} (Link: /subject/${doc.id})`;
+        });
+        setSubjectsStr(list.join('\n'));
+      } catch (error) {
+        console.error("Lỗi khi fetch subject cho AI", error);
+      }
+    };
+    fetchSubjects();
+  }, []);
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -34,15 +56,15 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
     setIsLoading(true);
     
     try {
-      // In a real application, you'd pass application context here (e.g., current document titles, page)
-      // This is a generic context.
       const systemMessage: AIMessage = { 
         role: 'system', 
         content: `Bạn là trợ lý AI tên là "Sensei AI" được tích hợp trên ứng dụng SenseiTLU (nền tảng chia sẻ tài liệu và ôn thi).
-1. Trước tiên, hãy trả lời về kiến thức Đại học hoặc các môn học theo cách ngắn gọn và xúc tích.
-2. Bạn có thể sử dụng các API khác nhau như DeepSeek, Gemini, OpenAI, Grok dựa vào cấu hình của hệ thống.
-3. Nếu người dùng hỏi bạn biết gì, hãy nói rằng bạn có quyền truy cập vào thông tin môn học và tài liệu để hỗ trợ ôn thi.
-Trình bày rõ ràng, thân thiện, súc tích.`
+1. Hãy trả lời ngắn gọn, thân thiện và xúc tích.
+2. Dưới đây là danh sách các môn học hiện có trong hệ thống và đường dẫn của nó:
+${subjectsStr}
+Khi người dùng tìm kiếm môn học hoặc tài liệu, hãy sử dụng Link Markdown để gắn link truy cập nhanh thẳng vào môn học cho họ bấm vào. Ví dụ: [Tên môn học](/subject/ID). Tuyệt đối không bịa ra hoặc nhầm lẫn tên môn học không có trong list được cung cấp.
+Nếu người dùng hỏi về chức năng hoặc cách làm bài, hãy dựa vào đường dẫn trang hiện tại của người dùng để tư vấn. Người dùng đang ở: ${location.pathname}
+3. Giải đáp các câu hỏi học tập bằng kiến thức sư phạm và chuyên môn.`
       };
       
       const chatMessages = [
@@ -120,7 +142,32 @@ Trình bày rõ ràng, thân thiện, súc tích.`
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-none'
               }`}
             >
-              {msg.content}
+              {msg.role === 'user' ? (
+                msg.content
+              ) : (
+                <div className="text-sm">
+                  <ReactMarkdown
+                    components={{
+                      a: ({ node, ...props }) => (
+                        <Link to={props.href || "#"} className="text-blue-600 dark:text-blue-400 hover:text-blue-700 underline font-semibold transition-colors" onClick={onMinimize}>
+                          {props.children}
+                        </Link>
+                      ),
+                      p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                      ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2 last:mb-0" {...props} />,
+                      ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2 last:mb-0" {...props} />,
+                      li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                      strong: ({ node, ...props }) => <strong className="font-bold text-slate-900 dark:text-slate-100" {...props} />,
+                      code: ({ node, inline, ...props }: any) => 
+                        inline 
+                          ? <code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded text-xs text-pink-600 dark:text-pink-400 font-mono" {...props} />
+                          : <code className="block bg-slate-200 dark:bg-slate-700 p-2 rounded text-xs font-mono my-2 overflow-x-auto" {...props} />
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
+                </div>
+              )}
             </div>
           </div>
         ))}
