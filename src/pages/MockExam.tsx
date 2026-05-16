@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { GoogleGenAI } from '@google/genai';
+import { generateWithFallback, AIMessage } from '../services/aiService';
 import { ArrowLeft, Settings, Play, CheckCircle2, XCircle, RefreshCcw, Lightbulb, Book, Menu, X, User, Quote, Home as HomeIcon, RotateCcw, Eye, Minus, Plus } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-
-// Initialize Gemini API
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 interface Question {
   question: string;
@@ -67,6 +64,7 @@ export default function MockExam() {
   const [numQuestions, setNumQuestions] = useState(10);
   const [selectedChapters, setSelectedChapters] = useState<string[]>([]);
   const [timeLimit, setTimeLimit] = useState(0);
+  const [customPrompt, setCustomPrompt] = useState("");
   const [retakeWrong, setRetakeWrong] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [examMode, setExamMode] = useState<'instant' | 'submit'>('submit');
@@ -220,6 +218,7 @@ export default function MockExam() {
         Tạo một bài trắc nghiệm đại học chuyên ngành cho môn học: "${subject.name}".
         Ngữ cảnh môn học (dựa trên tên các tài liệu giáo trình và tài liệu tham khảo đã có): ${documentTitles.length > 0 ? documentTitles.join('; ') : 'Không có thông tin tài liệu'}.
         ${selectedChapters.length > 0 ? `Tập trung câu hỏi vào các phần/chương: ${selectedChapters.join(', ')}.` : ''}
+        ${customPrompt ? `YÊU CẦU ĐẶC BIỆT TỪ NGƯỜI DÙNG: ${customPrompt}` : ''}
         Số lượng câu hỏi: ${numQuestions}.
         
         QUY TẮC QUAN TRỌNG:
@@ -236,98 +235,43 @@ export default function MockExam() {
         }
       `;
 
+      const textResponse = await generateWithFallback({
+        messages: [
+          {
+            role: "system",
+            content: "Bạn là một giáo viên kinh nghiệm soạn đề trắc nghiệm đại học. Bạn phải CỰC KỲ TUÂN THỦ TÊN MÔN HỌC và NGỮ CẢNH TÀI LIỆU được cung cấp, không được tự ý sinh nội dung từ công nghệ/ngôn ngữ khác nếu không được nhắc đến. Luôn trả về kết quả ĐÚNG định dạng JSON array hợp lệ. KHÔNG có text xung quanh, KHÔNG có markdown block. Kết quả phải bắt đầu bằng [ và kết thúc bằng ]."
+          },
+          { role: "user", content: prompt }
+        ],
+        jsonMode: true
+      });
+
       let parsedQuestions: Question[] | null = null;
-      let aiError: any = null;
+        
+        let cleanedText = textResponse;
+        if (cleanedText.startsWith('```json')) cleanedText = cleanedText.replace(/^```json/, '').replace(/```$/, '').trim();
+        else if (cleanedText.startsWith('```')) cleanedText = cleanedText.replace(/^```/, '').replace(/```$/, '').trim();
+        
+        const parsed = JSON.parse(cleanedText);
+        if (Array.isArray(parsed)) {
+          parsedQuestions = parsed as Question[];
+        } else if (parsed.questions && Array.isArray(parsed.questions)) {
+          parsedQuestions = parsed.questions as Question[];
+        } else if (parsed.data && Array.isArray(parsed.data)) {
+          parsedQuestions = parsed.data as Question[];
+        }
 
-      try {
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: prompt,
-          config: {
-            temperature: 0.7,
-            responseMimeType: "application/json",
-          }
-        });
-
-        const text = response.text;
-        if (text) {
-          parsedQuestions = JSON.parse(text) as Question[];
+        if (parsedQuestions && parsedQuestions.length > 0) {
+          setQuestions(parsedQuestions);
+          setStatus('active');
+          setCurrentIndex(0);
+          setUserAnswers({});
+          setTimeRemaining(timeLimit > 0 ? timeLimit * 60 : null);
+          if (window.innerWidth < 1024) setIsNavOpen(false);
         } else {
-          throw new Error("Empty response from Gemini AI");
+          throw new Error("Không thể tạo câu hỏi hợp lệ");
         }
       } catch (error: any) {
-        console.error("Gemini failed:", error);
-        aiError = error;
-      }
-
-      // Fallback to DeepSeek if Gemini fails and key is provided
-      if (!parsedQuestions && process.env.DEEPSEEK_API_KEY) {
-        console.log("Sử dụng DeepSeek API làm phương án dự phòng...");
-        try {
-          const res = await fetch("https://api.deepseek.com/chat/completions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
-            },
-            body: JSON.stringify({
-              model: "deepseek-chat",
-              messages: [
-                {
-                  role: "system",
-                  content: "Bạn là một giáo viên kinh nghiệm soạn đề trắc nghiệm đại học. Bạn phải CỰC KỲ TUÂN THỦ TÊN MÔN HỌC và NGỮ CẢNH TÀI LIỆU được cung cấp, không được tự ý sinh nội dung từ công nghệ/ngôn ngữ khác nếu không được nhắc đến. Luôn trả về kết quả ĐÚNG định dạng JSON array hợp lệ. KHÔNG có text xung quanh, KHÔNG có markdown block. Kết quả phải bắt đầu bằng [ và kết thúc bằng ]."
-                },
-                { role: "user", content: prompt }
-              ],
-              temperature: 0.7,
-              response_format: { type: "json_object" }
-            })
-          });
-
-          if (res.ok) {
-            const data = await res.json();
-            let text = data.choices[0].message.content.trim();
-            if (text.startsWith('```json')) text = text.replace(/^```json/, '').replace(/```$/, '').trim();
-            else if (text.startsWith('```')) text = text.replace(/^```/, '').replace(/```$/, '').trim();
-            
-            const parsed = JSON.parse(text);
-            if (Array.isArray(parsed)) {
-              parsedQuestions = parsed as Question[];
-            } else if (parsed.questions && Array.isArray(parsed.questions)) {
-              parsedQuestions = parsed.questions as Question[];
-            } else if (parsed.data && Array.isArray(parsed.data)) {
-              parsedQuestions = parsed.data as Question[];
-            }
-
-            if (!parsedQuestions) throw new Error("Invalid format from DeepSeek");
-            
-            // Clear originally recorded error since DeepSeek succeeded
-            aiError = null;
-          } else {
-            const errorData = await res.text();
-            throw new Error(`DeepSeek error: ${res.status} ${errorData}`);
-          }
-        } catch (deepseekError: any) {
-          console.error("Deepseek fallback failed:", deepseekError);
-          // If DeepSeek also fails, keep the original aiError
-        }
-      }
-
-      if (aiError && !parsedQuestions) {
-        throw aiError;
-      }
-
-      if (parsedQuestions && parsedQuestions.length > 0) {
-        setQuestions(parsedQuestions);
-        setStatus('active');
-        setCurrentIndex(0);
-        setUserAnswers({});
-        setTimeRemaining(timeLimit > 0 ? timeLimit * 60 : null);
-        if (window.innerWidth < 1024) setIsNavOpen(false);
-      } else {
-        throw new Error("Không thể tạo câu hỏi hợp lệ");
-      }
-    } catch (error: any) {
       console.error("Error generating quiz:", error);
       let errorMessage = "Có lỗi xảy ra khi tạo đề thi. Vui lòng thử lại.";
       
@@ -640,6 +584,16 @@ export default function MockExam() {
                   </div>
                 </label>
               )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Tùy chỉnh Prompt (Không bắt buộc)</label>
+              <textarea 
+                value={customPrompt}
+                onChange={(e) => setCustomPrompt(e.target.value)}
+                placeholder="Ví dụ: Chỉ hỏi các câu hỏi mức độ vận dụng cao, hoặc chỉ hỏi phần trắc nghiệm tính toán..."
+                className="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-transparent text-sm h-28 resize-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              />
             </div>
 
             {availableChapters.length > 0 && (
