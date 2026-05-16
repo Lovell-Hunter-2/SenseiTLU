@@ -7,6 +7,7 @@ import AdminManagerModal from './AdminManagerModal';
 import UserManagerModal from './UserManagerModal';
 import HeroImageManagerModal from './HeroImageManagerModal';
 import { AIAssistantWidget, toggleAIAssistant, pingAIAssistant } from './AIAssistantWidget';
+import { TextSelectionHelper } from './TextSelectionHelper';
 import avtTlu from '../assets/avt_tlu.jpg';
 
 export default function Layout() {
@@ -291,12 +292,13 @@ export default function Layout() {
             rel="noopener noreferrer"
             className="bg-[#ff6b00] hover:bg-[#e66000] text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center gap-2"
           >
-            <MessageCircle className="w-3 h-3" />
+            <MessageCircle className="w-4 h-4" />
             <span className="font-bold">Hỗ trợ</span>
           </a>
         </div>
       )}
       
+      <TextSelectionHelper />
       <AIAssistantWidget />
     </div>
   );
