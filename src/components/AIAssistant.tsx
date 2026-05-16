@@ -186,6 +186,7 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
   return (
     <>
       <motion.div
+        id="ai-assistant-container"
         drag
         dragConstraints={{ top: 0, left: 0, right: typeof window !== 'undefined' ? window.innerWidth - 320 : 0, bottom: typeof window !== 'undefined' ? window.innerHeight - 500 : 0 }}
         dragElastic={0.1}
