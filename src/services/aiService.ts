@@ -5,13 +5,15 @@ const gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
-  image?: string;
+  attachedFileData?: string;
+  attachedFileName?: string;
+  attachedFileType?: string;
 }
 
 export interface AIGenerateOptions {
   messages: AIMessage[];
   jsonMode?: boolean;
-  attachedImage?: string; // base64 data URL
+  attachedFileString?: string; // base64 data URL
 }
 
 /**
@@ -21,37 +23,30 @@ export interface AIGenerateOptions {
 export const generateWithFallback = async (options: AIGenerateOptions): Promise<string> => {
   const errors: Error[] = [];
 
-  // Provider 1: DeepSeek (Ưu tiên theo yêu cầu người dùng)
-  if (process.env.DEEPSEEK_API_KEY) {
-    try {
-        console.log("Đang thử DeepSeek API...");
-        const res = await fetch("https://api.deepseek.com/chat/completions", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
-        },
-        body: JSON.stringify({
-            model: "deepseek-chat",
-            messages: options.messages,
-            temperature: 0.7,
-            response_format: options.jsonMode ? { type: "json_object" } : undefined
-        })
-        });
+  const processStandardMessages = (supportVision: boolean) => {
+    return options.messages.map(m => {
+      if (m.role === 'user' && m.attachedFileData && m.attachedFileType?.startsWith('image/') && supportVision) {
+        return {
+          role: m.role,
+          content: [
+            { type: "text", text: m.content || "Xem ảnh" },
+            { type: "image_url", image_url: { url: m.attachedFileData } }
+          ]
+        };
+      } else if (m.role === 'user' && m.attachedFileData && !m.attachedFileType?.startsWith('image/')) {
+         return {
+            role: m.role,
+            content: `[Tệp đính kèm: ${m.attachedFileName}]\n(Lưu ý: Nội dung tệp có thể nằm trong prompt hoặc tệp không được hỗ trợ bởi model này)\n\n${m.content}`,
+         };
+      }
+      return {
+        role: m.role,
+        content: m.content
+      };
+    });
+  };
 
-        if (res.ok) {
-        const data = await res.json();
-        return data.choices[0].message.content.trim();
-        } else {
-        const errorData = await res.text();
-        errors.push(new Error(`DeepSeek error: ${res.status} ${errorData}`));
-        }
-    } catch (e: any) {
-        errors.push(new Error(`DeepSeek network error: ${e.message}`));
-    }
-  }
-
-  // Provider 2: Gemini
+  // Provider 1: Gemini
   if (process.env.GEMINI_API_KEY) {
     try {
         console.log("Đang thử Gemini API...");
@@ -60,8 +55,8 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
         const userMsg = options.messages.filter(m => m.role === 'user').map(m => m.content).join("\n");
         
         let contentsParts: any = systemMsg ? `${systemMsg}\n\n${userMsg}` : userMsg;
-        if (options.attachedImage) {
-          const match = options.attachedImage.match(/^data:(image\/[\w+.-]+);base64,(.*)$/);
+        if (options.attachedFileString) {
+          const match = options.attachedFileString.match(/^data:([\w+/.-]+);base64,(.*)$/);
           if (match) {
             contentsParts = [
               {
@@ -95,19 +90,19 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
     }
   }
 
-  // Provider 3: OpenAI
-  if (process.env.OPENAI_API_KEY) {
+  // Provider 2: DeepSeek
+  if (process.env.DEEPSEEK_API_KEY) {
     try {
-        console.log("Đang thử OpenAI API...");
-        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        console.log("Đang thử DeepSeek API...");
+        const res = await fetch("https://api.deepseek.com/chat/completions", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+            "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
         },
         body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: options.messages,
+            model: "deepseek-chat",
+            messages: processStandardMessages(false), // Deepseek chat chưa hỗ trợ file vision tốt
             temperature: 0.7,
             response_format: options.jsonMode ? { type: "json_object" } : undefined
         })
@@ -118,14 +113,14 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
         return data.choices[0].message.content.trim();
         } else {
         const errorData = await res.text();
-        errors.push(new Error(`OpenAI error: ${res.status} ${errorData}`));
+        errors.push(new Error(`DeepSeek error: ${res.status} ${errorData}`));
         }
     } catch (e: any) {
-        errors.push(new Error(`OpenAI network error: ${e.message}`));
+        errors.push(new Error(`DeepSeek network error: ${e.message}`));
     }
   }
 
-  // Provider 4: Grok
+  // Provider 3: Grok
   if (process.env.GROK_API_KEY) {
     try {
         console.log("Đang thử Grok API...");
@@ -137,7 +132,7 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
         },
         body: JSON.stringify({
             model: "grok-2-latest", // Hoặc grok-beta
-            messages: options.messages,
+            messages: processStandardMessages(true),
             temperature: 0.7,
             response_format: options.jsonMode ? { type: "json_object" } : undefined
         })
@@ -152,6 +147,36 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
         }
     } catch (e: any) {
         errors.push(new Error(`Grok network error: ${e.message}`));
+    }
+  }
+
+  // Provider 4: OpenAI
+  if (process.env.OPENAI_API_KEY) {
+    try {
+        console.log("Đang thử OpenAI API...");
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: processStandardMessages(true),
+            temperature: 0.7,
+            response_format: options.jsonMode ? { type: "json_object" } : undefined
+        })
+        });
+
+        if (res.ok) {
+        const data = await res.json();
+        return data.choices[0].message.content.trim();
+        } else {
+        const errorData = await res.text();
+        errors.push(new Error(`OpenAI error: ${res.status} ${errorData}`));
+        }
+    } catch (e: any) {
+        errors.push(new Error(`OpenAI network error: ${e.message}`));
     }
   }
 
