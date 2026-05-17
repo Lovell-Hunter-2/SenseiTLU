@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { generateWithFallback, AIMessage } from '../services/aiService';
-import { ArrowLeft, Settings, Play, CheckCircle2, XCircle, RefreshCcw, Lightbulb, Book, Menu, X, User, Quote, Home as HomeIcon, RotateCcw, Eye, Minus, Plus, UploadCloud, FileText, Trash2 } from 'lucide-react';
+import { ArrowLeft, Settings, Play, CheckCircle2, XCircle, RefreshCcw, Lightbulb, Book, Menu, X, User, Quote, Home as HomeIcon, RotateCcw, Eye, Minus, Plus, UploadCloud, FileText, Trash2, Share2, ClipboardCheck } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -92,12 +92,14 @@ const highScoreQuotes = [
 ];
 
 export default function MockExam() {
-  const { id } = useParams<{ id: string }>();
+  const { id, examId } = useParams<{ id: string, examId?: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [subject, setSubject] = useState<any>(null);
   const [availableChapters, setAvailableChapters] = useState<string[]>([]);
   const [documentTitles, setDocumentTitles] = useState<string[]>([]);
+  const [loadedExamId, setLoadedExamId] = useState<string | null>(examId || null);
+  const [isCopied, setIsCopied] = useState(false);
   
   // Quiz Settings
   const [numQuestions, setNumQuestions] = useState(10);
@@ -249,12 +251,80 @@ export default function MockExam() {
     fetchData();
   }, [id]);
 
+  useEffect(() => {
+    if (!examId) return;
+
+    const loadExam = async () => {
+      try {
+        const docRef = doc(db, 'mockExams', examId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setQuestions(data.questions || []);
+          setTimeLimit(data.examConfig?.timeLimit || 0);
+          setExamMode(data.examConfig?.examMode || 'submit');
+          setNumQuestions(data.questions?.length || 10);
+          
+          setStatus('active');
+          setCurrentIndex(0);
+          setUserAnswers({});
+          setTimeRemaining(data.examConfig?.timeLimit > 0 ? data.examConfig.timeLimit * 60 : null);
+          if (window.innerWidth < 1024) setIsNavOpen(false);
+          
+        } else {
+          alert('Đề thi không tồn tại hoặc đã bị xóa.');
+          navigate(`/subject/${id}/mock-exam`);
+        }
+      } catch (error) {
+        console.error("Error loading exam:", error);
+        alert('Lỗi tải đề thi.');
+      }
+    };
+    
+    // Only load if status is setup, meaning we haven't started playing or it's a fresh load
+    if (status === 'setup') {
+      loadExam();
+    }
+  }, [examId, id, navigate]);
+
   const toggleChapter = (chapter: string) => {
     setSelectedChapters(prev => 
       prev.includes(chapter) 
         ? prev.filter(c => c !== chapter)
         : [...prev, chapter]
     );
+  };
+
+  const handleShareExam = async () => {
+    try {
+      let currentExamId = loadedExamId;
+      
+      if (!currentExamId) {
+        // Save the exam
+        const docRef = await addDoc(collection(db, 'mockExams'), {
+          subjectId: id,
+          authorId: user?.uid || null,
+          createdAt: serverTimestamp(),
+          questions: questions,
+          examConfig: {
+            timeLimit,
+            examMode,
+            numQuestions
+          }
+        });
+        currentExamId = docRef.id;
+        setLoadedExamId(currentExamId);
+        navigate(`/subject/${id}/mock-exam/${currentExamId}`, { replace: true });
+      }
+      
+      const shareUrl = `${window.location.protocol}//${window.location.host}/subject/${id}/mock-exam/${currentExamId}`;
+      await navigator.clipboard.writeText(shareUrl);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (error) {
+      console.error("Error sharing exam:", error);
+      alert("Không thể tạo link chia sẻ.");
+    }
   };
 
   const generateQuiz = async () => {
@@ -896,6 +966,9 @@ export default function MockExam() {
             <button onClick={() => { setStatus('review'); setCurrentIndex(0); }} className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 bg-[#24283b] hover:bg-[#2f344d] text-white rounded-xl font-medium transition-colors border border-slate-700">
               <Eye className="w-4 h-4" /> Xem đáp án
             </button>
+            <button onClick={handleShareExam} className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium transition-colors border border-emerald-500">
+              {isCopied ? <ClipboardCheck className="w-4 h-4" /> : <Share2 className="w-4 h-4" />} {isCopied ? 'Đã copy link' : 'Chia sẻ đề'}
+            </button>
             <button onClick={() => { setStatus('setup'); setQuestions([]); setUserAnswers({}); sessionStorage.removeItem(STORAGE_KEY); }} className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 bg-[#24283b] hover:bg-[#2f344d] text-white rounded-xl font-medium transition-colors border border-slate-700">
               <Settings className="w-4 h-4" /> Cài đặt đề
             </button>
@@ -939,9 +1012,14 @@ export default function MockExam() {
       <div className="flex-1 min-w-0 px-4 sm:px-0">
         <div className="max-w-3xl w-full mx-auto py-6 space-y-6">
           <div className="flex items-center justify-between mb-2">
-            <button onClick={confirmExit} className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700 px-3 py-1.5 rounded-lg -ml-3">
-              <ArrowLeft className="w-4 h-4" /> Tạo đề mới
-            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={confirmExit} className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700 px-3 py-1.5 rounded-lg -ml-3">
+                <ArrowLeft className="w-4 h-4" /> Tạo đề mới
+              </button>
+              <button onClick={handleShareExam} className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-700 dark:text-emerald-500 dark:hover:text-emerald-400 transition-colors border border-transparent hover:border-emerald-200 dark:hover:border-emerald-900/50 px-3 py-1.5 rounded-lg">
+                {isCopied ? <ClipboardCheck className="w-4 h-4" /> : <Share2 className="w-4 h-4" />} <span className="hidden sm:inline">{isCopied ? 'Đã copy' : 'Chia sẻ đề'}</span>
+              </button>
+            </div>
             {timeRemaining !== null && status === 'active' && (
               <div className={`font-mono text-lg font-bold px-4 py-1.5 rounded-lg ${timeRemaining < 60 ? 'bg-red-100 text-red-600 dark:bg-red-900/30' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}>
                 {formatTime(timeRemaining)}
