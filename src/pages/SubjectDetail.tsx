@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
-import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon, ClipboardList, ScrollText, Lightbulb, Sigma } from 'lucide-react';
+import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon, ClipboardList, ScrollText, Lightbulb, Sigma, X, LayoutTemplate } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -31,6 +31,42 @@ export default function SubjectDetail() {
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingDocId, setEditingDocId] = useState<string | null>(null);
+
+  // Document Viewer State
+  const [selectedDocument, setSelectedDocument] = useState<{title: string, url: string} | null>(null);
+  const [showChoiceModal, setShowChoiceModal] = useState(false);
+  const [showIframeModal, setShowIframeModal] = useState(false);
+
+  const handleDocumentClick = (e: React.MouseEvent, title: string, url: string) => {
+    e.preventDefault();
+    setSelectedDocument({ title, url });
+    setShowChoiceModal(true);
+  };
+
+  const getEmbedUrl = (url: string) => {
+    if (!url) return '';
+    try {
+      if (url.includes('drive.google.com/file/d/')) {
+        const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+        if (match) return `https://drive.google.com/file/d/${match[1]}/preview`;
+      }
+      if (url.includes('docs.google.com/presentation/d/')) {
+        const match = url.match(/\/presentation\/d\/([a-zA-Z0-9-_]+)/);
+        if (match) return `https://docs.google.com/presentation/d/${match[1]}/preview`;
+      }
+      if (url.includes('docs.google.com/document/d/')) {
+        const match = url.match(/\/document\/d\/([a-zA-Z0-9-_]+)/);
+        if (match) return `https://docs.google.com/document/d/${match[1]}/preview`;
+      }
+      if (url.includes('docs.google.com/spreadsheets/d/')) {
+        const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+        if (match) return `https://docs.google.com/spreadsheets/d/${match[1]}/preview`;
+      }
+    } catch(e) {
+      console.error(e);
+    }
+    return url;
+  };
 
   // Drive Auto Import State
   const [folderInputMode, setFolderInputMode] = useState<'manual' | 'auto'>('manual');
@@ -319,8 +355,7 @@ export default function SubjectDetail() {
                           {!doc.isFolder ? (
                             <a
                               href={doc.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                              onClick={(e) => handleDocumentClick(e, doc.title, doc.url)}
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
                             >
                               <ExternalLink className="w-4 h-4" /> Xem tài liệu
@@ -358,8 +393,7 @@ export default function SubjectDetail() {
                           <a 
                             key={idx}
                             href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            onClick={(e) => handleDocumentClick(e, item.title, item.url)}
                             className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-blue-200 dark:hover:border-blue-900/50 transition-all group"
                           >
                             <div className="flex items-center gap-3 min-w-0">
@@ -645,6 +679,91 @@ export default function SubjectDetail() {
                 Xóa
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Choice Modal for Document Opening Options */}
+      {showChoiceModal && selectedDocument && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-8 shadow-2xl border border-slate-200 dark:border-slate-800 text-center relative overflow-hidden">
+            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <LayoutTemplate className="w-8 h-8" />
+            </div>
+            <h3 className="text-2xl font-bold mb-2">Mở tài liệu</h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-sm mx-auto">
+              Bạn muốn mở <strong>{selectedDocument.title}</strong> ở đâu?
+            </p>
+
+            <div className="flex flex-col gap-4">
+              <button 
+                onClick={() => {
+                  setShowChoiceModal(false);
+                  setShowIframeModal(true);
+                }}
+                className="flex items-center justify-center gap-2 w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors shadow-md shadow-blue-500/20"
+              >
+                Mở tại SenseiTLU (Hỗ trợ AI)
+              </button>
+              
+              <a
+                href={selectedDocument.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setShowChoiceModal(false)}
+                className="flex items-center justify-center gap-2 w-full py-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl font-medium transition-colors border border-slate-200 dark:border-slate-700"
+              >
+                Tiếp tục tới Google Drive <ExternalLink className="w-4 h-4 ml-1" />
+              </a>
+            </div>
+            <button 
+              onClick={() => setShowChoiceModal(false)} 
+              className="mt-6 text-sm font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 transition-colors"
+            >
+              Hủy
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Embedded Document View Modal */}
+      {showIframeModal && selectedDocument && (
+        <div className="fixed inset-0 z-[55] bg-white dark:bg-slate-950 flex flex-col">
+          <div className="h-14 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10 shadow-sm">
+            <div className="flex items-center gap-3 w-3/4">
+              <div className="w-8 h-8 shrink-0 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center rounded-lg">
+                <Book className="w-4 h-4" />
+              </div>
+              <h2 className="font-bold text-slate-800 dark:text-slate-200 truncate">{selectedDocument.title}</h2>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <a 
+                href={selectedDocument.url} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" 
+                title="Mở trong Google Drive"
+              >
+                <ExternalLink className="w-5 h-5" />
+              </a>
+              <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1"></div>
+              <button 
+                onClick={() => setShowIframeModal(false)} 
+                className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" 
+                title="Đóng (Esc)"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 w-full relative bg-slate-100 dark:bg-slate-900">
+            {/* Embedded Iframe */}
+            <iframe 
+              src={getEmbedUrl(selectedDocument.url)} 
+              className="absolute inset-0 w-full h-full border-0" 
+              allow="autoplay; fullscreen"
+              title="Trình xem tài liệu"
+            />
           </div>
         </div>
       )}
