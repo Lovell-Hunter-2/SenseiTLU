@@ -50,39 +50,48 @@ export default function HeroImageManagerModal({ isOpen, onClose }: Props) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 800 * 1024) { // Roughly 800KB limit for typical Firestore doc (limit is 1MB)
+      alert('Kích thước file quá lớn. Vui lòng chọn ảnh/gif dưới 800KB để lưu vào hệ thống.');
+      return;
+    }
+
     const reader = new FileReader();
     reader.onloadend = () => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        
-        // Max dimensions
-        const MAX_SIZE = 800;
-        if (width > height) {
-          if (width > MAX_SIZE) {
-            height *= MAX_SIZE / width;
-            width = MAX_SIZE;
+      if (file.type === 'image/gif') {
+        const base64 = reader.result as string;
+        if (side === 'left') setLeftUrl(base64);
+        else setRightUrl(base64);
+      } else {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          const MAX_SIZE = 800;
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
           }
-        } else {
-          if (height > MAX_SIZE) {
-            width *= MAX_SIZE / height;
-            height = MAX_SIZE;
-          }
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
-        
-        // Compress to webp 0.7
-        const compressedBase64 = canvas.toDataURL('image/webp', 0.7);
-        if (side === 'left') setLeftUrl(compressedBase64);
-        else setRightUrl(compressedBase64);
-      };
-      img.src = reader.result as string;
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          const compressedBase64 = canvas.toDataURL('image/webp', 0.8);
+          if (side === 'left') setLeftUrl(compressedBase64);
+          else setRightUrl(compressedBase64);
+        };
+        img.src = reader.result as string;
+      }
     };
     reader.readAsDataURL(file);
   };
