@@ -5,10 +5,23 @@ import { generateWithFallback, AIMessage } from '../services/aiService';
 import { ArrowLeft, Settings, Play, CheckCircle2, XCircle, RefreshCcw, Lightbulb, Book, Menu, X, User, Quote, Home as HomeIcon, RotateCcw, Eye, Minus, Plus, UploadCloud, FileText, Trash2 } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import * as pdfjsLib from 'pdfjs-dist';
 
-// Initialize PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+const loadPdfJs = async (): Promise<any> => {
+  if ((window as any).pdfjsLib) {
+    return (window as any).pdfjsLib;
+  }
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    script.onload = () => {
+      const pdfjs = (window as any).pdfjsLib;
+      pdfjs.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      resolve(pdfjs);
+    };
+    script.onerror = () => reject(new Error("Không thể tải thư viện đọc PDF"));
+    document.body.appendChild(script);
+  });
+};
 
 interface Question {
   question: string;
@@ -370,8 +383,9 @@ export default function MockExam() {
 
     try {
       if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+        const pdfjs = await loadPdfJs();
         const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
         let extText = '';
         const maxPages = Math.min(pdf.numPages, 30); // Giới hạn đọc 30 trang để tránh lag và đầy context
         for (let i = 1; i <= maxPages; i++) {
