@@ -160,14 +160,26 @@ YÊU CẦU ĐẶC BIỆT: Nếu người dùng hỏi về tài liệu môn này 
     try {
       let personalizeContext = "";
       if (userProfile) {
-        personalizeContext = `\n\n--- HỒ SƠ HỌC TẬP (VÔ CÙNG QUAN TRỌNG) ---
-Bạn ĐANG NÓI CHUYỆN VỚI NGƯỜI CÓ HỒ SƠ SAU:
-- Lớp: ${userProfile.grade || 'Không rõ'}
-- Mục tiêu: ${userProfile.goals || 'Không rõ'}
-- Điểm mạnh: ${userProfile.strongSubjects || 'Không rõ'}
-- Điểm yếu: ${userProfile.weakSubjects || 'Không rõ'}
-- Sở thích học: ${userProfile.learningStyle || 'Không rõ'}
-HÃY DÙNG THÔNG TIN NÀY ĐỂ TRẢ LỜI CHO PHÙ HỢP (ví dụ dùng văn phong dễ hiểu hơn nếu học sinh lớp nhỏ, hoặc tập trung vào môn yếu nếu liên quan). Tuyệt đối không nhắc lại toàn bộ hồ sơ trừ khi được hỏi.`;
+        const toneStr = 
+          userProfile.aiTone === 'friendly' ? 'Vui vẻ, động viên, gần gũi, hay dùng emoji' :
+          userProfile.aiTone === 'strict' ? 'Nghiêm khắc, kỷ luật, đi thẳng vấn đề, văn phong học thuật' :
+          userProfile.aiTone === 'concise' ? 'Ngắn gọn, súc tích, chỉ gạch đầu dòng' :
+          userProfile.aiTone === 'socratic' ? 'Không trả lời trực tiếp mà hỏi gợi mở để người dùng tự tìm kết quả' : 'Bình thường';
+          
+        const answerStyleStr = 
+          userProfile.answerStyle === 'step_by_step' ? 'Chỉ đưa ra hướng dẫn từng bước để tự luyện tập (không giải trọn vẹn)' : 
+          'Đưa ra đáp án chi tiết và giải thích ngay lập tức';
+
+        const needsStr = (userProfile.aiNeeds || []).join(', ');
+
+        personalizeContext = `\n\n--- HỒ SƠ & THIẾT LẬP CÁ NHÂN HÓA ---
+Vui lòng tuân thủ TUYỆT ĐỐI các thiết lập sau khi giao tiếp:
+- PHONG CÁCH GIAO TIẾP CỦA BẠN: ${toneStr}
+- CÁCH ĐƯA ĐÁP ÁN: ${answerStyleStr}
+- Môn yếu cần theo sát: ${userProfile.weakSubjects || 'Không rõ'}
+- Ghi chú phong cách học: ${userProfile.learningStyle || 'Không có'}
+- Nhu cầu hỗ trợ chính: ${needsStr || 'Nhiều nhu cầu'}
+(CHÚ Ý: bạn PHẢI áp dụng phong cách giao tiếp và cách đưa đáp án này trong MỌI câu trả lời, không cần nhắc lại thiết lập này)`;
       }
 
       const systemMessage: AIMessage = { 
