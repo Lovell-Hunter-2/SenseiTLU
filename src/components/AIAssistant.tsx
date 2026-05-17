@@ -23,7 +23,7 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
   const [subjectsList, setSubjectsList] = useState<{ id: string, name: string }[]>([]);
   const [subjectsStr, setSubjectsStr] = useState("");
   const [smartPrompts, setSmartPrompts] = useState<string[]>([]);
-  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const [attachedFile, setAttachedFile] = useState<{name: string, type: string, data: string} | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -53,7 +53,7 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
     } else if (pathParts[1] === '') {
       setSmartPrompts([
         "Môn nào đang hot?",
-        "Hướng dẫn thi thử bằng AI",
+        "Tìm tài liệu Toán",
         "Hướng dẫn ôn thi"
       ]);
     } else {
@@ -86,13 +86,13 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
   const handleSend = async (textOverride?: string) => {
     // If the event object from React is passed accidentally, we don't want to use it
     const textToProcess = typeof textOverride === 'string' ? textOverride : inputValue;
-    if ((!textToProcess.trim() && !attachedImage) || isLoading) return;
+    if ((!textToProcess.trim() && !attachedFile) || isLoading) return;
     
-    const userMessage: AIMessage = { role: 'user', content: textToProcess, image: attachedImage || undefined };
+    const userMessage: AIMessage = { role: 'user', content: textToProcess, attachedFileData: attachedFile?.data, attachedFileName: attachedFile?.name, attachedFileType: attachedFile?.type };
     setMessages(prev => [...prev, userMessage]);
     setInputValue("");
-    const imageToSend = attachedImage;
-    setAttachedImage(null);
+    const fileToSend = attachedFile;
+    setAttachedFile(null);
     setIsLoading(true);
     
     // Tìm context chính xác
@@ -147,7 +147,7 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
 
       const responseText = await generateWithFallback({ 
         messages: chatMessages,
-        attachedImage: imageToSend || undefined
+        attachedFileString: fileToSend ? fileToSend.data : undefined
       });
       
       setMessages(prev => [...prev, { role: 'assistant', content: responseText }]);
@@ -237,8 +237,13 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
             >
               {msg.role === 'user' ? (
                 <>
-                  {msg.image && (
-                    <img src={msg.image} alt="User attachment" className="w-full h-auto rounded-lg mb-2 object-contain bg-white/10" style={{ maxHeight: '200px' }} />
+                  {msg.attachedFileType && msg.attachedFileData && msg.attachedFileType.startsWith('image/') && (
+                    <img src={msg.attachedFileData} alt="User attachment" className="w-full h-auto rounded-lg mb-2 object-contain bg-white/10" style={{ maxHeight: '200px' }} />
+                  )}
+                  {msg.attachedFileType && msg.attachedFileData && !msg.attachedFileType.startsWith('image/') && (
+                    <div className="flex items-center gap-2 bg-white/20 p-2 rounded-lg mb-2 border border-white/10 text-xs">
+                      <span className="truncate max-w-[150px]">{msg.attachedFileName}</span>
+                    </div>
                   )}
                   {msg.content}
                 </>
@@ -299,13 +304,19 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
           </div>
         )}
 
-        {/* Selected Image Preview */}
-        {attachedImage && (
+        {/* Selected File Preview */}
+        {attachedFile && (
           <div className="relative inline-block w-fit mb-1 mt-1">
-            <img src={attachedImage} alt="Selected preview" className="h-16 w-auto rounded-lg border border-slate-200 dark:border-slate-700 object-cover" />
+            {attachedFile.type.startsWith('image/') ? (
+              <img src={attachedFile.data} alt="Selected preview" className="h-16 w-auto rounded-lg border border-slate-200 dark:border-slate-700 object-cover" />
+            ) : (
+              <div className="h-12 px-3 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center border border-slate-200 dark:border-slate-700 text-sm font-medium">
+                {attachedFile.name.length > 20 ? attachedFile.name.substring(0, 20) + '...' : attachedFile.name}
+              </div>
+            )}
             <button 
-              onClick={() => setAttachedImage(null)}
-              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-sm hover:bg-red-600"
+              onClick={() => setAttachedFile(null)}
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-sm hover:bg-red-600 z-10"
             >
               <X className="w-3 h-3" />
             </button>
@@ -315,14 +326,14 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
         <div className="relative flex items-end gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
           <input 
             type="file" 
-            accept="image/*" 
+            accept="image/*,.pdf,.txt,.md" 
             ref={fileInputRef} 
             className="hidden" 
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) {
                 const reader = new FileReader();
-                reader.onloadend = () => setAttachedImage(reader.result as string);
+                reader.onloadend = () => setAttachedFile({name: file.name, type: file.type || 'unknown', data: reader.result as string});
                 reader.readAsDataURL(file);
               }
               if (e.target) e.target.value = '';
@@ -355,7 +366,7 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
 
           <button 
             onClick={() => handleSend()}
-            disabled={(!inputValue.trim() && !attachedImage) || isLoading}
+            disabled={(!inputValue.trim() && !attachedFile) || isLoading}
             className="p-2 mb-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors shrink-0 mr-1"
           >
             <Send className="w-4 h-4" />
@@ -366,7 +377,7 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
     {isCapturing && (
       <ScreenshotHelper 
         onCapture={(base64) => {
-          setAttachedImage(base64);
+          setAttachedFile({name: 'screenshot.png', type: 'image/png', data: base64});
           setIsCapturing(false);
         }}
         onCancel={() => setIsCapturing(false)}
