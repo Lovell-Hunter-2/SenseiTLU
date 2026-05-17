@@ -23,6 +23,28 @@ const loadPdfJs = async (): Promise<any> => {
   });
 };
 
+const loadMammothJs = async (): Promise<any> => {
+  if ((window as any).mammoth) return (window as any).mammoth;
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js";
+    script.onload = () => resolve((window as any).mammoth);
+    script.onerror = () => reject(new Error("Không thể tải mammoth"));
+    document.body.appendChild(script);
+  });
+};
+
+const loadSheetJs = async (): Promise<any> => {
+  if ((window as any).XLSX) return (window as any).XLSX;
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    script.onload = () => resolve((window as any).XLSX);
+    script.onerror = () => reject(new Error("Không thể tải SheetJS"));
+    document.body.appendChild(script);
+  });
+};
+
 interface Question {
   question: string;
   options: string[];
@@ -89,9 +111,12 @@ export default function MockExam() {
   
   // Custom File Upload
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadedFileName, setUploadedFileName] = useState("");
-  const [uploadedFileText, setUploadedFileText] = useState("");
-  const [isExtractingText, setIsExtractingText] = useState(false);
+  interface UploadedFile {
+    name: string;
+    text: string;
+    status: 'extracting' | 'done' | 'error';
+  }
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
   // Initialize state from sessionStorage if available
   const STORAGE_KEY = `mockExamState_${id}`;
@@ -240,7 +265,7 @@ export default function MockExam() {
       const prompt = `
         Tạo một bài trắc nghiệm đại học chuyên ngành cho môn học: "${subject.name}".
         Ngữ cảnh môn học (từ tài liệu Drive): ${documentTitles.length > 0 ? documentTitles.join('; ') : 'Không có thông tin tài liệu'}.
-        ${uploadedFileText ? `\nĐÂY LÀ NỘI DUNG TÀI LIỆU MÀ NGƯỜI DÙNG QUAN TÂM (Trích xuất từ file tải lên):\n${uploadedFileText.substring(0, 50000)}...\n(HÃY TẠO NHIỀU CÂU HỎI TRỌNG TÂM VÀO NỘI DUNG NÀY NHẤT CÓ THỂ, ưu tiên cao hơn tài liệu chung!).` : ''}
+        ${uploadedFiles.filter(f => f.status === 'done').length > 0 ? `\nĐÂY LÀ NỘI DUNG TÀI LIỆU MÀ NGƯỜI DÙNG QUAN TÂM (Trích xuất từ file tải lên):\n${uploadedFiles.filter(f => f.status === 'done').map(f => f.text).join('\\n---\\n').substring(0, 150000)}...\n(HÃY TẠO NHIỀU CÂU HỎI TRỌNG TÂM VÀO NỘI DUNG NÀY NHẤT CÓ THỂ, ưu tiên cao hơn tài liệu chung!).` : ''}
         ${selectedChapters.length > 0 ? `Tập trung câu hỏi vào các phần/chương: ${selectedChapters.join(', ')}.` : ''}
         ${customPrompt ? `YÊU CẦU ĐẶC BIỆT TỪ NGƯỜI DÙNG: ${customPrompt}` : ''}
         Số lượng câu hỏi: ${numQuestions}.
@@ -275,6 +300,12 @@ export default function MockExam() {
         let cleanedText = textResponse;
         if (cleanedText.startsWith('```json')) cleanedText = cleanedText.replace(/^```json/, '').replace(/```$/, '').trim();
         else if (cleanedText.startsWith('```')) cleanedText = cleanedText.replace(/^```/, '').replace(/```$/, '').trim();
+        
+        // Remove bad control characters, escaping newlines inside string literals
+        cleanedText = cleanedText.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+        cleanedText = cleanedText.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match) => {
+          return match.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
+        });
         
         const parsed = JSON.parse(cleanedText);
         if (Array.isArray(parsed)) {
@@ -374,44 +405,75 @@ export default function MockExam() {
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    setUploadedFileName(file.name);
-    setIsExtractingText(true);
-    setUploadedFileText("");
-
-    try {
-      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-        const pdfjs = await loadPdfJs();
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-        let extText = '';
-        const maxPages = Math.min(pdf.numPages, 30); // Giới hạn đọc 30 trang để tránh lag và đầy context
-        for (let i = 1; i <= maxPages; i++) {
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          const pageText = textContent.items.map((item: any) => item.str).join(' ');
-          extText += pageText + '\\n';
-        }
-        if (pdf.numPages > 30) {
-          extText += '\\n [Đã cắt bớt nội dung vì file quá dài...]';
-        }
-        setUploadedFileText(extText);
-      } else {
-        // Assume text file
-        const text = await file.text();
-        setUploadedFileText(text.substring(0, 50000));
-      }
-    } catch (err) {
-      console.error("Lỗi khi đọc file:", err);
-      alert("Không thể đọc nội dung file. Vui lòng thử file khác.");
-      setUploadedFileName("");
-      setUploadedFileText("");
-    } finally {
-      setIsExtractingText(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+    // Check limit of 5 files maximum
+    if (uploadedFiles.length + files.length > 5) {
+      alert("Bạn chỉ có thể tải lên tối đa 5 file cùng lúc.");
+      return;
     }
+
+    const newUploadedFiles = files.map(file => ({
+      name: file.name,
+      text: '',
+      status: 'extracting' as const
+    }));
+
+    setUploadedFiles(prev => [...prev, ...newUploadedFiles]);
+
+    for (const file of files) {
+      try {
+        let extractedText = "";
+
+        if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+          const pdfjs = await loadPdfJs();
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+          const maxPages = Math.min(pdf.numPages, 30); // Giới hạn đọc 30 trang
+          for (let i = 1; i <= maxPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            extractedText += textContent.items.map((item: any) => item.str).join(' ') + '\\n';
+          }
+          if (pdf.numPages > 30) {
+            extractedText += '\\n [Đã cắt bớt nội dung vì file quá dài...]';
+          }
+        } else if (file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
+          const mammoth = await loadMammothJs();
+          const arrayBuffer = await file.arrayBuffer();
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          extractedText = result.value;
+        } else if (file.name.match(/\\.(xlsx|xls|csv)$/i)) {
+          const XLSX = await loadSheetJs();
+          const arrayBuffer = await file.arrayBuffer();
+          const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          extractedText = XLSX.utils.sheet_to_csv(worksheet);
+        } else {
+          // Assume text file
+          extractedText = await file.text();
+        }
+
+        const limitedText = extractedText.substring(0, 50000); // 50K chars per file
+        
+        setUploadedFiles(prev => prev.map(f => 
+          f.name === file.name 
+            ? { ...f, text: limitedText, status: 'done' } 
+            : f
+        ));
+      } catch (err) {
+        console.error("Lỗi khi đọc file:", file.name, err);
+        setUploadedFiles(prev => prev.map(f => 
+          f.name === file.name 
+            ? { ...f, status: 'error' } 
+            : f
+        ));
+      }
+    }
+    
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   // --- RENDER HELPERS ---
@@ -656,50 +718,58 @@ export default function MockExam() {
               <label className="block text-sm font-medium mb-1">Tài liệu tham chiếu (Tuỳ chọn)</label>
               <p className="text-xs text-slate-500 mb-2">SenseiTLU sẽ đọc nội dung file để tạo đề siêu sát với tài liệu của cậu.</p>
               
-              {!uploadedFileName ? (
+              <div className="space-y-3">
+                {uploadedFiles.map((file, idx) => (
+                  <div key={idx} className={`w-full relative border rounded-xl p-3 flex items-center gap-3 ${file.status === 'error' ? 'border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-900/20' : 'border-blue-200 bg-blue-50 dark:border-blue-900/50 dark:bg-blue-900/20'}`}>
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${file.status === 'error' ? 'bg-red-100 dark:bg-red-800' : 'bg-blue-100 dark:bg-blue-800'}`}>
+                      <FileText className={`w-5 h-5 ${file.status === 'error' ? 'text-red-600 dark:text-red-300' : 'text-blue-600 dark:text-blue-300'}`} />
+                    </div>
+                    <div className="min-w-0 pr-8">
+                      <div className={`font-medium truncate text-sm ${file.status === 'error' ? 'text-red-900 dark:text-red-100' : 'text-blue-900 dark:text-blue-100'}`}>
+                        {file.name}
+                      </div>
+                      {file.status === 'extracting' ? (
+                        <div className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-0.5">
+                          <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" /> 
+                          Đang đọc nội dung...
+                        </div>
+                      ) : file.status === 'done' ? (
+                        <div className="text-xs text-green-600 dark:text-green-400 mt-0.5 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Đã đọc xong ({Math.round(file.text.length / 1024)}KB)
+                        </div>
+                      ) : (
+                         <div className="text-xs text-red-600 dark:text-red-400 mt-0.5 flex items-center gap-1">
+                          <XCircle className="w-3 h-3" /> Lỗi đọc file
+                        </div>
+                      )}
+                    </div>
+                    <button 
+                      onClick={() => {
+                        setUploadedFiles(prev => prev.filter((_, i) => i !== idx));
+                      }}
+                      className="absolute right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-slate-200 dark:hover:bg-slate-700/50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {uploadedFiles.length < 5 && (
                 <div 
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex-col h-24 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 rounded-xl flex items-center justify-center cursor-pointer transition-colors bg-slate-50 dark:bg-slate-800/50"
+                  className="mt-3 w-full flex-col h-24 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 rounded-xl flex items-center justify-center cursor-pointer transition-colors bg-slate-50 dark:bg-slate-800/50"
                 >
                   <UploadCloud className="w-6 h-6 text-slate-400 mb-2" />
-                  <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Tải lên PDF/TXT</span>
+                  <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Tải lên file (PDF, TXT, DOCX, XLSX) tối đa 5 file</span>
                   <input 
                     type="file" 
                     ref={fileInputRef} 
                     className="hidden" 
-                    accept=".pdf,.txt"
+                    multiple
+                    accept=".pdf,.txt,.docx,.doc,.xlsx,.xls,.csv"
                     onChange={handleFileUpload}
                   />
-                </div>
-              ) : (
-                <div className="w-full relative border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-lg flex items-center justify-center shrink-0">
-                    <FileText className="w-5 h-5 text-blue-600 dark:text-blue-300" />
-                  </div>
-                  <div className="min-w-0 pr-8">
-                    <div className="font-medium text-blue-900 dark:text-blue-100 truncate text-sm">
-                      {uploadedFileName}
-                    </div>
-                    {isExtractingText ? (
-                      <div className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-0.5">
-                        <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" /> 
-                        Đang đọc bằng AI...
-                      </div>
-                    ) : (
-                      <div className="text-xs text-green-600 dark:text-green-400 mt-0.5 flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Đã đọc xong nội dung
-                      </div>
-                    )}
-                  </div>
-                  <button 
-                    onClick={() => {
-                      setUploadedFileName("");
-                      setUploadedFileText("");
-                    }}
-                    className="absolute right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
                 </div>
               )}
             </div>
