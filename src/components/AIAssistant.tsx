@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Search, Sparkles, Send, Minimize2, Minimize, Minus, Image as ImageIcon, Camera, Trash2 } from 'lucide-react';
+import { X, Search, Sparkles, Send, Minimize2, Minimize, Minus, Image as ImageIcon, Camera, Trash2, Settings2 } from 'lucide-react';
 import { generateWithFallback, AIMessage } from '../services/aiService';
 import ReactMarkdown from 'react-markdown';
 import { Link, useLocation } from 'react-router-dom';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useAuth } from '../contexts/AuthContext';
 import { ScreenshotHelper } from './ScreenshotHelper';
+import { AIPersonalizeModal } from './AIPersonalizeModal';
 
 interface AIAssistantProps {
   isVisible: boolean;
@@ -15,6 +17,7 @@ interface AIAssistantProps {
 }
 
 export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps) {
+  const { currentUser } = useAuth();
   const [messages, setMessages] = useState<AIMessage[]>([
     { role: 'assistant', content: 'Xin chào! Mình là trợ lý AI ở đây để giúp bạn sử dụng các tài liệu, tìm môn học, tạo đề, hoặc giải thích kiến thức.' }
   ]);
@@ -25,6 +28,9 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
   const [smartPrompts, setSmartPrompts] = useState<string[]>([]);
   const [attachedFile, setAttachedFile] = useState<{name: string, type: string, data: string} | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [showPersonalizeModal, setShowPersonalizeModal] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
@@ -63,6 +69,30 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
       ]);
     }
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (currentUser && isVisible) {
+      const fetchUserData = async () => {
+        try {
+          const docRef = doc(db, 'users', currentUser.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.aiPreferences) setUserProfile(data.aiPreferences);
+            if (data.aiHistory && data.aiHistory.length > 0) {
+              setMessages([
+                { role: 'assistant', content: 'Xin chào! Mình đã tải lại lịch sử trò chuyện trước đó của bạn.' },
+                ...data.aiHistory
+              ]);
+            }
+          }
+        } catch (error) {
+          console.error("Lỗi khi tải dữ liệu AI cá nhân:", error);
+        }
+      };
+      fetchUserData();
+    }
+  }, [currentUser, isVisible]);
 
   useEffect(() => {
     const fetchSubjects = async () => {
@@ -128,6 +158,18 @@ YÊU CẦU ĐẶC BIỆT: Nếu người dùng hỏi về tài liệu môn này 
     }
 
     try {
+      let personalizeContext = "";
+      if (userProfile) {
+        personalizeContext = `\n\n--- HỒ SƠ HỌC TẬP (VÔ CÙNG QUAN TRỌNG) ---
+Bạn ĐANG NÓI CHUYỆN VỚI NGƯỜI CÓ HỒ SƠ SAU:
+- Lớp: ${userProfile.grade || 'Không rõ'}
+- Mục tiêu: ${userProfile.goals || 'Không rõ'}
+- Điểm mạnh: ${userProfile.strongSubjects || 'Không rõ'}
+- Điểm yếu: ${userProfile.weakSubjects || 'Không rõ'}
+- Sở thích học: ${userProfile.learningStyle || 'Không rõ'}
+HÃY DÙNG THÔNG TIN NÀY ĐỂ TRẢ LỜI CHO PHÙ HỢP (ví dụ dùng văn phong dễ hiểu hơn nếu học sinh lớp nhỏ, hoặc tập trung vào môn yếu nếu liên quan). Tuyệt đối không nhắc lại toàn bộ hồ sơ trừ khi được hỏi.`;
+      }
+
       const systemMessage: AIMessage = { 
         role: 'system', 
         content: `Bạn là trợ lý AI "Sensei AI" trên nền tảng ôn thi SenseiTLU.
@@ -135,7 +177,7 @@ YÊU CẦU ĐẶC BIỆT: Nếu người dùng hỏi về tài liệu môn này 
 2. Dưới đây là danh sách các môn học (để tạo link khi cần):
 ${subjectsStr}
 Khi nhắc đến môn học, có thể dùng format Link Markdown để người dùng bấm vào: [Tên môn](/subject/ID).
-3. NGỮ CẢNH HIỆN TẠI (Vô cùng quan trọng): ${currentContext}
+3. NGỮ CẢNH HIỆN TẠI (Vô cùng quan trọng): ${currentContext}${personalizeContext}
 4. Giải đáp kiến thức bằng chuyên môn sư phạm. Luôn bám sát ngữ cảnh hiện tại trước tiên.`
       };
       
@@ -150,7 +192,18 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
         attachedFileString: fileToSend ? fileToSend.data : undefined
       });
       
-      setMessages(prev => [...prev, { role: 'assistant', content: responseText }]);
+      const assistantMessage: AIMessage = { role: 'assistant', content: responseText };
+      setMessages(prev => {
+        const newMessages = [...prev, assistantMessage];
+        // Save to Firebase (background)
+        if (currentUser) {
+           const historyToSave = [...messages.filter(m => m.role !== 'system'), userMessage, assistantMessage].slice(-10); // Keep last 10
+           updateDoc(doc(db, 'users', currentUser.uid), {
+             aiHistory: historyToSave.map(m => ({ role: m.role, content: m.content })) // omit base64 to save size
+           }).catch(e => console.error("Could not save history", e));
+        }
+        return newMessages;
+      });
     } catch (error: any) {
       setMessages(prev => [...prev, { role: 'assistant', content: `Xin lỗi, có lỗi xảy ra: ${error.message}` }]);
     } finally {
@@ -206,6 +259,15 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
           <span className="font-bold text-sm">Sensei AI</span>
         </div>
         <div className="flex items-center gap-1">
+          {currentUser && (
+            <button 
+              onClick={() => setShowPersonalizeModal(true)}
+              className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 transition-colors"
+              title="Cá nhân hóa AI"
+            >
+              <Settings2 className="w-4 h-4" />
+            </button>
+          )}
           <button 
             onClick={onMinimize}
             className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 transition-colors"
@@ -383,6 +445,21 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
         onCancel={() => setIsCapturing(false)}
       />
     )}
+    <AIPersonalizeModal 
+      isOpen={showPersonalizeModal} 
+      onClose={() => {
+        setShowPersonalizeModal(false);
+        // Retry fetch manually to update profile quickly
+        if (currentUser) {
+          getDoc(doc(db, 'users', currentUser.uid))
+            .then(snap => {
+              if (snap.exists() && snap.data().aiPreferences) {
+                 setUserProfile(snap.data().aiPreferences);
+              }
+            });
+        }
+      }} 
+    />
     </>
   );
 }
