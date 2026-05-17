@@ -12,13 +12,49 @@ interface AIPersonalizeModalProps {
 export function AIPersonalizeModal({ isOpen, onClose }: AIPersonalizeModalProps) {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [preferences, setPreferences] = useState({
-    grade: '',
-    goals: '',
+  const [preferences, setPreferences] = useState<{
+    aiTone: string;
+    aiNeeds: string[];
+    weakSubjects: string;
+    answerStyle: string;
+    learningStyle: string;
+  }>({
+    aiTone: 'friendly',
+    aiNeeds: [],
     weakSubjects: '',
-    strongSubjects: '',
+    answerStyle: 'step_by_step',
     learningStyle: '',
   });
+
+  const aiToneOptions = [
+    { value: 'friendly', label: 'Vui vẻ & Động viên', description: 'Trò chuyện gần gũi, hay dùng emoji' },
+    { value: 'strict', label: 'Nghiêm khắc & Kỷ luật', description: 'Điểm đúng sai rõ ràng, văn phong học thuật' },
+    { value: 'concise', label: 'Ngắn gọn & Súc tích', description: 'Đi thẳng vào vấn đề, dùng bullet points' },
+    { value: 'socratic', label: 'Phương pháp Socratic', description: 'Hỏi ngược lại để học sinh tự tìm ra câu trả lời' }
+  ];
+
+  const aiNeedsOptions = [
+    { value: 'theory', label: 'Giải thích lý thuyết, khái niệm khó' },
+    { value: 'exercises', label: 'Hướng dẫn giải bài tập chi tiết' },
+    { value: 'mock_exam', label: 'Tạo đề thi/Quiz trắc nghiệm ôn tập' },
+    { value: 'summary', label: 'Tóm tắt tài liệu dài' },
+    { value: 'roadmap', label: 'Lên lộ trình/Kế hoạch học tập' }
+  ];
+
+  const answerStyleOptions = [
+    { value: 'step_by_step', label: 'Gợi ý từng bước để mình tự giải (Phát triển tư duy)' },
+    { value: 'direct', label: 'Đưa ra đáp án chi tiết và giải thích ngay lập tức (Tiết kiệm thời gian)' }
+  ];
+
+  const toggleNeed = (value: string) => {
+    setPreferences(prev => {
+      const needs = prev.aiNeeds || [];
+      if (needs.includes(value)) {
+        return { ...prev, aiNeeds: needs.filter(n => n !== value) };
+      }
+      return { ...prev, aiNeeds: [...needs, value] };
+    });
+  };
 
   useEffect(() => {
     if (isOpen && user) {
@@ -98,67 +134,88 @@ export function AIPersonalizeModal({ isOpen, onClose }: AIPersonalizeModalProps)
         </div>
 
         <div className="p-6 overflow-y-auto space-y-5">
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+              <User className="w-4 h-4 text-blue-500" /> Phong cách giao tiếp của AI
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {aiToneOptions.map(option => (
+                <div 
+                  key={option.value}
+                  onClick={() => setPreferences({...preferences, aiTone: option.value})}
+                  className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
+                    preferences.aiTone === option.value 
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 ring-1 ring-purple-500' 
+                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800'
+                  }`}
+                >
+                  <div className="font-medium text-sm text-slate-800 dark:text-slate-200">{option.label}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{option.description}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+              <Target className="w-4 h-4 text-red-500" /> Nhu cầu hỗ trợ chính <span className="text-xs font-normal text-slate-400">(Có thể chọn nhiều)</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {aiNeedsOptions.map(option => (
+                <label key={option.value} className="flex items-center gap-3 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    checked={(preferences.aiNeeds || []).includes(option.value)}
+                    onChange={() => toggleNeed(option.value)}
+                    className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-slate-700 dark:text-slate-300">{option.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+              <Brain className="w-4 h-4 text-green-500" /> Cách AI đưa ra đáp án bài tập
+            </label>
+            <div className="flex flex-col gap-2">
+              {answerStyleOptions.map(option => (
+                <label key={option.value} className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                  <input 
+                    type="radio" 
+                    name="answerStyle"
+                    checked={preferences.answerStyle === option.value}
+                    onChange={() => setPreferences({...preferences, answerStyle: option.value})}
+                    className="w-4 h-4 mt-0.5 text-purple-600 border-slate-300 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-slate-700 dark:text-slate-300">{option.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-1">
             <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
-              <User className="w-4 h-4 text-blue-500" /> Bạn đang học lớp mấy?
+              <BookOpen className="w-4 h-4 text-orange-500" /> Môn học cần được AI theo sát nhất
             </label>
             <input 
               type="text"
-              value={preferences.grade}
-              onChange={(e) => setPreferences({...preferences, grade: e.target.value})}
-              placeholder="VD: Lớp 12, Đại học năm 1,..."
+              value={preferences.weakSubjects}
+              onChange={(e) => setPreferences({...preferences, weakSubjects: e.target.value})}
+              placeholder="VD: Toán Đại số, Tiếng Anh giao tiếp..."
               className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500"
             />
-          </div>
-
-          <div className="space-y-1">
-            <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
-              <Target className="w-4 h-4 text-red-500" /> Mục tiêu học tập
-            </label>
-            <textarea 
-              value={preferences.goals}
-              onChange={(e) => setPreferences({...preferences, goals: e.target.value})}
-              placeholder="VD: Thi đỗ Đại học Bách Khoa khối A1, điểm 9+ Toán,..."
-              className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 min-h-[80px]"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div className="space-y-1">
-              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
-                <Brain className="w-4 h-4 text-green-500" /> Môn thế mạnh
-              </label>
-              <input 
-                type="text"
-                value={preferences.strongSubjects}
-                onChange={(e) => setPreferences({...preferences, strongSubjects: e.target.value})}
-                placeholder="VD: Vật lý, Hóa học..."
-                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
-                <BookOpen className="w-4 h-4 text-orange-500" /> Môn còn yếu
-              </label>
-              <input 
-                type="text"
-                value={preferences.weakSubjects}
-                onChange={(e) => setPreferences({...preferences, weakSubjects: e.target.value})}
-                placeholder="VD: Tiếng Anh, Văn..."
-                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
           </div>
           
           <div className="space-y-1">
             <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
-              <Sparkles className="w-4 h-4 text-yellow-500" /> Phong cách học mong muốn
+              <Sparkles className="w-4 h-4 text-yellow-500" /> Ghi chú bổ sung về phong cách học
             </label>
             <textarea 
               value={preferences.learningStyle}
               onChange={(e) => setPreferences({...preferences, learningStyle: e.target.value})}
-              placeholder="VD: Thích giải thích bằng hình ảnh/ví dụ thực tế, cần được kiểm tra thường xuyên..."
+              placeholder="VD: Mình hay quên công thức, cần nhắc lại nhiều lần..."
               className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm focus:ring-2 focus:ring-purple-500 min-h-[80px]"
             />
           </div>
