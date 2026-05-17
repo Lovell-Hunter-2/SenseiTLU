@@ -79,7 +79,14 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 export default function Home() {
-  const [subjects, setSubjects] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('cachedSubjects');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -126,6 +133,11 @@ export default function Home() {
       const subs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       subs.sort((a: any, b: any) => (a.name || '').localeCompare(b.name || '', 'vi'));
       setSubjects(subs);
+      try {
+        localStorage.setItem('cachedSubjects', JSON.stringify(subs));
+      } catch (e) {
+        console.error("Could not cache subjects", e);
+      }
     }, (error) => {
       console.error("Error fetching subjects:", error);
     });
