@@ -56,6 +56,26 @@ export function AIPersonalizeModal({ isOpen, onClose }: AIPersonalizeModalProps)
 
   if (!isOpen) return null;
 
+  if (!currentUser) {
+    return (
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden text-center p-6">
+           <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4">
+              <User className="w-8 h-8" />
+           </div>
+           <h3 className="text-xl font-bold mb-2">Đăng nhập để sử dụng</h3>
+           <p className="text-slate-500 mb-6">Bạn cần đăng nhập để thiết lập thông tin cá nhân hóa AI của riêng mình.</p>
+           <button 
+             onClick={onClose}
+             className="w-full py-3 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 rounded-xl font-medium transition-colors"
+           >
+             Đóng
+           </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]">
