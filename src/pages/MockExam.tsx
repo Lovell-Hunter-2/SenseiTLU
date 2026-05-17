@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { generateWithFallback, AIMessage } from '../services/aiService';
-import { ArrowLeft, Settings, Play, CheckCircle2, XCircle, RefreshCcw, Lightbulb, Book, Menu, X, User, Quote, Home as HomeIcon, RotateCcw, Eye, Minus, Plus } from 'lucide-react';
+import { ArrowLeft, Settings, Play, CheckCircle2, XCircle, RefreshCcw, Lightbulb, Book, Menu, X, User, Quote, Home as HomeIcon, RotateCcw, Eye, Minus, Plus, UploadCloud, FileText, Trash2 } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Initialize PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface Question {
   question: string;
@@ -69,6 +73,12 @@ export default function MockExam() {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [examMode, setExamMode] = useState<'instant' | 'submit'>('submit');
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  
+  // Custom File Upload
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const [uploadedFileText, setUploadedFileText] = useState("");
+  const [isExtractingText, setIsExtractingText] = useState(false);
 
   // Initialize state from sessionStorage if available
   const STORAGE_KEY = `mockExamState_${id}`;
@@ -216,7 +226,8 @@ export default function MockExam() {
     try {
       const prompt = `
         Tạo một bài trắc nghiệm đại học chuyên ngành cho môn học: "${subject.name}".
-        Ngữ cảnh môn học (dựa trên tên các tài liệu giáo trình và tài liệu tham khảo đã có): ${documentTitles.length > 0 ? documentTitles.join('; ') : 'Không có thông tin tài liệu'}.
+        Ngữ cảnh môn học (từ tài liệu Drive): ${documentTitles.length > 0 ? documentTitles.join('; ') : 'Không có thông tin tài liệu'}.
+        ${uploadedFileText ? `\nĐÂY LÀ NỘI DUNG TÀI LIỆU MÀ NGƯỜI DÙNG QUAN TÂM (Trích xuất từ file tải lên):\n${uploadedFileText.substring(0, 50000)}...\n(HÃY TẠO NHIỀU CÂU HỎI TRỌNG TÂM VÀO NỘI DUNG NÀY NHẤT CÓ THỂ, ưu tiên cao hơn tài liệu chung!).` : ''}
         ${selectedChapters.length > 0 ? `Tập trung câu hỏi vào các phần/chương: ${selectedChapters.join(', ')}.` : ''}
         ${customPrompt ? `YÊU CẦU ĐẶC BIỆT TỪ NGƯỜI DÙNG: ${customPrompt}` : ''}
         Số lượng câu hỏi: ${numQuestions}.
@@ -346,6 +357,46 @@ export default function MockExam() {
       setStatus('retake_wrong');
     } else {
       alert("Bạn không có câu sai nào cả!");
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadedFileName(file.name);
+    setIsExtractingText(true);
+    setUploadedFileText("");
+
+    try {
+      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let extText = '';
+        const maxPages = Math.min(pdf.numPages, 30); // Giới hạn đọc 30 trang để tránh lag và đầy context
+        for (let i = 1; i <= maxPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map((item: any) => item.str).join(' ');
+          extText += pageText + '\\n';
+        }
+        if (pdf.numPages > 30) {
+          extText += '\\n [Đã cắt bớt nội dung vì file quá dài...]';
+        }
+        setUploadedFileText(extText);
+      } else {
+        // Assume text file
+        const text = await file.text();
+        setUploadedFileText(text.substring(0, 50000));
+      }
+    } catch (err) {
+      console.error("Lỗi khi đọc file:", err);
+      alert("Không thể đọc nội dung file. Vui lòng thử file khác.");
+      setUploadedFileName("");
+      setUploadedFileText("");
+    } finally {
+      setIsExtractingText(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -583,6 +634,59 @@ export default function MockExam() {
                     <p className="text-xs text-slate-500">Tiếng tick khi đúng, tạch khi sai (chỉ ở chế độ Xem ngay).</p>
                   </div>
                 </label>
+              )}
+            </div>
+
+            {/* Optional Custom File Upload */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Tài liệu tham chiếu (Tuỳ chọn)</label>
+              <p className="text-xs text-slate-500 mb-2">SenseiTLU sẽ đọc nội dung file để tạo đề siêu sát với tài liệu của cậu.</p>
+              
+              {!uploadedFileName ? (
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex-col h-24 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 rounded-xl flex items-center justify-center cursor-pointer transition-colors bg-slate-50 dark:bg-slate-800/50"
+                >
+                  <UploadCloud className="w-6 h-6 text-slate-400 mb-2" />
+                  <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Tải lên PDF/TXT</span>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept=".pdf,.txt"
+                    onChange={handleFileUpload}
+                  />
+                </div>
+              ) : (
+                <div className="w-full relative border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-lg flex items-center justify-center shrink-0">
+                    <FileText className="w-5 h-5 text-blue-600 dark:text-blue-300" />
+                  </div>
+                  <div className="min-w-0 pr-8">
+                    <div className="font-medium text-blue-900 dark:text-blue-100 truncate text-sm">
+                      {uploadedFileName}
+                    </div>
+                    {isExtractingText ? (
+                      <div className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-0.5">
+                        <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" /> 
+                        Đang đọc bằng AI...
+                      </div>
+                    ) : (
+                      <div className="text-xs text-green-600 dark:text-green-400 mt-0.5 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> Đã đọc xong nội dung
+                      </div>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setUploadedFileName("");
+                      setUploadedFileText("");
+                    }}
+                    className="absolute right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               )}
             </div>
 
