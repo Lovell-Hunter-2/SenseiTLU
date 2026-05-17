@@ -203,14 +203,59 @@ export default function Blog() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">URL Ảnh bìa (Tùy chọn)</label>
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={newPost.imageUrl}
-                  onChange={e => setNewPost({...newPost, imageUrl: e.target.value})}
-                />
+                <label className="block text-sm font-medium mb-1">Ảnh bìa (Tùy chọn)</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="URL ảnh hoặc tải lên..."
+                    className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
+                    value={newPost.imageUrl}
+                    onChange={e => setNewPost({...newPost, imageUrl: e.target.value})}
+                  />
+                  <label className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl cursor-pointer transition-colors text-sm font-medium shrink-0">
+                    <ImageIcon className="w-4 h-4" /> Tải lên
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 800 * 1024) {
+                          alert('Kích thước ảnh quá lớn. Vui lòng chọn ảnh/gif dưới 800KB.');
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          if (file.type === 'image/gif') {
+                            setNewPost({...newPost, imageUrl: reader.result as string});
+                          } else {
+                            const img = new Image();
+                            img.onload = () => {
+                              const canvas = document.createElement('canvas');
+                              let w = img.width, h = img.height;
+                              const MAX = 800;
+                              if (w > h && w > MAX) { h *= MAX/w; w = MAX; }
+                              else if (h > MAX) { w *= MAX/h; h = MAX; }
+                              canvas.width = w; canvas.height = h;
+                              const ctx = canvas.getContext('2d');
+                              ctx?.drawImage(img, 0, 0, w, h);
+                              setNewPost({...newPost, imageUrl: canvas.toDataURL('image/webp', 0.8)});
+                            };
+                            img.src = reader.result as string;
+                          }
+                        };
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                  </label>
+                </div>
+                {newPost.imageUrl && newPost.imageUrl.startsWith('data:') && (
+                  <div className="mt-2 relative inline-block">
+                    <img src={newPost.imageUrl} alt="Preview" className="h-20 rounded-lg object-contain border border-slate-200 dark:border-slate-700" />
+                    <button type="button" onClick={() => setNewPost({...newPost, imageUrl: ''})} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X className="w-3 h-3" /></button>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Nội dung</label>
