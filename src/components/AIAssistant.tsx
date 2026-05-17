@@ -1,463 +1,184 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Search, Sparkles, Send, Minimize2, Minimize, Minus, Image as ImageIcon, Camera, Trash2, Settings2 } from 'lucide-react';
-import { generateWithFallback, AIMessage } from '../services/aiService';
-import ReactMarkdown from 'react-markdown';
-import { Link, useLocation } from 'react-router-dom';
-import { collection, getDocs, query, where, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase';
-import { useAuth } from '../contexts/AuthContext';
-import { ScreenshotHelper } from './ScreenshotHelper';
-import { AIPersonalizeModal } from './AIPersonalizeModal';
+import { Sparkles } from 'lucide-react';
+import { AIAssistant } from './AIAssistant';
 
-interface AIAssistantProps {
-  isVisible: boolean;
-  onClose: () => void;
-  onMinimize: () => void;
-}
+// Global state using events so the layout header can trigger it
+export const toggleAIAssistant = () => {
+  const event = new CustomEvent('toggle-ai-assistant');
+  window.dispatchEvent(event);
+};
 
-export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps) {
-  const { currentUser } = useAuth();
-  const [messages, setMessages] = useState<AIMessage[]>([
-    { role: 'assistant', content: 'Xin chào! Mình là trợ lý AI ở đây để giúp bạn sử dụng các tài liệu, tìm môn học, tạo đề, hoặc giải thích kiến thức.' }
-  ]);
-  const [inputValue, setInputValue] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [subjectsList, setSubjectsList] = useState<{ id: string, name: string }[]>([]);
-  const [subjectsStr, setSubjectsStr] = useState("");
-  const [smartPrompts, setSmartPrompts] = useState<string[]>([]);
-  const [attachedFile, setAttachedFile] = useState<{name: string, type: string, data: string} | null>(null);
-  const [isCapturing, setIsCapturing] = useState(false);
-  const [showPersonalizeModal, setShowPersonalizeModal] = useState(false);
-  const [userProfile, setUserProfile] = useState<any>(null);
+export const pingAIAssistant = () => {
+  const event = new CustomEvent('ping-ai-assistant');
+  window.dispatchEvent(event);
+};
+
+export function AIAssistantWidget() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [ping, setPing] = useState(false);
   
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const location = useLocation();
-  
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-  
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, isVisible]);
+  // Vị trí mặc định ở góc trên cùng bên phải (dưới header)
+  const padding = 16;
+  const [position, setPosition] = useState({ 
+    x: typeof window !== 'undefined' ? window.innerWidth - 64 - padding : 300, 
+    y: 80 
+  });
+  const isDragging = useRef(false);
 
   useEffect(() => {
-    const pathParts = location.pathname.split('/');
-    if (pathParts[1] === 'subject' && pathParts[2]) {
-      setSmartPrompts([
-        "Tóm tắt môn học này",
-        "Tạo đề ôn tập",
-        "Học môn này cần lưu ý gì?"
-      ]);
-    } else if (pathParts[1] === 'mock-exam') {
-      setSmartPrompts([
-        "Làm sao để được điểm cao?",
-        "Giải thích câu khó",
-      ]);
-    } else if (pathParts[1] === '') {
-      setSmartPrompts([
-        "Môn nào đang hot?",
-        "Tìm tài liệu Toán",
-        "Hướng dẫn ôn thi"
-      ]);
-    } else {
-      setSmartPrompts([
-        "Sensei ơi giúp mình",
-        "Tìm tài liệu",
-      ]);
-    }
-  }, [location.pathname]);
+    const handleToggle = () => {
+      setIsOpen(true);
+      setIsMinimized(false);
+    };
 
-  useEffect(() => {
-    if (currentUser && isVisible) {
-      const fetchUserData = async () => {
-        try {
-          const docRef = doc(db, 'users', currentUser.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            if (data.aiPreferences) setUserProfile(data.aiPreferences);
-            if (data.aiHistory && data.aiHistory.length > 0) {
-              setMessages([
-                { role: 'assistant', content: 'Xin chào! Mình đã tải lại lịch sử trò chuyện trước đó của bạn.' },
-                ...data.aiHistory
-              ]);
-            }
-          }
-        } catch (error) {
-          console.error("Lỗi khi tải dữ liệu AI cá nhân:", error);
-        }
-      };
-      fetchUserData();
-    }
-  }, [currentUser, isVisible]);
-
-  useEffect(() => {
-    const fetchSubjects = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'subjects'));
-        const list = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          name: doc.data().name
-        }));
-        setSubjectsList(list);
-        
-        const listStr = list.map(item => `- ${item.name} (Link: /subject/${item.id})`);
-        setSubjectsStr(listStr.join('\n'));
-      } catch (error) {
-        console.error("Lỗi khi fetch subject cho AI", error);
+    const handlePing = () => {
+      if (!isMinimized && isOpen) {
+        setPing(true);
+        setTimeout(() => setPing(false), 1000);
+      } else {
+        setIsOpen(true);
+        setIsMinimized(false);
       }
     };
-    fetchSubjects();
+
+    window.addEventListener('toggle-ai-assistant', handleToggle);
+    window.addEventListener('ping-ai-assistant', handlePing);
+    
+    // Xử lý resize window, đảm bảo mascot không bị rơi ra ngoài màn hình
+    const handleResize = () => {
+       setPosition(prev => {
+          const mascotWidth = 64;
+          const mascotHeight = 80;
+          let newX = Math.max(padding, Math.min(prev.x, window.innerWidth - mascotWidth - padding));
+          let newY = Math.max(padding, Math.min(prev.y, window.innerHeight - mascotHeight - padding));
+          return { x: newX, y: newY };
+       });
+    };
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('toggle-ai-assistant', handleToggle);
+      window.removeEventListener('ping-ai-assistant', handlePing);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [isOpen, isMinimized]);
+
+  if (!isOpen && !isMinimized) {
+    // Hidden initially until triggered by a top level component (or if you want it always visible, set isMinimized=true by default)
+  }
+
+  // Khởi tạo luôn chạy nhưng thu nhỏ dưới dạng Mascot
+  useEffect(() => {
+    // Có thể mặc định bật mascot
+    setIsMinimized(true);
+    setIsOpen(true);
   }, []);
 
-  const handleSend = async (textOverride?: string) => {
-    // If the event object from React is passed accidentally, we don't want to use it
-    const textToProcess = typeof textOverride === 'string' ? textOverride : inputValue;
-    if ((!textToProcess.trim() && !attachedFile) || isLoading) return;
+  const handleDragEnd = (e: any, info: any) => {
+    setTimeout(() => { isDragging.current = false; }, 100);
     
-    const userMessage: AIMessage = { role: 'user', content: textToProcess, attachedFileData: attachedFile?.data, attachedFileName: attachedFile?.name, attachedFileType: attachedFile?.type };
-    setMessages(prev => [...prev, userMessage]);
-    setInputValue("");
-    const fileToSend = attachedFile;
-    setAttachedFile(null);
-    setIsLoading(true);
+    const mascotWidth = 64;
+    const mascotHeight = 80;
     
-    // Tìm context chính xác
-    let currentContext = `Đường dẫn trang hiện tại: ${location.pathname}`;
-    const pathParts = location.pathname.split('/');
-    if (pathParts[1] === 'subject' && pathParts[2]) {
-      const subjectId = pathParts[2];
-      const foundSubject = subjectsList.find(s => s.id === subjectId);
-      if (foundSubject) {
-        let docsInfo = "Chưa có tài liệu nào.";
-        try {
-          const q = query(collection(db, 'documents'), where('subjectId', '==', subjectId));
-          const snap = await getDocs(q);
-          if (!snap.empty) {
-            const docs = snap.docs.map(d => {
-              const data = d.data();
-              return `- [${data.type || 'Tài liệu'}] ${data.title} ${data.url ? `(Link: ${data.url})` : ''}`;
-            });
-            docsInfo = docs.join('\n');
-          }
-        } catch (error) {
-          console.error("Lỗi khi fetch docs cho AI:", error);
-        }
-        
-        currentContext = `Người dùng đang ở trong trang của môn học: "${foundSubject.name}".
-Hiện tại môn học này có các tài liệu sau trên hệ thống:
-${docsInfo}
+    // Vị trí sau khi kéo (sử dụng info.point thay cho offset vì element được dịch chuyển fixed layout top-0 left-0)
+    // Thực ra với motion framer khi binding x/y, animate tự duy trì vị trí tuyệt đối. 
+    // offset chỉ là mức dịch chuyển trong 1 lần kéo.
+    let currentX = position.x + info.offset.x;
+    let currentY = position.y + info.offset.y;
 
-YÊU CẦU ĐẶC BIỆT: Nếu người dùng hỏi về tài liệu môn này có gì, hoặc tóm tắt môn này, hãy TẬP TRUNG tư vấn dựa trên TÀI LIỆU CỦA MÔN "${foundSubject.name}" ở trên. KHÔNG gợi ý sang các môn khác trừ khi được yêu cầu. Dùng format markdown link để dẫn link tài liệu.`;
-      }
-    } else if (pathParts[1] === '') {
-      currentContext = `Người dùng đang ở Trang Chủ (Home).`;
+    // Khoảng cách tới các cạnh màn hình
+    const distLeft = currentX;
+    const distRight = window.innerWidth - (currentX + mascotWidth);
+    const distTop = currentY;
+    const distBottom = window.innerHeight - (currentY + mascotHeight);
+
+    // Tìm cạnh gần nhất
+    const minDist = Math.min(distLeft, distRight, distTop, distBottom);
+
+    let snapX = currentX;
+    let snapY = currentY;
+
+    if (minDist === distLeft) {
+      snapX = padding;
+    } else if (minDist === distRight) {
+      snapX = window.innerWidth - mascotWidth - padding;
+    } else if (minDist === distTop) {
+      snapY = padding;
+    } else if (minDist === distBottom) {
+      snapY = window.innerHeight - mascotHeight - padding;
     }
+    
+    // Đảm bảo không bị lọt ra ngoài màn hình ở trục còn lại
+    snapX = Math.max(padding, Math.min(snapX, window.innerWidth - mascotWidth - padding));
+    snapY = Math.max(padding, Math.min(snapY, window.innerHeight - mascotHeight - padding));
 
-    try {
-      let personalizeContext = "";
-      if (userProfile) {
-        personalizeContext = `\n\n--- HỒ SƠ HỌC TẬP (VÔ CÙNG QUAN TRỌNG) ---
-Bạn ĐANG NÓI CHUYỆN VỚI NGƯỜI CÓ HỒ SƠ SAU:
-- Lớp: ${userProfile.grade || 'Không rõ'}
-- Mục tiêu: ${userProfile.goals || 'Không rõ'}
-- Điểm mạnh: ${userProfile.strongSubjects || 'Không rõ'}
-- Điểm yếu: ${userProfile.weakSubjects || 'Không rõ'}
-- Sở thích học: ${userProfile.learningStyle || 'Không rõ'}
-HÃY DÙNG THÔNG TIN NÀY ĐỂ TRẢ LỜI CHO PHÙ HỢP (ví dụ dùng văn phong dễ hiểu hơn nếu học sinh lớp nhỏ, hoặc tập trung vào môn yếu nếu liên quan). Tuyệt đối không nhắc lại toàn bộ hồ sơ trừ khi được hỏi.`;
-      }
-
-      const systemMessage: AIMessage = { 
-        role: 'system', 
-        content: `Bạn là trợ lý AI "Sensei AI" trên nền tảng ôn thi SenseiTLU.
-1. Hãy trả lời cực kỳ NGẮN GỌN, CHÍNH XÁC, đi thẳng vào vấn đề. KHÔNG dài dòng, KHÔNG tự ý gợi ý những thứ người dùng không hỏi.
-2. Dưới đây là danh sách các môn học (để tạo link khi cần):
-${subjectsStr}
-Khi nhắc đến môn học, có thể dùng format Link Markdown để người dùng bấm vào: [Tên môn](/subject/ID).
-3. NGỮ CẢNH HIỆN TẠI (Vô cùng quan trọng): ${currentContext}${personalizeContext}
-4. Giải đáp kiến thức bằng chuyên môn sư phạm. Luôn bám sát ngữ cảnh hiện tại trước tiên.`
-      };
-      
-      const chatMessages = [
-        systemMessage,
-        ...messages.map(m => ({ role: m.role, content: m.content })),
-        userMessage
-      ];
-
-      const responseText = await generateWithFallback({ 
-        messages: chatMessages,
-        attachedFileString: fileToSend ? fileToSend.data : undefined
-      });
-      
-      const assistantMessage: AIMessage = { role: 'assistant', content: responseText };
-      setMessages(prev => {
-        const newMessages = [...prev, assistantMessage];
-        // Save to Firebase (background)
-        if (currentUser) {
-           const historyToSave = [...messages.filter(m => m.role !== 'system'), userMessage, assistantMessage].slice(-10); // Keep last 10
-           updateDoc(doc(db, 'users', currentUser.uid), {
-             aiHistory: historyToSave.map(m => ({ role: m.role, content: m.content })) // omit base64 to save size
-           }).catch(e => console.error("Could not save history", e));
-        }
-        return newMessages;
-      });
-    } catch (error: any) {
-      setMessages(prev => [...prev, { role: 'assistant', content: `Xin lỗi, có lỗi xảy ra: ${error.message}` }]);
-    } finally {
-      setIsLoading(false);
-    }
+    setPosition({ x: snapX, y: snapY });
   };
 
-  useEffect(() => {
-    const handleFill = (e: any) => {
-      const text = e.detail;
-      if (text) {
-        setInputValue(text);
-        setTimeout(() => {
-          handleSend(text);
-        }, 300);
-      }
-    };
-    window.addEventListener('ai-assistant-fill', handleFill);
-    return () => window.removeEventListener('ai-assistant-fill', handleFill);
-  }, [handleSend]);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    } else if (e.key === 'Escape') {
-      onMinimize();
-    }
+  const handleClick = (e: React.MouseEvent) => {
+    if (isDragging.current) return;
+    setIsMinimized(false);
   };
-
-  if (!isVisible) return null;
 
   return (
     <>
-      <motion.div
-        id="ai-assistant-container"
-        drag
-        dragConstraints={{ top: 0, left: 0, right: typeof window !== 'undefined' ? window.innerWidth - 320 : 0, bottom: typeof window !== 'undefined' ? window.innerHeight - 500 : 0 }}
-        dragElastic={0.1}
-        dragMomentum={false}
-        initial={{ opacity: 0, scale: 0.8, y: 50 }}
-        animate={{ opacity: isCapturing ? 0 : 1, scale: 1, y: 0, pointerEvents: isCapturing ? 'none' : 'auto' }}
-        exit={{ opacity: 0, scale: 0.8, y: 50 }}
-        className="fixed z-50 bottom-4 right-4 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col"
-        style={{ height: '500px', maxHeight: '80vh' }}
-      >
-      {/* Header (Drag Handle) */}
-      <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 cursor-move rounded-t-2xl">
-        <div className="flex items-center gap-2 pointer-events-none">
-          <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
-            <Sparkles className="w-4 h-4" />
-          </div>
-          <span className="font-bold text-sm">Sensei AI</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <button 
-            onClick={() => setShowPersonalizeModal(true)}
-            className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 transition-colors"
-            title="Cá nhân hóa AI"
-          >
-            <Settings2 className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={onMinimize}
-            className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 transition-colors"
-          >
-            <Minus className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={onClose}
-            className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 rounded-lg text-slate-500 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg, index) => (
-          <div 
-            key={index} 
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div 
-              className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm ${
-                msg.role === 'user' 
-                  ? 'bg-blue-600 text-white rounded-br-none' 
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-none'
-              }`}
-            >
-              {msg.role === 'user' ? (
-                <>
-                  {msg.attachedFileType && msg.attachedFileData && msg.attachedFileType.startsWith('image/') && (
-                    <img src={msg.attachedFileData} alt="User attachment" className="w-full h-auto rounded-lg mb-2 object-contain bg-white/10" style={{ maxHeight: '200px' }} />
-                  )}
-                  {msg.attachedFileType && msg.attachedFileData && !msg.attachedFileType.startsWith('image/') && (
-                    <div className="flex items-center gap-2 bg-white/20 p-2 rounded-lg mb-2 border border-white/10 text-xs">
-                      <span className="truncate max-w-[150px]">{msg.attachedFileName}</span>
-                    </div>
-                  )}
-                  {msg.content}
-                </>
-              ) : (
-                <div className="text-sm">
-                  <ReactMarkdown
-                    components={{
-                      a: ({ node, ...props }) => (
-                        <Link to={props.href || "#"} className="text-blue-600 dark:text-blue-400 hover:text-blue-700 underline font-semibold transition-colors" onClick={onMinimize}>
-                          {props.children}
-                        </Link>
-                      ),
-                      p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
-                      ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2 last:mb-0" {...props} />,
-                      ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2 last:mb-0" {...props} />,
-                      li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-                      strong: ({ node, ...props }) => <strong className="font-bold text-slate-900 dark:text-slate-100" {...props} />,
-                      code: ({ node, inline, ...props }: any) => 
-                        inline 
-                          ? <code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded text-xs text-pink-600 dark:text-pink-400 font-mono" {...props} />
-                          : <code className="block bg-slate-200 dark:bg-slate-700 p-2 rounded text-xs font-mono my-2 overflow-x-auto" {...props} />
-                    }}
-                  >
-                    {msg.content}
-                  </ReactMarkdown>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="max-w-[85%] rounded-2xl px-4 py-3 text-sm bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-bl-none flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce"></span>
-              <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-              <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0.4s' }}></span>
-            </div>
-          </div>
+      <AnimatePresence>
+        {isOpen && !isMinimized && (
+          <AIAssistant 
+            isVisible={true} 
+            onClose={() => setIsOpen(false)} 
+            onMinimize={() => setIsMinimized(true)}
+          />
         )}
-        <div ref={messagesEndRef} />
-      </div>
+      </AnimatePresence>
 
-      {/* Input */}
-      <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-2 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] z-10">
-        {/* Smart Prompts */}
-        {smartPrompts.length > 0 && messages.length < 5 && (
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-            {smartPrompts.map((prompt, index) => (
-              <button
-                key={index}
-                onClick={() => handleSend(prompt)}
-                className="whitespace-nowrap text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-full px-3 py-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                disabled={isLoading}
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Selected File Preview */}
-        {attachedFile && (
-          <div className="relative inline-block w-fit mb-1 mt-1">
-            {attachedFile.type.startsWith('image/') ? (
-              <img src={attachedFile.data} alt="Selected preview" className="h-16 w-auto rounded-lg border border-slate-200 dark:border-slate-700 object-cover" />
-            ) : (
-              <div className="h-12 px-3 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center border border-slate-200 dark:border-slate-700 text-sm font-medium">
-                {attachedFile.name.length > 20 ? attachedFile.name.substring(0, 20) + '...' : attachedFile.name}
-              </div>
-            )}
+      <AnimatePresence>
+        {isOpen && isMinimized && (
+          <motion.div
+            drag
+            dragMomentum={false}
+            onDragStart={() => { isDragging.current = true; }}
+            onDragEnd={handleDragEnd}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ 
+              scale: ping ? 1.2 : 1, 
+              opacity: 1,
+              x: position.x,
+              y: position.y
+            }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            className="fixed z-50 top-0 left-0 cursor-grab active:cursor-grabbing flex flex-col items-center gap-1 group"
+            style={{ touchAction: 'none' }}
+          >
+            {/* Nút đóng mascot - chỉ hiện khi hover */}
             <button 
-              onClick={() => setAttachedFile(null)}
-              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-sm hover:bg-red-600 z-10"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); setIsOpen(false); setIsMinimized(false); }}
+              className="absolute -top-2 -right-2 bg-slate-800 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-500"
             >
-              <X className="w-3 h-3" />
+              <span className="text-[10px] font-bold">✕</span>
             </button>
-          </div>
+
+            <button
+              onClick={handleClick}
+              className="w-12 h-12 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg flex items-center justify-center relative shadow-blue-500/30 ring-4 ring-white dark:ring-slate-900 transition-transform hover:scale-105"
+            >
+              <Sparkles className="w-6 h-6" />
+              <motion.div 
+                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="absolute inset-0 rounded-full bg-white opacity-20"
+              />
+            </button>
+            <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-full opacity-90 shadow-sm pointer-events-none">
+              AI
+            </span>
+          </motion.div>
         )}
-
-        <div className="relative flex items-end gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
-          <input 
-            type="file" 
-            accept="image/*,.pdf,.txt,.md" 
-            ref={fileInputRef} 
-            className="hidden" 
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onloadend = () => setAttachedFile({name: file.name, type: file.type || 'unknown', data: reader.result as string});
-                reader.readAsDataURL(file);
-              }
-              if (e.target) e.target.value = '';
-            }} 
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="p-2 mb-1 text-slate-500 hover:text-blue-600 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors shrink-0"
-            title="Đăng ảnh"
-          >
-            <ImageIcon className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setIsCapturing(true)}
-            className="p-2 mb-1 text-slate-500 hover:text-blue-600 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors shrink-0"
-            title="Chụp màn hình"
-          >
-            <Camera className="w-5 h-5" />
-          </button>
-
-          <textarea
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Hỏi AI..."
-            className="flex-1 bg-transparent border-none focus:ring-0 resize-none py-2 px-2 text-sm"
-            rows={1}
-            style={{ minHeight: '36px', maxHeight: '120px' }}
-          />
-
-          <button 
-            onClick={() => handleSend()}
-            disabled={(!inputValue.trim() && !attachedFile) || isLoading}
-            className="p-2 mb-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors shrink-0 mr-1"
-          >
-            <Send className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-    </motion.div>
-    {isCapturing && (
-      <ScreenshotHelper 
-        onCapture={(base64) => {
-          setAttachedFile({name: 'screenshot.png', type: 'image/png', data: base64});
-          setIsCapturing(false);
-        }}
-        onCancel={() => setIsCapturing(false)}
-      />
-    )}
-    <AIPersonalizeModal 
-      isOpen={showPersonalizeModal} 
-      onClose={() => {
-        setShowPersonalizeModal(false);
-        // Retry fetch manually to update profile quickly
-        if (currentUser) {
-          getDoc(doc(db, 'users', currentUser.uid))
-            .then(snap => {
-              if (snap.exists() && snap.data().aiPreferences) {
-                 setUserProfile(snap.data().aiPreferences);
-              }
-            });
-        }
-      }} 
-    />
+      </AnimatePresence>
     </>
   );
 }
