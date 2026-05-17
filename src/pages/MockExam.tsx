@@ -884,19 +884,22 @@ export default function MockExam() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-8">
-            <button onClick={resetQuiz} className="flex items-center justify-center gap-2 py-3 bg-[#6b4cff] hover:bg-[#5a3ee0] text-white rounded-xl font-medium transition-colors">
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
+            <button onClick={resetQuiz} className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 bg-[#6b4cff] hover:bg-[#5a3ee0] text-white rounded-xl font-medium transition-colors">
               <RotateCcw className="w-4 h-4" /> Làm lại
             </button>
             {retakeWrong && incorrect > 0 && (
-              <button onClick={startRetakeWrong} className="flex items-center justify-center gap-2 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-medium transition-colors">
+              <button onClick={startRetakeWrong} className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-medium transition-colors">
                 <RefreshCcw className="w-4 h-4" /> Làm lại câu sai
               </button>
             )}
-            <button onClick={() => { setStatus('review'); setCurrentIndex(0); }} className="flex items-center justify-center gap-2 py-3 bg-[#24283b] hover:bg-[#2f344d] text-white rounded-xl font-medium transition-colors border border-slate-700">
+            <button onClick={() => { setStatus('review'); setCurrentIndex(0); }} className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 bg-[#24283b] hover:bg-[#2f344d] text-white rounded-xl font-medium transition-colors border border-slate-700">
               <Eye className="w-4 h-4" /> Xem đáp án
             </button>
-            <button onClick={() => navigate('/')} className="flex items-center justify-center gap-2 py-3 bg-[#24283b] hover:bg-[#2f344d] text-white rounded-xl font-medium transition-colors border border-slate-700">
+            <button onClick={() => { setStatus('setup'); setQuestions([]); setUserAnswers({}); sessionStorage.removeItem(STORAGE_KEY); }} className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 bg-[#24283b] hover:bg-[#2f344d] text-white rounded-xl font-medium transition-colors border border-slate-700">
+              <Settings className="w-4 h-4" /> Cài đặt đề
+            </button>
+            <button onClick={() => navigate('/')} className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 bg-[#24283b] hover:bg-[#2f344d] text-white rounded-xl font-medium transition-colors border border-slate-700">
               <HomeIcon className="w-4 h-4" /> Trang chủ
             </button>
           </div>
