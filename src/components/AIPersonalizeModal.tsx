@@ -10,7 +10,7 @@ interface AIPersonalizeModalProps {
 }
 
 export function AIPersonalizeModal({ isOpen, onClose }: AIPersonalizeModalProps) {
-  const { currentUser } = useAuth();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [preferences, setPreferences] = useState({
     grade: '',
@@ -21,10 +21,10 @@ export function AIPersonalizeModal({ isOpen, onClose }: AIPersonalizeModalProps)
   });
 
   useEffect(() => {
-    if (isOpen && currentUser) {
+    if (isOpen && user) {
       const fetchProfile = async () => {
         try {
-          const docRef = doc(db, 'users', currentUser.uid);
+          const docRef = doc(db, 'users', user.uid);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists() && docSnap.data().aiPreferences) {
             setPreferences(docSnap.data().aiPreferences);
@@ -35,13 +35,13 @@ export function AIPersonalizeModal({ isOpen, onClose }: AIPersonalizeModalProps)
       };
       fetchProfile();
     }
-  }, [isOpen, currentUser]);
+  }, [isOpen, user]);
 
   const handleSave = async () => {
-    if (!currentUser) return;
+    if (!user) return;
     setIsLoading(true);
     try {
-      const docRef = doc(db, 'users', currentUser.uid);
+      const docRef = doc(db, 'users', user.uid);
       await updateDoc(docRef, {
         aiPreferences: preferences
       });
@@ -56,7 +56,7 @@ export function AIPersonalizeModal({ isOpen, onClose }: AIPersonalizeModalProps)
 
   if (!isOpen) return null;
 
-  if (!currentUser) {
+  if (!user) {
     return (
       <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
         <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden text-center p-6">
