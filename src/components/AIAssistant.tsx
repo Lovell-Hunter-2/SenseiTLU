@@ -259,15 +259,13 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
           <span className="font-bold text-sm">Sensei AI</span>
         </div>
         <div className="flex items-center gap-1">
-          {currentUser && (
-            <button 
-              onClick={() => setShowPersonalizeModal(true)}
-              className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 transition-colors"
-              title="Cá nhân hóa AI"
-            >
-              <Settings2 className="w-4 h-4" />
-            </button>
-          )}
+          <button 
+            onClick={() => setShowPersonalizeModal(true)}
+            className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 transition-colors"
+            title="Cá nhân hóa AI"
+          >
+            <Settings2 className="w-4 h-4" />
+          </button>
           <button 
             onClick={onMinimize}
             className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 transition-colors"
