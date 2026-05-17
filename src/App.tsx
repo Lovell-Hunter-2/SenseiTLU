@@ -21,6 +21,7 @@ export default function App() {
               <Route index element={<Home />} />
               <Route path="subject/:id" element={<SubjectDetail />} />
               <Route path="subject/:id/mock-exam" element={<MockExam />} />
+              <Route path="subject/:id/mock-exam/:examId" element={<MockExam />} />
               <Route path="about" element={<About />} />
               <Route path="contribute" element={<Contribute />} />
               <Route path="blog" element={<Blog />} />
