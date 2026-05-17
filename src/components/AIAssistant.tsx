@@ -53,7 +53,7 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
     } else if (pathParts[1] === '') {
       setSmartPrompts([
         "Môn nào đang hot?",
-        "Tìm tài liệu Toán",
+        "Hướng dẫn thi thử bằng AI",
         "Hướng dẫn ôn thi"
       ]);
     } else {
