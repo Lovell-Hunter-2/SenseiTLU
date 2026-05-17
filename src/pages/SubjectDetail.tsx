@@ -685,7 +685,7 @@ export default function SubjectDetail() {
 
       {/* Choice Modal for Document Opening Options */}
       {showChoiceModal && selectedDocument && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[55] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-8 shadow-2xl border border-slate-200 dark:border-slate-800 text-center relative overflow-hidden">
             <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <LayoutTemplate className="w-8 h-8" />
@@ -728,42 +728,44 @@ export default function SubjectDetail() {
 
       {/* Embedded Document View Modal */}
       {showIframeModal && selectedDocument && (
-        <div className="fixed inset-0 z-[55] bg-white dark:bg-slate-950 flex flex-col">
-          <div className="h-14 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10 shadow-sm">
-            <div className="flex items-center gap-3 w-3/4">
-              <div className="w-8 h-8 shrink-0 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center rounded-lg">
-                <Book className="w-4 h-4" />
+        <div className="fixed inset-0 z-[45] p-4 sm:p-6 md:p-8 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-6xl h-[85vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
+            <div className="h-14 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between px-4 sm:px-6 shrink-0">
+              <div className="flex items-center gap-3 w-3/4">
+                <div className="w-8 h-8 shrink-0 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center rounded-lg shadow-sm">
+                  <Book className="w-4 h-4" />
+                </div>
+                <h2 className="font-bold text-slate-800 dark:text-slate-200 truncate pr-4">{selectedDocument.title}</h2>
               </div>
-              <h2 className="font-bold text-slate-800 dark:text-slate-200 truncate">{selectedDocument.title}</h2>
+              <div className="flex items-center gap-2 shrink-0">
+                <a 
+                  href={selectedDocument.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors" 
+                  title="Mở trong Google Drive"
+                >
+                  <ExternalLink className="w-5 h-5" />
+                </a>
+                <div className="w-px h-5 bg-slate-300 dark:bg-slate-700 mx-1"></div>
+                <button 
+                  onClick={() => setShowIframeModal(false)} 
+                  className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors" 
+                  title="Đóng (Esc)"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <a 
-                href={selectedDocument.url} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" 
-                title="Mở trong Google Drive"
-              >
-                <ExternalLink className="w-5 h-5" />
-              </a>
-              <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1"></div>
-              <button 
-                onClick={() => setShowIframeModal(false)} 
-                className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" 
-                title="Đóng (Esc)"
-              >
-                <X className="w-5 h-5" />
-              </button>
+            <div className="flex-1 w-full bg-slate-100 dark:bg-slate-900/50">
+              {/* Embedded Iframe */}
+              <iframe 
+                src={getEmbedUrl(selectedDocument.url)} 
+                className="w-full h-full border-0" 
+                allow="autoplay; fullscreen"
+                title="Trình xem tài liệu"
+              />
             </div>
-          </div>
-          <div className="flex-1 w-full relative bg-slate-100 dark:bg-slate-900">
-            {/* Embedded Iframe */}
-            <iframe 
-              src={getEmbedUrl(selectedDocument.url)} 
-              className="absolute inset-0 w-full h-full border-0" 
-              allow="autoplay; fullscreen"
-              title="Trình xem tài liệu"
-            />
           </div>
         </div>
       )}
