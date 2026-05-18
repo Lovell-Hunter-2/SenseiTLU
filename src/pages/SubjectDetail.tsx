@@ -317,7 +317,7 @@ export default function SubjectDetail() {
               <h3 className="text-lg font-bold flex items-center gap-2">
                 <Icon className="w-5 h-5 text-blue-500" /> {type}
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                 {docs.map(doc => (
                   <div key={doc.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                     <div className="flex items-start gap-4">
@@ -333,7 +333,7 @@ export default function SubjectDetail() {
                             </h4>
                             {!doc.isFolder && doc.chapter && (
                               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                              {doc.chapter}
+                                {doc.chapter}
                               </p>
                             )}
                           </div>
@@ -388,28 +388,21 @@ export default function SubjectDetail() {
 
                     {/* Expanded Folder Items */}
                     {doc.isFolder && expandedFolders[doc.id] && doc.items && doc.items.length > 0 && (
-                      <div className="pl-0 sm:pl-14 space-y-2 pt-4 mt-2 border-t border-slate-100 dark:border-slate-800">
+                      <div className="pl-0 sm:pl-14 pt-4 mt-2 border-t border-slate-100 dark:border-slate-800 flex flex-wrap gap-2">
                         {doc.items.map((item: any, idx: number) => (
                           <a 
                             key={idx}
                             href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             onClick={(e) => handleDocumentClick(e, item.title, item.url)}
-                            className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-blue-200 dark:hover:border-blue-900/50 transition-all group"
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800 flex-1 min-w-[200px] hover:shadow-sm hover:border-blue-300 dark:hover:border-blue-700/50 transition-all group"
+                            title={item.title}
                           >
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
-                                <LinkIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                              </div>
-                              <span className="truncate text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
-                                {item.title}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-medium text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">
-                                Xem tài liệu
-                              </span>
-                              <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors shrink-0" />
-                            </div>
+                            <FileText className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-blue-500 dark:group-hover:text-blue-400 shrink-0" />
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                              {item.title}
+                            </span>
                           </a>
                         ))}
                       </div>
