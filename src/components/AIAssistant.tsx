@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useDragControls } from 'motion/react';
 import { X, Search, Sparkles, Send, Minimize2, Minimize, Minus, Image as ImageIcon, Camera, Trash2, Settings2 } from 'lucide-react';
 import { generateWithFallback, AIMessage } from '../services/aiService';
 import ReactMarkdown from 'react-markdown';
@@ -34,6 +34,7 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
+  const dragControls = useDragControls();
   
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -253,6 +254,8 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
       <motion.div
         id="ai-assistant-container"
         drag
+        dragListener={false}
+        dragControls={dragControls}
         dragConstraints={{ top: 0, left: 0, right: typeof window !== 'undefined' ? window.innerWidth - 320 : 0, bottom: typeof window !== 'undefined' ? window.innerHeight - 500 : 0 }}
         dragElastic={0.1}
         dragMomentum={false}
@@ -263,7 +266,10 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
         style={{ height: '500px', maxHeight: '80vh' }}
       >
       {/* Header (Drag Handle) */}
-      <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 cursor-move rounded-t-2xl">
+      <div 
+        onPointerDown={(e) => dragControls.start(e)}
+        className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 cursor-move rounded-t-2xl touch-none"
+      >
         <div className="flex items-center gap-2 pointer-events-none">
           <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
             <Sparkles className="w-4 h-4" />
@@ -294,14 +300,14 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 select-text">
         {messages.map((msg, index) => (
           <div 
             key={index} 
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div 
-              className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm ${
+              className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm select-text ${
                 msg.role === 'user' 
                   ? 'bg-blue-600 text-white rounded-br-none' 
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-none'
