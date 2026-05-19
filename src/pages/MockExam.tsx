@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { generateWithFallback, AIMessage } from '../services/aiService';
-import { ArrowLeft, Settings, Play, CheckCircle2, XCircle, RefreshCcw, Lightbulb, Book, Menu, X, User, Quote, Home as HomeIcon, RotateCcw, Eye, Minus, Plus, UploadCloud, FileText, Trash2, Share2, ClipboardCheck } from 'lucide-react';
+import { ArrowLeft, Settings, Play, CheckCircle2, XCircle, RefreshCcw, Lightbulb, Book, Menu, X, User, Quote, Home as HomeIcon, RotateCcw, Eye, Minus, Plus, UploadCloud, FileText, Trash2, Share2, ClipboardCheck, Lock, LogIn } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -94,7 +94,7 @@ const highScoreQuotes = [
 export default function MockExam() {
   const { id, examId } = useParams<{ id: string, examId?: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const [subject, setSubject] = useState<any>(null);
   const [availableChapters, setAvailableChapters] = useState<string[]>([]);
   const [documentTitles, setDocumentTitles] = useState<string[]>([]);
@@ -630,7 +630,39 @@ export default function MockExam() {
 
   // --- RENDER STATES ---
 
-  if (!subject) return <div className="py-12 text-center">Đang tải...</div>;
+  if (!user) {
+    return (
+      <div className="py-12 max-w-3xl mx-auto px-4">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-8 sm:p-12 text-center shadow-lg relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+          <div className="flex flex-col items-center gap-5 relative z-10">
+            <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-blue-600 dark:text-blue-400 mb-2 border border-slate-100 dark:border-slate-700">
+              <Lock className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
+              Chưa đăng nhập
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 max-w-lg mx-auto text-lg">
+              Tính năng <strong>Thi thử & Luyện đề</strong> yêu cầu đăng nhập tài khoản Google để có thể lưu kết quả và cá nhân hóa trải nghiệm học tập của bạn.
+            </p>
+            <button
+              onClick={login}
+              className="mt-4 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-bold text-lg transition-all hover:scale-105 shadow-lg shadow-blue-500/30"
+            >
+              <LogIn className="w-5 h-5" /> Đăng nhập ngay
+            </button>
+            <div className="mt-8 pt-6 border-t border-blue-200/50 dark:border-blue-800/50 w-full">
+              <button onClick={() => navigate(-1)} className="text-blue-600 dark:text-blue-400 hover:underline font-medium flex items-center justify-center gap-2 w-full">
+                ← Quay lại
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!subject) return <div className="py-12 text-center text-slate-500">Đang tải thông tin...</div>;
 
   if (status === 'setup') {
     return (
