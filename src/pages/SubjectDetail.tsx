@@ -277,6 +277,105 @@ export default function SubjectDetail() {
 
   const types = ['Giáo trình', 'Slide', 'Đề cương', 'File trắc nghiệm', 'Bài tập', 'Đề thi mẫu', 'Tips', 'Công thức', 'Khác'];
 
+  const renderDocCard = (doc: any, Icon: any) => (
+    <div key={doc.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-start gap-4">
+        <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+          <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h4 className="font-medium text-slate-900 dark:text-slate-100 truncate flex items-center gap-2" title={doc.title}>
+                {doc.title}
+                {doc.isHidden && <span className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Đang ẩn</span>}
+              </h4>
+              {!doc.isFolder && doc.chapter && (
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  {doc.chapter}
+                </p>
+              )}
+            </div>
+            {doc.isFolder && (
+              <button 
+                onClick={() => toggleFolder(doc.id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors shrink-0"
+              >
+                {expandedFolders[doc.id] ? (
+                  <><ChevronUp className="w-4 h-4" /> Thu gọn</>
+                ) : (
+                  <><ChevronDown className="w-4 h-4" /> Mở rộng</>
+                )}
+              </button>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-3 mt-3">
+            {!doc.isFolder ? (
+              <a
+                href={doc.url}
+                onClick={(e) => handleDocumentClick(e, doc.title, doc.url)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
+              >
+                <ExternalLink className="w-4 h-4" /> Xem tài liệu
+              </a>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                <Folder className="w-4 h-4" /> {doc.items?.length || 0} mục
+              </span>
+            )}
+            
+            {isAdmin && (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => handleEditClick(doc)}
+                  className="text-xs font-medium text-blue-500 hover:text-blue-600 flex items-center gap-1"
+                >
+                  <Edit2 className="w-3 h-3" /> Sửa
+                </button>
+                <button
+                  onClick={() => setDeleteConfirmId(doc.id)}
+                  className="text-xs font-medium text-red-500 hover:text-red-600 flex items-center gap-1"
+                >
+                  <Trash2 className="w-3 h-3" /> Xóa
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Expanded Folder Items */}
+      {doc.isFolder && expandedFolders[doc.id] && doc.items && doc.items.length > 0 && (
+        <div className="pl-0 sm:pl-14 pt-3 mt-1 border-t border-slate-100 dark:border-slate-800/60">
+          <div className="flex flex-col gap-1.5">
+            {doc.items.map((item: any, idx: number) => (
+              <a 
+                key={idx}
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => handleDocumentClick(e, item.title, item.url)}
+                className="group flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-slate-50 hover:bg-white dark:bg-slate-800/30 dark:hover:bg-slate-800 border border-slate-200/50 dark:border-slate-700/30 hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-sm transition-all"
+                title={item.title}
+              >
+                <div className="flex items-center gap-3 min-w-0 pr-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100/50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-colors">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors">
+                    {item.title}
+                  </span>
+                </div>
+                <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors shrink-0" />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       {/* Header */}
@@ -352,105 +451,18 @@ export default function SubjectDetail() {
               <h3 className="text-lg font-bold flex items-center gap-2">
                 <Icon className="w-5 h-5 text-blue-500" /> {type}
               </h3>
-              <div className="columns-1 md:columns-2 gap-4 space-y-4">
-                {docs.map(doc => (
-                  <div key={doc.id} className="break-inside-avoid bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
-                        <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <h4 className="font-medium text-slate-900 dark:text-slate-100 truncate flex items-center gap-2" title={doc.title}>
-                              {doc.title}
-                              {doc.isHidden && <span className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Đang ẩn</span>}
-                            </h4>
-                            {!doc.isFolder && doc.chapter && (
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                {doc.chapter}
-                              </p>
-                            )}
-                          </div>
-                          {doc.isFolder && (
-                            <button 
-                              onClick={() => toggleFolder(doc.id)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors shrink-0"
-                            >
-                              {expandedFolders[doc.id] ? (
-                                <><ChevronUp className="w-4 h-4" /> Thu gọn</>
-                              ) : (
-                                <><ChevronDown className="w-4 h-4" /> Mở rộng</>
-                              )}
-                            </button>
-                          )}
-                        </div>
-                        
-                        <div className="flex items-center gap-3 mt-3">
-                          {!doc.isFolder ? (
-                            <a
-                              href={doc.url}
-                              onClick={(e) => handleDocumentClick(e, doc.title, doc.url)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
-                            >
-                              <ExternalLink className="w-4 h-4" /> Xem tài liệu
-                            </a>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                              <Folder className="w-4 h-4" /> {doc.items?.length || 0} mục
-                            </span>
-                          )}
-                          
-                          {isAdmin && (
-                            <div className="flex items-center gap-3">
-                              <button
-                                onClick={() => handleEditClick(doc)}
-                                className="text-xs font-medium text-blue-500 hover:text-blue-600 flex items-center gap-1"
-                              >
-                                <Edit2 className="w-3 h-3" /> Sửa
-                              </button>
-                              <button
-                                onClick={() => setDeleteConfirmId(doc.id)}
-                                className="text-xs font-medium text-red-500 hover:text-red-600 flex items-center gap-1"
-                              >
-                                <Trash2 className="w-3 h-3" /> Xóa
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Expanded Folder Items */}
-                    {doc.isFolder && expandedFolders[doc.id] && doc.items && doc.items.length > 0 && (
-                      <div className="pl-0 sm:pl-14 pt-3 mt-1 border-t border-slate-100 dark:border-slate-800/60">
-                        <div className="flex flex-col gap-1.5">
-                          {doc.items.map((item: any, idx: number) => (
-                            <a 
-                              key={idx}
-                              href={item.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => handleDocumentClick(e, item.title, item.url)}
-                              className="group flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-slate-50 hover:bg-white dark:bg-slate-800/30 dark:hover:bg-slate-800 border border-slate-200/50 dark:border-slate-700/30 hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-sm transition-all"
-                              title={item.title}
-                            >
-                              <div className="flex items-center gap-3 min-w-0 pr-2">
-                                <div className="w-8 h-8 rounded-lg bg-blue-100/50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-colors">
-                                  <FileText className="w-4 h-4" />
-                                </div>
-                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors">
-                                  {item.title}
-                                </span>
-                              </div>
-                              <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors shrink-0" />
-                            </a>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+              <div className="flex flex-col md:flex-row gap-4 items-start">
+                {/* Column 1 */}
+                <div className="flex-1 flex flex-col gap-4 w-full">
+                  {docs.filter((_, i) => i % 2 === 0).map(doc => renderDocCard(doc, Icon))}
+                </div>
+                
+                {/* Column 2 */}
+                {docs.length > 1 && (
+                  <div className="flex-1 flex flex-col gap-4 w-full">
+                    {docs.filter((_, i) => i % 2 !== 0).map(doc => renderDocCard(doc, Icon))}
                   </div>
-                ))}
+                )}
               </div>
             </div>
           );
