@@ -94,7 +94,7 @@ const highScoreQuotes = [
 export default function MockExam() {
   const { id, examId } = useParams<{ id: string, examId?: string }>();
   const navigate = useNavigate();
-  const { user, login } = useAuth();
+  const { user, login, driveToken } = useAuth();
   const [subject, setSubject] = useState<any>(null);
   const [availableChapters, setAvailableChapters] = useState<string[]>([]);
   const [documentTitles, setDocumentTitles] = useState<string[]>([]);
@@ -119,6 +119,9 @@ export default function MockExam() {
     status: 'extracting' | 'done' | 'error';
   }
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [driveLink, setDriveLink] = useState('');
+  const [isFetchingDrive, setIsFetchingDrive] = useState(false);
+  const [driveError, setDriveError] = useState<string | null>(null);
 
   // Initialize state from sessionStorage if available
   const STORAGE_KEY = `mockExamState_${id}`;
@@ -474,11 +477,83 @@ export default function MockExam() {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
+  const handleDriveImport = async () => {
+    if (!driveLink.trim()) return;
+    setDriveError(null);
+    
+    const match = driveLink.match(/(?:[-\w]{25,})|([a-zA-Z0-9-_]{25,})/);
+    const fileId = match ? match[0] : null;
 
-    // Check limit of 20 files maximum
+    if (!fileId) {
+      setDriveError("Link không hợp lệ. Vui lòng dán link Google Drive chia sẻ (hoặc ID file).");
+      return;
+    }
+
+    if (!driveToken) {
+      setDriveError("Vui lòng kết nối Google Drive trước bằng nút bên cạnh.");
+      return;
+    }
+
+    setIsFetchingDrive(true);
+    try {
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType`, {
+        headers: { Authorization: `Bearer ${driveToken}` },
+      });
+      if (!res.ok) {
+        throw new Error("Không thể truy cập file. Hãy chắc chắn link đã được chia sẻ hoặc nằm trong Drive của bạn.");
+      }
+      const metadata = await res.json();
+      const { name, mimeType } = metadata;
+
+      if (uploadedFiles.length >= 20) {
+        throw new Error("Tối đa 20 file.");
+      }
+
+      let extractedText = "";
+
+      if (mimeType.includes('document')) {
+        const docRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/plain`, {
+          headers: { Authorization: `Bearer ${driveToken}` }
+        });
+        extractedText = await docRes.text();
+      } else if (mimeType.includes('presentation')) {
+        const slideRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/plain`, {
+          headers: { Authorization: `Bearer ${driveToken}` }
+        });
+        extractedText = await slideRes.text();
+      } else if (mimeType.includes('spreadsheet')) {
+         const sheetRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/csv`, {
+          headers: { Authorization: `Bearer ${driveToken}` }
+        });
+        extractedText = await sheetRes.text();
+      } else {
+        const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+          headers: { Authorization: `Bearer ${driveToken}` }
+        });
+        const blob = await fileRes.blob();
+        const fileObj = new File([blob], name, { type: mimeType });
+        await processFiles([fileObj]);
+        setDriveLink('');
+        setIsFetchingDrive(false);
+        return;
+      }
+
+      const limitedText = extractedText.substring(0, 500000);
+      setUploadedFiles(prev => [...prev, {
+        name,
+        text: limitedText,
+        status: 'done'
+      }]);
+      setDriveLink('');
+    } catch (err: any) {
+      console.error(err);
+      setDriveError(err.message || "Lỗi khi fetch file từ Drive.");
+    } finally {
+      setIsFetchingDrive(false);
+    }
+  };
+
+  const processFiles = async (files: File[]) => {
     if (uploadedFiles.length + files.length > 20) {
       alert("Bạn chỉ có thể tải lên tối đa 20 file cùng lúc.");
       return;
@@ -542,6 +617,12 @@ export default function MockExam() {
         ));
       }
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    await processFiles(files);
     
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -858,21 +939,62 @@ export default function MockExam() {
               </div>
 
               {uploadedFiles.length < 20 && (
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="mt-3 w-full flex-col h-24 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 rounded-xl flex items-center justify-center cursor-pointer transition-colors bg-slate-50 dark:bg-slate-800/50"
-                >
-                  <UploadCloud className="w-6 h-6 text-slate-400 mb-2" />
-                  <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Tải lên file (PDF, TXT, DOCX, XLSX) tối đa 20 file (có thể tải file lớn hơn)</span>
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    className="hidden" 
-                    multiple
-                    accept=".pdf,.txt,.docx,.doc,.xlsx,.xls,.csv"
-                    onChange={handleFileUpload}
-                  />
-                </div>
+                <>
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="mt-3 w-full flex-col h-24 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 rounded-xl flex items-center justify-center cursor-pointer transition-colors bg-slate-50 dark:bg-slate-800/50"
+                  >
+                    <UploadCloud className="w-6 h-6 text-slate-400 mb-2" />
+                    <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Tải lên file (PDF, TXT, DOCX, XLSX) tối đa 20 file (có thể tải file lớn hơn)</span>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      multiple
+                      accept=".pdf,.txt,.docx,.doc,.xlsx,.xls,.csv"
+                      onChange={handleFileUpload}
+                    />
+                  </div>
+                  
+                  <div className="mt-4 p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-800/20">
+                    <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-blue-500" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16 11.5L32 11.5L40 25L24 25L16 11.5Z" fill="#FFC107"/>
+                        <path d="M8 25.5L16 11.5L24 25L16 39L8 25.5Z" fill="#1976D2"/>
+                        <path d="M24.5 25L40.5 25L32.5 39L16.5 39L24.5 25Z" fill="#4CAF50"/>
+                      </svg>
+                      Nhập từ Google Drive
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={driveLink}
+                        onChange={(e) => setDriveLink(e.target.value)}
+                        placeholder="Dán link file Google Drive vào đây..."
+                        className="flex-1 px-4 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 h-10"
+                        disabled={isFetchingDrive}
+                      />
+                      {driveToken ? (
+                        <button
+                          onClick={handleDriveImport}
+                          disabled={isFetchingDrive || !driveLink.trim() || uploadedFiles.length >= 20}
+                          className="px-4 h-10 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                        >
+                          {isFetchingDrive ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <UploadCloud className="w-4 h-4" />}
+                          Tải lên
+                        </button>
+                      ) : (
+                        <button
+                          onClick={login}
+                          className="px-4 h-10 border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 text-slate-700 dark:text-slate-300"
+                        >
+                          Kết nối Drive
+                        </button>
+                      )}
+                    </div>
+                    {driveError && <p className="text-sm text-red-500 mt-2">{driveError}</p>}
+                  </div>
+                </>
               )}
             </div>
 
