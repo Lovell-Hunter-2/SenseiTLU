@@ -27,7 +27,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [driveToken, setDriveToken] = useState<string | null>(null);
+  const [driveToken, setDriveToken] = useState<string | null>(() => {
+    return sessionStorage.getItem('driveToken') || null;
+  });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -81,6 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const credential = GoogleAuthProvider.credentialFromResult(result);
       if (credential?.accessToken) {
         setDriveToken(credential.accessToken);
+        sessionStorage.setItem('driveToken', credential.accessToken);
       }
     } catch (error) {
       console.error("Login failed", error);
@@ -94,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await setDoc(userRef, { isOnline: false }, { merge: true });
       }
       setDriveToken(null);
+      sessionStorage.removeItem('driveToken');
       await signOut(auth);
     } catch (error) {
       console.error("Logout failed", error);
