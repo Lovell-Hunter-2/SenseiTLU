@@ -149,9 +149,9 @@ export function AIAssistantWidget() {
               y: position.y
             }}
             exit={{ scale: 0, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            transition={{ type: 'tween', duration: 0.2 }}
             className="fixed z-50 top-0 left-0 cursor-grab active:cursor-grabbing flex flex-col items-center gap-1 group"
-            style={{ touchAction: 'none' }}
+            style={{ touchAction: 'none', willChange: 'transform' }}
           >
             {/* Nút đóng mascot - chỉ hiện khi hover */}
             <button 
@@ -167,11 +167,6 @@ export function AIAssistantWidget() {
               className="w-12 h-12 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg flex items-center justify-center relative shadow-blue-500/30 ring-4 ring-white dark:ring-slate-900 transition-transform hover:scale-105"
             >
               <Sparkles className="w-6 h-6" />
-              <motion.div 
-                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
-                transition={{ repeat: Infinity, duration: 2 }}
-                className="absolute inset-0 rounded-full bg-white opacity-20"
-              />
             </button>
             <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-full opacity-90 shadow-sm pointer-events-none">
               AI
