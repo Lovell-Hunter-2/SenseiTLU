@@ -94,7 +94,7 @@ export function AIPersonalizeModal({ isOpen, onClose }: AIPersonalizeModalProps)
 
   if (!user) {
     return (
-      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/70">
         <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden text-center p-6">
            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4">
               <User className="w-8 h-8" />
