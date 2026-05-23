@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { Search, Plus, Book, Calculator, Code, Globe, Database, Cpu, FileText, Briefcase, Scale, Lightbulb, Brain, PieChart, ShoppingCart, Rocket, Trash2, Edit2, ChartBar, PenTool, Milestone, Activity, Building, Leaf, Shield, History, Compass, GraduationCap, Microscope, Palette, Landmark, Component, Cloud, DatabaseZap, DollarSign, Euro, Frame, Users, Target, Network, Layers, LayoutDashboard, LineChart, FileSpreadsheet, Bitcoin, CandlestickChart, TrendingUp, BadgeDollarSign, Receipt, Gavel, Building2, HandCoins, MessageCircle, Globe2, Map as MapIcon, HeartHandshake, Vote, MonitorPlay, Smartphone, Terminal, Server, Wifi, Fingerprint, Microchip, Bot, Star, Lock, LogIn } from 'lucide-react';
@@ -94,6 +94,9 @@ export default function Home() {
     const saved = localStorage.getItem('favoriteSubjects');
     return saved ? JSON.parse(saved) : [];
   });
+  // Track which card is "active" on mobile (long-pressed)
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { isAdmin, user, login } = useAuth();
   
@@ -107,6 +110,33 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem('favoriteSubjects', JSON.stringify(favorites));
   }, [favorites]);
+
+  // Long-press handlers for mobile
+  const handleTouchStart = useCallback((subjectId: string) => {
+    longPressTimer.current = setTimeout(() => {
+      setActiveCardId(subjectId);
+    }, 500);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  // Dismiss active card when tapping outside
+  useEffect(() => {
+    const handleDocumentTouch = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      // If touch is not on a card or its children, dismiss
+      if (!target.closest('[data-subject-card]')) {
+        setActiveCardId(null);
+      }
+    };
+    document.addEventListener('touchstart', handleDocumentTouch);
+    return () => document.removeEventListener('touchstart', handleDocumentTouch);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -304,27 +334,52 @@ export default function Home() {
           {filteredSubjects.map(subject => {
             const Icon = iconMap[subject.iconName] || Book;
             const isFav = favorites.includes(subject.id);
+            const isActive = activeCardId === subject.id;
+            // Show controls if: desktop (group-hover via CSS) OR mobile long-pressed
+            const showControls = isActive;
             return (
-              <div key={subject.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full group relative">
+              <div
+                key={subject.id}
+                data-subject-card="true"
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full group relative select-none"
+                onTouchStart={() => handleTouchStart(subject.id)}
+                onTouchEnd={handleTouchEnd}
+                onTouchMove={handleTouchEnd}
+              >
+                {/* Long-press hint overlay on mobile */}
+                {isActive && (
+                  <div className="absolute inset-0 rounded-2xl ring-2 ring-blue-400 ring-offset-1 pointer-events-none z-0" />
+                )}
+                {/* Favorite star button */}
                 <button
                   onClick={(e) => toggleFavorite(subject.id, e)}
                   className={`absolute top-4 right-4 p-2 rounded-xl transition-all z-10 ${
-                    isFav 
-                      ? 'text-yellow-500 bg-yellow-50 dark:bg-yellow-500/10 opacity-100' 
-                      : 'text-slate-300 dark:text-slate-600 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-500/10 opacity-0 group-hover:opacity-100'
+                    isFav
+                      ? 'text-yellow-500 bg-yellow-50 dark:bg-yellow-500/10 opacity-100'
+                      : `text-slate-300 dark:text-slate-600 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-500/10 opacity-0 group-hover:opacity-100 ${showControls ? 'opacity-100' : ''}`
                   }`}
-                  title={isFav ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+                  title={isFav ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'}
                 >
                   <Star className={`w-5 h-5 ${isFav ? 'fill-current' : ''}`} />
                 </button>
+                {/* Admin edit/delete buttons */}
                 {isAdmin && (
-                  <div className={`absolute top-4 ${isFav ? 'right-14' : 'right-4 group-hover:right-14'} flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all z-10`}>
+                  <div
+                    className={`absolute top-4 flex items-center gap-1 z-10 transition-all duration-200 ${
+                      isFav ? 'right-14' : 'right-4'
+                    } ${
+                      showControls
+                        ? 'opacity-100 translate-x-0'
+                        : 'opacity-0 group-hover:opacity-100'
+                    } ${!showControls && !isFav ? 'group-hover:right-14' : ''}`}
+                  >
                     <button
                       onClick={(e) => {
                         e.preventDefault();
+                        setActiveCardId(null);
                         setEditingSubject(subject);
                       }}
-                      className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                      className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 active:bg-blue-100 rounded-lg transition-colors"
                       title="Sửa môn học"
                     >
                       <Edit2 className="w-4 h-4" />
@@ -332,9 +387,10 @@ export default function Home() {
                     <button
                       onClick={(e) => {
                         e.preventDefault();
+                        setActiveCardId(null);
                         setDeleteConfirmId(subject.id);
                       }}
-                      className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                      className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 rounded-lg transition-colors"
                       title="Xóa môn học"
                     >
                       <Trash2 className="w-4 h-4" />
