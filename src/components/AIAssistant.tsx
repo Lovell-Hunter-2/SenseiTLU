@@ -35,7 +35,7 @@ interface AIAssistantProps {
 }
 
 export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps) {
-  const { user, driveToken } = useAuth();
+  const { user, driveToken, login } = useAuth();
   const [messages, setMessages] = useState<AIMessage[]>([
     { role: 'assistant', content: 'Xin chào! Mình là trợ lý AI ở đây để giúp bạn sử dụng các tài liệu, tìm môn học, tạo đề, hoặc giải thích kiến thức.' }
   ]);
@@ -161,51 +161,60 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
               const data = d.data();
               let docStr = `- [${data.type || 'Tài liệu'}] ${data.title} ${data.url ? `(Link: ${data.url})` : ''}`;
               
-              if (data.url && data.url.includes('drive.google.com') && driveToken) {
-                 const match = data.url.match(/(?:[-\w]{25,})|([a-zA-Z0-9-_]{25,})/);
-                 const fileId = match ? match[0] : null;
-                 if (fileId) {
-                    try {
-                       const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType`, {
-                         headers: { Authorization: `Bearer ${driveToken}` },
-                       });
-                       if (res.ok) {
-                         const metadata = await res.json();
-                         const { mimeType } = metadata;
-                         let extractedText = "";
+              if (data.url && data.url.includes('drive.google.com')) {
+                 if (!driveToken) {
+                    docStr += `\n   -> (Lưu ý: Hệ thống hiện chưa có quyền truy cập Google Drive. Bạn HÃY nói với người dùng: "Mình cần bạn cấp quyền đọc Google Drive để phân tích file này. Vui lòng nhấn biểu tượng Google Drive ở góc AI chat để kết nối.")`;
+                 } else {
+                    const match = data.url.match(/(?:[-\w]{25,})|([a-zA-Z0-9-_]{25,})/);
+                    const fileId = match ? match[0] : null;
+                    if (fileId) {
+                       try {
+                          const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType`, {
+                            headers: { Authorization: `Bearer ${driveToken}` },
+                          });
+                          if (res.ok) {
+                            const metadata = await res.json();
+                            const { mimeType } = metadata;
+                            let extractedText = "";
 
-                         if (mimeType.includes('document') || mimeType.includes('presentation') || mimeType.includes('spreadsheet')) {
-                           const exportType = mimeType.includes('spreadsheet') ? 'text/csv' : 'text/plain';
-                           const docRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${exportType}`, {
-                             headers: { Authorization: `Bearer ${driveToken}` }
-                           });
-                           if (docRes.ok) extractedText = await docRes.text();
-                         } else if (mimeType === 'application/pdf') {
-                           const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-                             headers: { Authorization: `Bearer ${driveToken}` }
-                           });
-                           if (fileRes.ok) {
-                             const arrayBuffer = await fileRes.arrayBuffer();
-                             const pdfjs = await loadPdfJs();
-                             const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-                             const maxPages = Math.min(pdf.numPages, 30);
-                             for (let i = 1; i <= maxPages; i++) {
-                               const page = await pdf.getPage(i);
-                               const textContent = await page.getTextContent();
-                               extractedText += textContent.items.map((item: any) => item.str).join(' ') + '\n';
-                             }
-                             if (pdf.numPages > 30) {
-                               extractedText += '\n [Đã cắt bớt nội dung PDF vì quá dài...]';
-                             }
-                           }
-                         }
+                            if (mimeType.includes('document') || mimeType.includes('presentation') || mimeType.includes('spreadsheet')) {
+                              const exportType = mimeType.includes('spreadsheet') ? 'text/csv' : 'text/plain';
+                              const docRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${exportType}`, {
+                                headers: { Authorization: `Bearer ${driveToken}` }
+                              });
+                              if (docRes.ok) extractedText = await docRes.text();
+                            } else if (mimeType === 'application/pdf') {
+                              const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+                                headers: { Authorization: `Bearer ${driveToken}` }
+                              });
+                              if (fileRes.ok) {
+                                const arrayBuffer = await fileRes.arrayBuffer();
+                                const pdfjs = await loadPdfJs();
+                                const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+                                const maxPages = Math.min(pdf.numPages, 30);
+                                for (let i = 1; i <= maxPages; i++) {
+                                  const page = await pdf.getPage(i);
+                                  const textContent = await page.getTextContent();
+                                  extractedText += textContent.items.map((item: any) => item.str).join(' ') + '\n';
+                                }
+                                if (pdf.numPages > 30) {
+                                  extractedText += '\n [Đã cắt bớt nội dung PDF vì quá dài...]';
+                                }
+                              }
+                            }
 
-                         if (extractedText.trim()) {
-                           docStr += `\n   -> Nội dung trích xuất từ Drive:\n"""\n${extractedText.substring(0, 50000)}...\n"""\n`;
-                         }
+                            if (extractedText.trim()) {
+                              docStr += `\n   -> NỘI DUNG TỪ GOOGLE DRIVE:\n"""\n${extractedText.substring(0, 50000)}...\n"""\n`;
+                            } else {
+                              docStr += `\n   -> (Nội dung trống hoặc không thể trích xuất text từ Google Drive)`;
+                            }
+                          } else {
+                            docStr += `\n   -> (Lỗi truy cập File Drive: Người dùng có thể cần chia sẻ file cho bất kỳ ai có link, hoặc API gặp lỗi)`;
+                          }
+                       } catch (e) {
+                          console.error("Lỗi khi đọc file drive", e);
+                          docStr += `\n   -> (Lỗi lấy nội dung từ Drive: Lỗi mạng hoặc Token hết hạn)`;
                        }
-                    } catch (e) {
-                       console.error("Lỗi khi đọc file drive", e);
                     }
                  }
               }
@@ -347,6 +356,19 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
           <span className="font-bold text-sm">Sensei AI</span>
         </div>
         <div className="flex items-center gap-1">
+          {!driveToken && (
+            <button
+               onClick={login}
+               className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-amber-500 transition-colors flex items-center gap-1"
+               title="Kết nối Google Drive để phân tích Link tài liệu"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16 11.5L32 11.5L40 25L24 25L16 11.5Z" fill="#FFC107"/>
+                <path d="M8 25.5L16 11.5L24 25L16 39L8 25.5Z" fill="#1976D2"/>
+                <path d="M24.5 25L40.5 25L32.5 39L16.5 39L24.5 25Z" fill="#4CAF50"/>
+              </svg>
+            </button>
+          )}
           <button 
             onClick={() => setShowPersonalizeModal(true)}
             className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 transition-colors"
