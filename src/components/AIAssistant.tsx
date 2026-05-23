@@ -10,6 +10,24 @@ import { useAuth } from '../contexts/AuthContext';
 import { ScreenshotHelper } from './ScreenshotHelper';
 import { AIPersonalizeModal } from './AIPersonalizeModal';
 
+// Dynamically import PDF.js via CDN to avoid package size
+const loadPdfJs = (): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    if ((window as any).pdfjsLib) {
+      return resolve((window as any).pdfjsLib);
+    }
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    script.onload = () => {
+      const pdfjs = (window as any).pdfjsLib;
+      pdfjs.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      resolve(pdfjs);
+    };
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+};
+
 interface AIAssistantProps {
   isVisible: boolean;
   onClose: () => void;
@@ -17,7 +35,7 @@ interface AIAssistantProps {
 }
 
 export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps) {
-  const { user } = useAuth();
+  const { user, driveToken } = useAuth();
   const [messages, setMessages] = useState<AIMessage[]>([
     { role: 'assistant', content: 'Xin chào! Mình là trợ lý AI ở đây để giúp bạn sử dụng các tài liệu, tìm môn học, tạo đề, hoặc giải thích kiến thức.' }
   ]);
@@ -138,11 +156,62 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
           const q = query(collection(db, 'documents'), where('subjectId', '==', subjectId));
           const snap = await getDocs(q);
           if (!snap.empty) {
-            const docs = snap.docs.map(d => {
+            const docsDetails = [];
+            for (const d of snap.docs) {
               const data = d.data();
-              return `- [${data.type || 'Tài liệu'}] ${data.title} ${data.url ? `(Link: ${data.url})` : ''}`;
-            });
-            docsInfo = docs.join('\n');
+              let docStr = `- [${data.type || 'Tài liệu'}] ${data.title} ${data.url ? `(Link: ${data.url})` : ''}`;
+              
+              if (data.url && data.url.includes('drive.google.com') && driveToken) {
+                 const match = data.url.match(/(?:[-\w]{25,})|([a-zA-Z0-9-_]{25,})/);
+                 const fileId = match ? match[0] : null;
+                 if (fileId) {
+                    try {
+                       const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType`, {
+                         headers: { Authorization: `Bearer ${driveToken}` },
+                       });
+                       if (res.ok) {
+                         const metadata = await res.json();
+                         const { mimeType } = metadata;
+                         let extractedText = "";
+
+                         if (mimeType.includes('document') || mimeType.includes('presentation') || mimeType.includes('spreadsheet')) {
+                           const exportType = mimeType.includes('spreadsheet') ? 'text/csv' : 'text/plain';
+                           const docRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${exportType}`, {
+                             headers: { Authorization: `Bearer ${driveToken}` }
+                           });
+                           if (docRes.ok) extractedText = await docRes.text();
+                         } else if (mimeType === 'application/pdf') {
+                           const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+                             headers: { Authorization: `Bearer ${driveToken}` }
+                           });
+                           if (fileRes.ok) {
+                             const arrayBuffer = await fileRes.arrayBuffer();
+                             const pdfjs = await loadPdfJs();
+                             const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+                             const maxPages = Math.min(pdf.numPages, 30);
+                             for (let i = 1; i <= maxPages; i++) {
+                               const page = await pdf.getPage(i);
+                               const textContent = await page.getTextContent();
+                               extractedText += textContent.items.map((item: any) => item.str).join(' ') + '\n';
+                             }
+                             if (pdf.numPages > 30) {
+                               extractedText += '\n [Đã cắt bớt nội dung PDF vì quá dài...]';
+                             }
+                           }
+                         }
+
+                         if (extractedText.trim()) {
+                           docStr += `\n   -> Nội dung trích xuất từ Drive:\n"""\n${extractedText.substring(0, 50000)}...\n"""\n`;
+                         }
+                       }
+                    } catch (e) {
+                       console.error("Lỗi khi đọc file drive", e);
+                    }
+                 }
+              }
+              docsDetails.push(docStr);
+            }
+            docsInfo = docsDetails.join('\n');
           }
         } catch (error) {
           console.error("Lỗi khi fetch docs cho AI:", error);
