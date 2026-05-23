@@ -1072,36 +1072,6 @@ export default function MockExam() {
               />
             </div>
 
-            {availableChapters.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="block text-sm font-medium">Phạm vi ôn tập (Chương/Phần)</label>
-                  <label className="flex items-center gap-2 text-sm cursor-pointer group">
-                    <input 
-                      type="checkbox" 
-                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                      checked={selectedChapters.length === availableChapters.length && availableChapters.length > 0}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedChapters([...availableChapters]);
-                        } else {
-                          setSelectedChapters([]);
-                        }
-                      }}
-                    />
-                    <span className="text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">Chọn tất cả</span>
-                  </label>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {availableChapters.map(chapter => (
-                    <button key={chapter} onClick={() => toggleChapter(chapter)} className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${selectedChapters.includes(chapter) ? 'bg-blue-600 border-blue-600 text-white' : 'bg-transparent border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-500'}`}>
-                      {chapter}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {subjectDocs.length > 0 && (
               <div className="mt-6">
                 <div className="flex items-center justify-between mb-3">
@@ -1130,28 +1100,25 @@ export default function MockExam() {
                       Để thiết lập AI phân tích trực tiếp file tài liệu, bạn cần kết nối quyền truy cập Google Drive.
                    </div>
                 ) : null}
-                <div className="flex flex-col gap-2">
-                  {subjectDocs.map(docItem => (
-                    <label key={docItem.id} className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors">
-                      <input 
-                        type="checkbox" 
+                <div className="flex flex-wrap gap-2">
+                  {subjectDocs.map(docItem => {
+                    const isSelected = selectedDocs.includes(docItem.id);
+                    return (
+                      <button 
+                        key={docItem.id} 
                         disabled={!driveToken}
-                        className="w-4 h-4 mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
-                        checked={selectedDocs.includes(docItem.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedDocs(prev => [...prev, docItem.id]);
-                          } else {
-                            setSelectedDocs(prev => prev.filter(id => id !== docItem.id));
-                          }
-                        }}
-                      />
-                      <div className="flex flex-col">
-                        <span className={`text-sm font-medium ${!driveToken ? 'opacity-50' : ''}`}>{docItem.title}</span>
-                        {docItem.url && <span className={`text-xs text-slate-500 ${!driveToken ? 'opacity-50' : ''}`}>Google Drive</span>}
-                      </div>
-                    </label>
-                  ))}
+                        onClick={() => {
+                           if (isSelected) {
+                             setSelectedDocs(prev => prev.filter(id => id !== docItem.id));
+                           } else {
+                             setSelectedDocs(prev => [...prev, docItem.id]);
+                           }
+                        }} 
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border max-w-[300px] truncate ${isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'bg-transparent border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-500'} ${!driveToken ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                        {docItem.title}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
