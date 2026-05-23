@@ -1019,45 +1019,6 @@ export default function MockExam() {
                       onChange={handleFileUpload}
                     />
                   </div>
-                  
-                  <div className="mt-4 p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-800/20">
-                    <label className="block text-sm font-medium mb-2 flex items-center gap-2">
-                      <svg className="w-4 h-4 text-blue-500" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M16 11.5L32 11.5L40 25L24 25L16 11.5Z" fill="#FFC107"/>
-                        <path d="M8 25.5L16 11.5L24 25L16 39L8 25.5Z" fill="#1976D2"/>
-                        <path d="M24.5 25L40.5 25L32.5 39L16.5 39L24.5 25Z" fill="#4CAF50"/>
-                      </svg>
-                      Nhập từ Google Drive
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={driveLink}
-                        onChange={(e) => setDriveLink(e.target.value)}
-                        placeholder="Dán link file Google Drive vào đây..."
-                        className="flex-1 px-4 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 h-10"
-                        disabled={isFetchingDrive}
-                      />
-                      {driveToken ? (
-                        <button
-                          onClick={handleDriveImport}
-                          disabled={isFetchingDrive || !driveLink.trim() || uploadedFiles.length >= 20}
-                          className="px-4 h-10 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
-                        >
-                          {isFetchingDrive ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <UploadCloud className="w-4 h-4" />}
-                          Tải lên
-                        </button>
-                      ) : (
-                        <button
-                          onClick={login}
-                          className="px-4 h-10 border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 text-slate-700 dark:text-slate-300"
-                        >
-                          Kết nối Drive
-                        </button>
-                      )}
-                    </div>
-                    {driveError && <p className="text-sm text-red-500 mt-2">{driveError}</p>}
-                  </div>
                 </>
               )}
             </div>
