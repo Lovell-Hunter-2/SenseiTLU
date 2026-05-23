@@ -278,7 +278,7 @@ export default function SubjectDetail() {
   const types = ['Giáo trình', 'Slide', 'Đề cương', 'File trắc nghiệm', 'Bài tập', 'Đề thi mẫu', 'Tips', 'Công thức', 'Khác'];
 
   const renderDocCard = (doc: any, Icon: any) => (
-    <div key={doc.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow">
+    <div key={doc.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow transform-gpu">
       <div className="flex items-start gap-4">
         <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
           <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -356,7 +356,7 @@ export default function SubjectDetail() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => handleDocumentClick(e, item.title, item.url)}
-                className="group flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200/50 dark:border-slate-700/30 hover:bg-white dark:hover:bg-slate-800 hover:border-blue-200 dark:hover:border-blue-800 transition-colors"
+                className="group flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-slate-50 hover:bg-white dark:bg-slate-800/30 dark:hover:bg-slate-800 border border-slate-200/50 dark:border-slate-700/30 hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-sm transition-colors"
                 title={item.title}
               >
                 <div className="flex items-center gap-3 min-w-0 pr-2">
@@ -451,9 +451,18 @@ export default function SubjectDetail() {
               <h3 className="text-lg font-bold flex items-center gap-2">
                 <Icon className="w-5 h-5 text-blue-500" /> {type}
               </h3>
-              {/* Single responsive grid - no more even/odd split that causes ghost items on mobile */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {docs.map(doc => renderDocCard(doc, Icon))}
+              <div className="flex flex-col md:flex-row gap-4 items-start">
+                {/* Column 1 */}
+                <div className="flex-1 flex flex-col gap-4 w-full">
+                  {docs.filter((_, i) => i % 2 === 0).map(doc => renderDocCard(doc, Icon))}
+                </div>
+                
+                {/* Column 2 */}
+                {docs.length > 1 && (
+                  <div className="flex-1 flex flex-col gap-4 w-full">
+                    {docs.filter((_, i) => i % 2 !== 0).map(doc => renderDocCard(doc, Icon))}
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -468,7 +477,7 @@ export default function SubjectDetail() {
 
       {/* Add/Edit Document Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-6 shadow-xl border border-slate-200 dark:border-slate-800">
             <h3 className="text-xl font-bold mb-4">{editingDocId ? 'Sửa tài liệu' : 'Thêm tài liệu mới'}</h3>
             
@@ -696,7 +705,7 @@ export default function SubjectDetail() {
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm p-6 shadow-xl border border-slate-200 dark:border-slate-800 text-center">
             <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-8 h-8" />
@@ -723,7 +732,7 @@ export default function SubjectDetail() {
 
       {/* Choice Modal for Document Opening Options */}
       {showChoiceModal && selectedDocument && (
-        <div className="fixed inset-0 z-[55] flex items-center justify-center p-4 bg-black/70">
+        <div className="fixed inset-0 z-[55] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-8 shadow-2xl border border-slate-200 dark:border-slate-800 text-center relative overflow-hidden">
             <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <LayoutTemplate className="w-8 h-8" />
@@ -766,7 +775,7 @@ export default function SubjectDetail() {
 
       {/* Embedded Document View Modal */}
       {showIframeModal && selectedDocument && (
-        <div className="fixed inset-0 z-[45] p-4 sm:p-6 md:p-8 flex items-center justify-center bg-black/70">
+        <div className="fixed inset-0 z-[45] p-4 sm:p-6 md:p-8 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-6xl h-[85vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
             <div className="h-14 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between px-4 sm:px-6 shrink-0">
               <div className="flex items-center gap-3 w-3/4">
