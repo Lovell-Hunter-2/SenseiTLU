@@ -98,6 +98,8 @@ export default function MockExam() {
   const [subject, setSubject] = useState<any>(null);
   const [availableChapters, setAvailableChapters] = useState<string[]>([]);
   const [documentTitles, setDocumentTitles] = useState<string[]>([]);
+  const [subjectDocs, setSubjectDocs] = useState<{id: string, title: string, url?: string}[]>([]);
+  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   const [loadedExamId, setLoadedExamId] = useState<string | null>(examId || null);
   const [isCopied, setIsCopied] = useState(false);
   
@@ -229,13 +231,21 @@ export default function MockExam() {
       const querySnapshot = await getDocs(q);
       const chapters = new Set<string>();
       const titles = new Set<string>();
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
+      const docsArr: {id: string, title: string, url?: string}[] = [];
+      
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
         if (data.title) titles.add(data.title.trim());
+        if (data.title && data.url) {
+          docsArr.push({ id: docSnap.id, title: data.title, url: data.url });
+        }
         if (data.isFolder && data.items) {
           data.items.forEach((item: any) => {
             if (item.title) chapters.add(item.title.trim());
             if (item.title) titles.add(item.title.trim());
+            if (item.title && item.url) {
+              docsArr.push({ id: `${Math.random()}`, title: item.title, url: item.url });
+            }
           });
         } else if (data.chapter) {
           data.chapter.split(',').forEach((c: string) => {
@@ -249,6 +259,7 @@ export default function MockExam() {
       setAvailableChapters(chapterList);
       setSelectedChapters(chapterList);
       setDocumentTitles(Array.from(titles));
+      setSubjectDocs(docsArr);
     };
     
     fetchData();
@@ -335,10 +346,63 @@ export default function MockExam() {
     setStatus('generating');
 
     try {
+      let extraDocsContext = "";
+      if (selectedDocs.length > 0 && driveToken) {
+        setStatus('generating'); // Just to keep UI state
+        // Fetch the contents of selected drive links
+        const docsToFetch = subjectDocs.filter(d => selectedDocs.includes(d.id) && d.url && d.url.includes('drive.google.com'));
+        for (const doc of docsToFetch) {
+          const match = doc.url!.match(/(?:[-\w]{25,})|([a-zA-Z0-9-_]{25,})/);
+          const fileId = match ? match[0] : null;
+          if (fileId) {
+            try {
+              const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType`, {
+                headers: { Authorization: `Bearer ${driveToken}` },
+              });
+              if (res.ok) {
+                const metadata = await res.json();
+                const { mimeType } = metadata;
+                let extractedText = "";
+
+                if (mimeType.includes('document') || mimeType.includes('presentation') || mimeType.includes('spreadsheet')) {
+                  const exportType = mimeType.includes('spreadsheet') ? 'text/csv' : 'text/plain';
+                  const docRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${exportType}`, {
+                    headers: { Authorization: `Bearer ${driveToken}` }
+                  });
+                  if (docRes.ok) extractedText = await docRes.text();
+                } else if (mimeType === 'application/pdf') {
+                  const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+                    headers: { Authorization: `Bearer ${driveToken}` }
+                  });
+                  if (fileRes.ok) {
+                    const arrayBuffer = await fileRes.arrayBuffer();
+                    const pdfjs = await loadPdfJs();
+                    const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+                    const maxPages = Math.min(pdf.numPages, 30);
+                    for (let i = 1; i <= maxPages; i++) {
+                      const page = await pdf.getPage(i);
+                      const textContent = await page.getTextContent();
+                      extractedText += textContent.items.map((item: any) => item.str).join(' ') + '\\n';
+                    }
+                  }
+                }
+                
+                if (extractedText.trim()) {
+                  extraDocsContext += `\n[TÀI LIỆU HỆ THỐNG: ${doc.title}]\n${extractedText.substring(0, 30000)}...\n`;
+                }
+              }
+            } catch (e) {
+              console.error("Lỗi khi đọc file drive trong tạo quiz", e);
+            }
+          }
+        }
+      }
+
       const prompt = `
         Tạo một bài trắc nghiệm đại học chuyên ngành cho môn học: "${subject.name}".
         Ngữ cảnh môn học (từ tài liệu Drive): ${documentTitles.length > 0 ? documentTitles.join('; ') : 'Không có thông tin tài liệu'}.
         ${uploadedFiles.filter(f => f.status === 'done').length > 0 ? `\nĐÂY LÀ NỘI DUNG TÀI LIỆU MÀ NGƯỜI DÙNG QUAN TÂM (Trích xuất từ file tải lên):\n${uploadedFiles.filter(f => f.status === 'done').map(f => f.text).join('\\n---\\n').substring(0, 150000)}...\n(HÃY TẠO NHIỀU CÂU HỎI TRỌNG TÂM VÀO NỘI DUNG NÀY NHẤT CÓ THỂ, ưu tiên cao hơn tài liệu chung!).` : ''}
+        ${extraDocsContext ? `\nNỘI DUNG TỪ TÀI LIỆU HỆ THỐNG ĐƯỢC CHỌN:\n${extraDocsContext}\n(TẬP TRUNG TẠO CÂU HỎI TỪ PHẦN NÀY)` : ''}
         ${selectedChapters.length > 0 ? `Tập trung câu hỏi vào các phần/chương: ${selectedChapters.join(', ')}.` : ''}
         ${customPrompt ? `YÊU CẦU ĐẶC BIỆT TỪ NGƯỜI DÙNG: ${customPrompt}` : ''}
         Số lượng câu hỏi: ${numQuestions}.
@@ -1033,6 +1097,60 @@ export default function MockExam() {
                     <button key={chapter} onClick={() => toggleChapter(chapter)} className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${selectedChapters.includes(chapter) ? 'bg-blue-600 border-blue-600 text-white' : 'bg-transparent border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-500'}`}>
                       {chapter}
                     </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {subjectDocs.length > 0 && (
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <label className="block text-sm font-medium">Đính kèm tài liệu phân tích (từ hệ thống)</label>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-medium">AI Read</span>
+                  </div>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer group">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      checked={selectedDocs.length === subjectDocs.length && subjectDocs.length > 0}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedDocs(subjectDocs.map(d => d.id));
+                        } else {
+                          setSelectedDocs([]);
+                        }
+                      }}
+                    />
+                    <span className="text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">Chọn tất cả</span>
+                  </label>
+                </div>
+                {!driveToken ? (
+                   <div className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 p-3 rounded-lg mb-3">
+                      Để thiết lập AI phân tích trực tiếp file tài liệu, bạn cần kết nối quyền truy cập Google Drive.
+                   </div>
+                ) : null}
+                <div className="flex flex-col gap-2">
+                  {subjectDocs.map(docItem => (
+                    <label key={docItem.id} className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors">
+                      <input 
+                        type="checkbox" 
+                        disabled={!driveToken}
+                        className="w-4 h-4 mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
+                        checked={selectedDocs.includes(docItem.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedDocs(prev => [...prev, docItem.id]);
+                          } else {
+                            setSelectedDocs(prev => prev.filter(id => id !== docItem.id));
+                          }
+                        }}
+                      />
+                      <div className="flex flex-col">
+                        <span className={`text-sm font-medium ${!driveToken ? 'opacity-50' : ''}`}>{docItem.title}</span>
+                        {docItem.url && <span className={`text-xs text-slate-500 ${!driveToken ? 'opacity-50' : ''}`}>Google Drive</span>}
+                      </div>
+                    </label>
                   ))}
                 </div>
               </div>
