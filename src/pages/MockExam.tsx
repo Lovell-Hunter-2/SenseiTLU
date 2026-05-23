@@ -478,9 +478,9 @@ export default function MockExam() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    // Check limit of 5 files maximum
-    if (uploadedFiles.length + files.length > 5) {
-      alert("Bạn chỉ có thể tải lên tối đa 5 file cùng lúc.");
+    // Check limit of 20 files maximum
+    if (uploadedFiles.length + files.length > 20) {
+      alert("Bạn chỉ có thể tải lên tối đa 20 file cùng lúc.");
       return;
     }
 
@@ -500,13 +500,13 @@ export default function MockExam() {
           const pdfjs = await loadPdfJs();
           const arrayBuffer = await file.arrayBuffer();
           const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-          const maxPages = Math.min(pdf.numPages, 30); // Giới hạn đọc 30 trang
+          const maxPages = Math.min(pdf.numPages, 150); // Mở rộng giới hạn đọc lên 150 trang
           for (let i = 1; i <= maxPages; i++) {
             const page = await pdf.getPage(i);
             const textContent = await page.getTextContent();
             extractedText += textContent.items.map((item: any) => item.str).join(' ') + '\\n';
           }
-          if (pdf.numPages > 30) {
+          if (pdf.numPages > 150) {
             extractedText += '\\n [Đã cắt bớt nội dung vì file quá dài...]';
           }
         } else if (file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
@@ -526,7 +526,7 @@ export default function MockExam() {
           extractedText = await file.text();
         }
 
-        const limitedText = extractedText.substring(0, 50000); // 50K chars per file
+        const limitedText = extractedText.substring(0, 500000); // 500K chars per file
         
         setUploadedFiles(prev => prev.map(f => 
           f.name === file.name 
@@ -857,13 +857,13 @@ export default function MockExam() {
                 ))}
               </div>
 
-              {uploadedFiles.length < 5 && (
+              {uploadedFiles.length < 20 && (
                 <div 
                   onClick={() => fileInputRef.current?.click()}
                   className="mt-3 w-full flex-col h-24 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 rounded-xl flex items-center justify-center cursor-pointer transition-colors bg-slate-50 dark:bg-slate-800/50"
                 >
                   <UploadCloud className="w-6 h-6 text-slate-400 mb-2" />
-                  <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Tải lên file (PDF, TXT, DOCX, XLSX) tối đa 5 file</span>
+                  <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Tải lên file (PDF, TXT, DOCX, XLSX) tối đa 20 file (có thể tải file lớn hơn)</span>
                   <input 
                     type="file" 
                     ref={fileInputRef} 
