@@ -356,7 +356,7 @@ export default function SubjectDetail() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => handleDocumentClick(e, item.title, item.url)}
-                className="group flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-slate-50 hover:bg-white dark:bg-slate-800/30 dark:hover:bg-slate-800 border border-slate-200/50 dark:border-slate-700/30 hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-sm transition-all"
+                className="group flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200/50 dark:border-slate-700/30 hover:bg-white dark:hover:bg-slate-800 hover:border-blue-200 dark:hover:border-blue-800 transition-colors"
                 title={item.title}
               >
                 <div className="flex items-center gap-3 min-w-0 pr-2">
