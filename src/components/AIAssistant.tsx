@@ -161,58 +161,96 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
               const data = d.data();
               let docStr = `- [${data.type || 'Tài liệu'}] ${data.title} ${data.url ? `(Link: ${data.url})` : ''}`;
               
-              if (data.url && data.url.includes('drive.google.com')) {
+              if (data.url && data.url.includes('drive.google.com') || data.url && data.url.includes('docs.google.com')) {
                  const driveApiKey = localStorage.getItem('driveApiKey') || (import.meta as any).env.VITE_GOOGLE_DRIVE_API_KEY || '';
-                 
-                 // If no token and no API key, we can't fetch. Otherwise proceed.
-                 if (!driveToken && !driveApiKey) {
-                    docStr += `\n   -> (Lưu ý: Hệ thống hiện chưa được cấu hình Google Drive API. Không thể đọc liên kết này.)`;
-                 } else {
-                    const headers = driveToken ? { Authorization: `Bearer ${driveToken}` } : {};
-                    const match = data.url.match(/(?:[-\w]{25,})|([a-zA-Z0-9-_]{25,})/);
-                    const fileId = match ? match[0] : null;
-                    if (fileId) {
-                       try {
-                          const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType&key=${driveApiKey}`, { headers });
-                          if (res.ok) {
-                            const metadata = await res.json();
-                            const { mimeType } = metadata;
-                            let extractedText = "";
+                 const headers = driveToken ? { Authorization: `Bearer ${driveToken}` } : {};
+                 const match = data.url.match(/(?:[-\w]{25,})|([a-zA-Z0-9-_]{25,})/);
+                 const fileId = match ? match[0] : null;
 
-                            if (mimeType.includes('document') || mimeType.includes('presentation') || mimeType.includes('spreadsheet')) {
-                              const exportType = mimeType.includes('spreadsheet') ? 'text/csv' : 'text/plain';
-                              const docRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${exportType}&key=${driveApiKey}`, { headers });
-                              if (docRes.ok) extractedText = await docRes.text();
-                            } else if (mimeType === 'application/pdf') {
-                              const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${driveApiKey}`, { headers });
-                              if (fileRes.ok) {
-                                const arrayBuffer = await fileRes.arrayBuffer();
-                                const pdfjs = await loadPdfJs();
-                                const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-                                const maxPages = Math.min(pdf.numPages, 30);
-                                for (let i = 1; i <= maxPages; i++) {
-                                  const page = await pdf.getPage(i);
-                                  const textContent = await page.getTextContent();
-                                  extractedText += textContent.items.map((item: any) => item.str).join(' ') + '\n';
-                                }
-                                if (pdf.numPages > 30) {
-                                  extractedText += '\n [Đã cắt bớt nội dung PDF vì quá dài...]';
-                                }
-                              }
-                            }
+                 if (fileId) {
+                    try {
+                       let extractedText = "";
+                       let mimeType = "";
+                       let isPublicBypass = false;
 
-                            if (extractedText.trim()) {
-                              docStr += `\n   -> NỘI DUNG TỪ GOOGLE DRIVE:\n"""\n${extractedText.substring(0, 50000)}...\n"""\n`;
-                            } else {
-                              docStr += `\n   -> (Nội dung trống hoặc không thể trích xuất text từ Google Drive)`;
-                            }
-                          } else {
-                            docStr += `\n   -> (Lỗi truy cập File Drive: Người dùng có thể cần chia sẻ file cho bất kỳ ai có link, hoặc API gặp lỗi)`;
-                          }
-                       } catch (e) {
-                          console.error("Lỗi khi đọc file drive", e);
-                          docStr += `\n   -> (Lỗi lấy nội dung từ Drive: Lỗi mạng hoặc Token hết hạn)`;
+                       // Attempt official API if key/token exists
+                       if (driveApiKey || driveToken) {
+                         const metadataRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType&key=${driveApiKey}`, { headers });
+                         if (metadataRes.ok) {
+                           const metadata = await metadataRes.json();
+                           mimeType = metadata.mimeType;
+                         } else {
+                           isPublicBypass = true;
+                         }
+                       } else {
+                         isPublicBypass = true;
                        }
+
+                       if (isPublicBypass) {
+                         // Guess type from URL
+                         if (data.url.includes('presentation')) mimeType = 'presentation';
+                         else if (data.url.includes('document')) mimeType = 'document';
+                         else if (data.url.includes('spreadsheets')) mimeType = 'spreadsheet';
+                         else mimeType = 'unknown';
+
+                         if (mimeType !== 'unknown') {
+                            const exportUrl = mimeType === 'document' ? `https://docs.google.com/document/d/${fileId}/export?format=txt` :
+                                              mimeType === 'presentation' ? `https://docs.google.com/presentation/d/${fileId}/export/txt` :
+                                              `https://docs.google.com/spreadsheets/d/${fileId}/export?format=csv`;
+                            
+                            const proxyRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(exportUrl)}`);
+                            if (proxyRes.ok) {
+                               const proxyData = await proxyRes.json();
+                               extractedText = proxyData.contents || "";
+                            }
+                         } else {
+                            docStr += `\n   -> (Không thể xác định loại file từ URL công khai)`;
+                         }
+                       } else {
+                         // Official API approach
+                         if (mimeType.includes('document') || mimeType.includes('presentation') || mimeType.includes('spreadsheet')) {
+                           const exportType = mimeType.includes('spreadsheet') ? 'text/csv' : 'text/plain';
+                           const docRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${exportType}&key=${driveApiKey}`, { headers });
+                           if (docRes.ok) extractedText = await docRes.text();
+                           else isPublicBypass = true;
+                         } else if (mimeType === 'application/pdf') {
+                           const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${driveApiKey}`, { headers });
+                           if (fileRes.ok) {
+                             const arrayBuffer = await fileRes.arrayBuffer();
+                             const pdfjs = await loadPdfJs();
+                             const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+                             const maxPages = Math.min(pdf.numPages, 30);
+                             for (let i = 1; i <= maxPages; i++) {
+                               const page = await pdf.getPage(i);
+                               const textContent = await page.getTextContent();
+                               extractedText += textContent.items.map((item: any) => item.str).join(' ') + '\n';
+                             }
+                           }
+                         }
+                         
+                         // Fallback to proxy if export failed due to permissions on export endpoint
+                         if (isPublicBypass && (mimeType.includes('document') || mimeType.includes('presentation') || mimeType.includes('spreadsheet'))) {
+                            const parsedMime = mimeType.includes('document') ? 'document' : mimeType.includes('presentation') ? 'presentation' : 'spreadsheet';
+                            const exportUrl = parsedMime === 'document' ? `https://docs.google.com/document/d/${fileId}/export?format=txt` :
+                                              parsedMime === 'presentation' ? `https://docs.google.com/presentation/d/${fileId}/export/txt` :
+                                              `https://docs.google.com/spreadsheets/d/${fileId}/export?format=csv`;
+                            
+                            const proxyRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(exportUrl)}`);
+                            if (proxyRes.ok) {
+                               const proxyData = await proxyRes.json();
+                               extractedText = proxyData.contents || "";
+                            }
+                         }
+                       }
+
+                       if (extractedText && extractedText.trim()) {
+                         docStr += `\n   -> NỘI DUNG TỪ GOOGLE DRIVE:\n"""\n${extractedText.substring(0, 50000)}...\n"""\n`;
+                       } else {
+                         docStr += `\n   -> (Nội dung trống hoặc không thể trích xuất text từ Google Drive)`;
+                       }
+                    } catch (e) {
+                       console.error("Lỗi khi đọc file drive", e);
+                       docStr += `\n   -> (Lỗi lấy nội dung từ Drive: Lỗi mạng hoặc URL không công khai)`;
                     }
                  }
               }
