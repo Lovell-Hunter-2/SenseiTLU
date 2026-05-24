@@ -402,24 +402,53 @@ export default function Home() {
         )}
 
         {!user && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6 sm:p-8 text-center max-w-3xl mx-auto mt-8 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
-            <div className="flex flex-col items-center gap-4 relative z-10">
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 mb-2">
-                <Lock className="w-6 h-6" />
+          <div className="space-y-6 max-w-4xl mx-auto mt-8 relative z-10">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6 sm:p-8 text-center shadow-sm overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+              <div className="flex flex-col items-center gap-4 relative z-10">
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 mb-2">
+                  <Lock className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                  Đăng nhập để xem và tải tài liệu
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
+                  Hệ thống yêu cầu đăng nhập để bảo vệ nội dung tài liệu. Vui lòng đăng nhập bằng tài khoản Google để truy cập kho đề cương, slide bài giảng, đề thi và sử dụng trợ lý AI.
+                </p>
+                <button
+                  onClick={login}
+                  className="mt-2 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-medium transition-colors shadow-md shadow-blue-500/20"
+                >
+                  <LogIn className="w-5 h-5" /> Đăng nhập để tiếp tục
+                </button>
               </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                Đăng nhập để xem và tải tài liệu
-              </h3>
-              <p className="text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-                Hệ thống yêu cầu đăng nhập để bảo vệ nội dung tài liệu. Vui lòng đăng nhập bằng tài khoản Google để truy cập kho đề cương, slide bài giảng, đề thi và sử dụng trợ lý AI.
-              </p>
-              <button
-                onClick={login}
-                className="mt-2 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-medium transition-colors shadow-md shadow-blue-500/20"
-              >
-                <LogIn className="w-5 h-5" /> Đăng nhập để tiếp tục
-              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8">
+               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+                 <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
+                   <LayoutDashboard className="w-5 h-5 text-blue-500" />
+                   Về SenseiTLU
+                 </h3>
+                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                   SenseiTLU là một nền tảng hỗ trợ sinh viên học tập, cung cấp kho tài liệu tham khảo phong phú và tính năng tạo bài thi thử tự động. Mọi người dùng đều có thể khám phá danh sách các môn học, đọc thông tin mô tả và tìm kiếm tài liệu mong muốn một cách dễ dàng ngay trên trang chủ.
+                 </p>
+               </div>
+               
+               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+                 <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
+                   <Shield className="w-5 h-5 text-emerald-500" />
+                   Tại sao cần quyền Google Drive?
+                 </h3>
+                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
+                   Để mang lại trải nghiệm ôn tập tốt hơn, SenseiTLU cung cấp tính năng AI phân tích chuyên sâu tài liệu cá nhân của bạn.
+                 </p>
+                 <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-2 list-disc pl-5">
+                   <li>Ứng dụng yêu cầu quyền <b>đọc (readonly)</b> vào Google Drive của bạn.</li>
+                   <li>Quyền này <b>chỉ</b> được sử dụng khi bạn chủ động chọn một file từ Drive để AI đọc và tạo bộ đề thi mô phỏng từ file đó.</li>
+                   <li>Chúng tôi không lưu trữ hoặc chia sẻ dữ liệu Drive của bạn với bất kỳ bên thứ ba nào khác. Tham khảo thêm tại <Link to="/privacy" className="text-blue-500 hover:underline">Chính sách bảo mật</Link> và <Link to="/terms" className="text-blue-500 hover:underline">Điều khoản dịch vụ</Link>.</li>
+                 </ul>
+               </div>
             </div>
           </div>
         )}
