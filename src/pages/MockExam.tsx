@@ -430,14 +430,33 @@ export default function MockExam() {
                 
                 if (isPublicBypass && (mimeType.includes('document') || mimeType.includes('presentation') || mimeType.includes('spreadsheet'))) {
                    const parsedMime = mimeType.includes('document') ? 'document' : mimeType.includes('presentation') ? 'presentation' : 'spreadsheet';
-                   const exportUrl = parsedMime === 'document' ? `https://docs.google.com/document/d/${fileId}/export?format=txt` :
-                                     parsedMime === 'presentation' ? `https://docs.google.com/presentation/d/${fileId}/export/txt` :
-                                     `https://docs.google.com/spreadsheets/d/${fileId}/export?format=csv`;
-                   
-                   const proxyRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(exportUrl)}`);
-                   if (proxyRes.ok) {
-                      const proxyData = await proxyRes.json();
-                      extractedText = proxyData.contents || "";
+                   if (parsedMime === 'presentation') {
+                      const exportUrl = `https://docs.google.com/presentation/d/${fileId}/export/pdf`;
+                      const proxyRes = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(exportUrl)}`);
+                      if (proxyRes.ok) {
+                         try {
+                            const arrayBuffer = await proxyRes.arrayBuffer();
+                            const pdfjs = await loadPdfJs();
+                            const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+                            const maxPages = Math.min(pdf.numPages, 30);
+                            for (let i = 1; i <= maxPages; i++) {
+                               const page = await pdf.getPage(i);
+                               const textContent = await page.getTextContent();
+                               extractedText += textContent.items.map((item: any) => item.str).join(' ') + '\n';
+                            }
+                         } catch (e) {
+                            console.error('Lỗi khi đọc PDF từ Slides', e);
+                         }
+                      }
+                   } else {
+                      const exportUrl = parsedMime === 'document' ? `https://docs.google.com/document/d/${fileId}/export?format=txt` :
+                                        `https://docs.google.com/spreadsheets/d/${fileId}/export?format=csv`;
+                      
+                      const proxyRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(exportUrl)}`);
+                      if (proxyRes.ok) {
+                         const proxyData = await proxyRes.json();
+                         extractedText = proxyData.contents || "";
+                      }
                    }
                 }
               }
