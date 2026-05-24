@@ -9,3 +9,15 @@
     50% { transform: rotate(3deg); }
   }
 }
+
+@layer base {
+  html, body, #root {
+    min-height: 100%;
+  }
+  html {
+    background-color: #0f172a; /* Fallback dark bgColor */
+  }
+  body {
+    @apply bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50;
+  }
+}
