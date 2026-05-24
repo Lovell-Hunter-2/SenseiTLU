@@ -1057,8 +1057,14 @@ export default function MockExam() {
                   </label>
                 </div>
                 {!driveToken ? (
-                   <div className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 p-3 rounded-lg mb-3">
-                      Để thiết lập AI phân tích trực tiếp file tài liệu, bạn cần kết nối quyền truy cập Google Drive.
+                   <div className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 p-3 rounded-lg mb-3 flex items-center justify-between">
+                      <span>Để thiết lập AI phân tích trực tiếp file tài liệu, bạn cần kết nối quyền truy cập Google Drive.</span>
+                      <button 
+                        onClick={login}
+                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-md font-medium transition-colors"
+                      >
+                        Kết nối ngay
+                      </button>
                    </div>
                 ) : null}
                 <div className="flex flex-wrap gap-2">
