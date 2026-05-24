@@ -243,6 +243,10 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
                          }
                        }
 
+                       if (extractedText && (extractedText.includes('<!DOCTYPE html>') || extractedText.includes('<html'))) {
+                           extractedText = "";
+                       }
+
                        if (extractedText && extractedText.trim()) {
                          docStr += `\n   -> NỘI DUNG TỪ GOOGLE DRIVE:\n"""\n${extractedText.substring(0, 50000)}...\n"""\n`;
                        } else {
@@ -596,7 +600,3 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
             });
         }
       }} 
-    />
-    </>
-  );
-}
