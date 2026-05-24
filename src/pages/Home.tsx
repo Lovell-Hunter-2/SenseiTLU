@@ -395,34 +395,9 @@ export default function Home() {
           })}
         </div>
         
-        {filteredSubjects.length === 0 && user && (
+        {filteredSubjects.length === 0 && (
           <div className="text-center py-12 text-slate-500 dark:text-slate-400">
             <p>Không tìm thấy môn học nào phù hợp. <br /> Nếu vừa cập nhật hãy đợi vài giây hoặc F5 lại trang nhé!</p> 
-          </div>
-        )}
-
-        {!user && (
-          <div className="space-y-6 max-w-4xl mx-auto mt-8 relative z-10 pb-8">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6 sm:p-8 text-center shadow-sm overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
-              <div className="flex flex-col items-center gap-4 relative z-10">
-                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 mb-2">
-                  <Lock className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                  Đăng nhập để xem và tải tài liệu
-                </h3>
-                <p className="text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-                  Hệ thống yêu cầu đăng nhập để bảo vệ nội dung tài liệu. Vui lòng đăng nhập bằng tài khoản Google để truy cập kho đề cương, slide bài giảng, đề thi và sử dụng trợ lý AI.
-                </p>
-                <button
-                  onClick={login}
-                  className="mt-2 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-medium transition-colors shadow-md shadow-blue-500/20"
-                >
-                  <LogIn className="w-5 h-5" /> Đăng nhập để tiếp tục
-                </button>
-              </div>
-            </div>
           </div>
         )}
       </div>
