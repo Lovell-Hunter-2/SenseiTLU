@@ -162,16 +162,18 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
               let docStr = `- [${data.type || 'Tài liệu'}] ${data.title} ${data.url ? `(Link: ${data.url})` : ''}`;
               
               if (data.url && data.url.includes('drive.google.com')) {
-                 if (!driveToken) {
-                    docStr += `\n   -> (Lưu ý: Hệ thống hiện chưa có quyền truy cập Google Drive. Bạn HÃY nói với người dùng: "Mình cần bạn cấp quyền đọc Google Drive để phân tích file này. Vui lòng nhấn biểu tượng Google Drive ở góc AI chat để kết nối.")`;
+                 const driveApiKey = localStorage.getItem('driveApiKey') || (import.meta as any).env.VITE_GOOGLE_DRIVE_API_KEY || '';
+                 
+                 // If no token and no API key, we can't fetch. Otherwise proceed.
+                 if (!driveToken && !driveApiKey) {
+                    docStr += `\n   -> (Lưu ý: Hệ thống hiện chưa được cấu hình Google Drive API. Không thể đọc liên kết này.)`;
                  } else {
+                    const headers = driveToken ? { Authorization: `Bearer ${driveToken}` } : {};
                     const match = data.url.match(/(?:[-\w]{25,})|([a-zA-Z0-9-_]{25,})/);
                     const fileId = match ? match[0] : null;
                     if (fileId) {
                        try {
-                          const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType`, {
-                            headers: { Authorization: `Bearer ${driveToken}` },
-                          });
+                          const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType&key=${driveApiKey}`, { headers });
                           if (res.ok) {
                             const metadata = await res.json();
                             const { mimeType } = metadata;
@@ -179,14 +181,10 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
 
                             if (mimeType.includes('document') || mimeType.includes('presentation') || mimeType.includes('spreadsheet')) {
                               const exportType = mimeType.includes('spreadsheet') ? 'text/csv' : 'text/plain';
-                              const docRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${exportType}`, {
-                                headers: { Authorization: `Bearer ${driveToken}` }
-                              });
+                              const docRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${exportType}&key=${driveApiKey}`, { headers });
                               if (docRes.ok) extractedText = await docRes.text();
                             } else if (mimeType === 'application/pdf') {
-                              const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-                                headers: { Authorization: `Bearer ${driveToken}` }
-                              });
+                              const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${driveApiKey}`, { headers });
                               if (fileRes.ok) {
                                 const arrayBuffer = await fileRes.arrayBuffer();
                                 const pdfjs = await loadPdfJs();
@@ -356,19 +354,6 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
           <span className="font-bold text-sm">Sensei AI</span>
         </div>
         <div className="flex items-center gap-1">
-          {!driveToken && (
-            <button
-               onClick={login}
-               className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-amber-500 transition-colors flex items-center gap-1"
-               title="Kết nối Google Drive để phân tích Link tài liệu"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M16 11.5L32 11.5L40 25L24 25L16 11.5Z" fill="#FFC107"/>
-                <path d="M8 25.5L16 11.5L24 25L16 39L8 25.5Z" fill="#1976D2"/>
-                <path d="M24.5 25L40.5 25L32.5 39L16.5 39L24.5 25Z" fill="#4CAF50"/>
-              </svg>
-            </button>
-          )}
           <button 
             onClick={() => setShowPersonalizeModal(true)}
             className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 transition-colors"
