@@ -347,7 +347,7 @@ export default function MockExam() {
 
     try {
       let extraDocsContext = "";
-      if (selectedDocs.length > 0 && driveToken) {
+      if (selectedDocs.length > 0) {
         setStatus('generating'); // Just to keep UI state
         // Fetch the contents of selected drive links
         const docsToFetch = subjectDocs.filter(d => selectedDocs.includes(d.id) && d.url && d.url.includes('drive.google.com'));
@@ -356,9 +356,10 @@ export default function MockExam() {
           const fileId = match ? match[0] : null;
           if (fileId) {
             try {
-              const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType`, {
-                headers: { Authorization: `Bearer ${driveToken}` },
-              });
+              const driveApiKey = localStorage.getItem('driveApiKey') || (import.meta as any).env.VITE_GOOGLE_DRIVE_API_KEY || '';
+              const headers = driveToken ? { Authorization: `Bearer ${driveToken}` } : {};
+
+              const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType&key=${driveApiKey}`, { headers });
               if (res.ok) {
                 const metadata = await res.json();
                 const { mimeType } = metadata;
@@ -366,14 +367,10 @@ export default function MockExam() {
 
                 if (mimeType.includes('document') || mimeType.includes('presentation') || mimeType.includes('spreadsheet')) {
                   const exportType = mimeType.includes('spreadsheet') ? 'text/csv' : 'text/plain';
-                  const docRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${exportType}`, {
-                    headers: { Authorization: `Bearer ${driveToken}` }
-                  });
+                  const docRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${exportType}&key=${driveApiKey}`, { headers });
                   if (docRes.ok) extractedText = await docRes.text();
                 } else if (mimeType === 'application/pdf') {
-                  const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-                    headers: { Authorization: `Bearer ${driveToken}` }
-                  });
+                  const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${driveApiKey}`, { headers });
                   if (fileRes.ok) {
                     const arrayBuffer = await fileRes.arrayBuffer();
                     const pdfjs = await loadPdfJs();
@@ -553,16 +550,16 @@ export default function MockExam() {
       return;
     }
 
-    if (!driveToken) {
-      setDriveError("Vui lòng kết nối Google Drive trước bằng nút bên cạnh.");
+    const driveApiKey = localStorage.getItem('driveApiKey') || (import.meta as any).env.VITE_GOOGLE_DRIVE_API_KEY || '';
+    if (!driveToken && !driveApiKey) {
+      setDriveError("Vui lòng cấu hình Google Drive API Key hoặc kết nối Google Drive.");
       return;
     }
 
     setIsFetchingDrive(true);
     try {
-      const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType`, {
-        headers: { Authorization: `Bearer ${driveToken}` },
-      });
+      const headers = driveToken ? { Authorization: `Bearer ${driveToken}` } : {};
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType&key=${driveApiKey}`, { headers });
       if (!res.ok) {
         throw new Error("Không thể truy cập file. Hãy chắc chắn link đã được chia sẻ hoặc nằm trong Drive của bạn.");
       }
@@ -576,24 +573,16 @@ export default function MockExam() {
       let extractedText = "";
 
       if (mimeType.includes('document')) {
-        const docRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/plain`, {
-          headers: { Authorization: `Bearer ${driveToken}` }
-        });
+        const docRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/plain&key=${driveApiKey}`, { headers });
         extractedText = await docRes.text();
       } else if (mimeType.includes('presentation')) {
-        const slideRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/plain`, {
-          headers: { Authorization: `Bearer ${driveToken}` }
-        });
+        const slideRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/plain&key=${driveApiKey}`, { headers });
         extractedText = await slideRes.text();
       } else if (mimeType.includes('spreadsheet')) {
-         const sheetRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/csv`, {
-          headers: { Authorization: `Bearer ${driveToken}` }
-        });
+         const sheetRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/csv&key=${driveApiKey}`, { headers });
         extractedText = await sheetRes.text();
       } else {
-        const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-          headers: { Authorization: `Bearer ${driveToken}` }
-        });
+        const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${driveApiKey}`, { headers });
         const blob = await fileRes.blob();
         const fileObj = new File([blob], name, { type: mimeType });
         await processFiles([fileObj]);
@@ -1056,24 +1045,12 @@ export default function MockExam() {
                     <span className="text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">Chọn tất cả</span>
                   </label>
                 </div>
-                {!driveToken ? (
-                   <div className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 p-3 rounded-lg mb-3 flex items-center justify-between">
-                      <span>Để thiết lập AI phân tích trực tiếp file tài liệu, bạn cần kết nối quyền truy cập Google Drive.</span>
-                      <button 
-                        onClick={login}
-                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-md font-medium transition-colors"
-                      >
-                        Kết nối ngay
-                      </button>
-                   </div>
-                ) : null}
                 <div className="flex flex-wrap gap-2">
                   {subjectDocs.map(docItem => {
                     const isSelected = selectedDocs.includes(docItem.id);
                     return (
                       <button 
                         key={docItem.id} 
-                        disabled={!driveToken}
                         onClick={() => {
                            if (isSelected) {
                              setSelectedDocs(prev => prev.filter(id => id !== docItem.id));
@@ -1081,7 +1058,7 @@ export default function MockExam() {
                              setSelectedDocs(prev => [...prev, docItem.id]);
                            }
                         }} 
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border max-w-[300px] truncate ${isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'bg-transparent border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-500'} ${!driveToken ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border max-w-[300px] truncate ${isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'bg-transparent border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-500'}`}>
                         {docItem.title}
                       </button>
                     );
