@@ -208,7 +208,22 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
                          }
                        } else {
                          // Official API approach
-                         if (mimeType.includes('document') || mimeType.includes('presentation') || mimeType.includes('spreadsheet')) {
+                         if (mimeType.includes('presentation')) {
+                           const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=application/pdf&key=${driveApiKey}`, { headers });
+                           if (fileRes.ok) {
+                             const arrayBuffer = await fileRes.arrayBuffer();
+                             const pdfjs = await loadPdfJs();
+                             const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+                             const maxPages = Math.min(pdf.numPages, 30);
+                             for (let i = 1; i <= maxPages; i++) {
+                               const page = await pdf.getPage(i);
+                               const textContent = await page.getTextContent();
+                               extractedText += textContent.items.map((item: any) => item.str).join(' ') + '\n';
+                             }
+                           } else {
+                             isPublicBypass = true;
+                           }
+                         } else if (mimeType.includes('document') || mimeType.includes('spreadsheet')) {
                            const exportType = mimeType.includes('spreadsheet') ? 'text/csv' : 'text/plain';
                            const docRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${exportType}&key=${driveApiKey}`, { headers });
                            if (docRes.ok) extractedText = await docRes.text();
@@ -600,3 +615,7 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
             });
         }
       }} 
+    />
+    </>
+  );
+}
