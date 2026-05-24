@@ -359,16 +359,45 @@ export default function MockExam() {
               const driveApiKey = localStorage.getItem('driveApiKey') || (import.meta as any).env.VITE_GOOGLE_DRIVE_API_KEY || '';
               const headers = driveToken ? { Authorization: `Bearer ${driveToken}` } : {};
 
-              const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType&key=${driveApiKey}`, { headers });
-              if (res.ok) {
-                const metadata = await res.json();
-                const { mimeType } = metadata;
-                let extractedText = "";
+              let mimeType = "";
+              let isPublicBypass = false;
+              let extractedText = "";
 
+              if (driveApiKey || driveToken) {
+                 const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType&key=${driveApiKey}`, { headers });
+                 if (res.ok) {
+                   const metadata = await res.json();
+                   mimeType = metadata.mimeType;
+                 } else {
+                   isPublicBypass = true;
+                 }
+              } else {
+                 isPublicBypass = true;
+              }
+
+              if (isPublicBypass) {
+                  if (doc.url!.includes('presentation')) mimeType = 'presentation';
+                  else if (doc.url!.includes('document')) mimeType = 'document';
+                  else if (doc.url!.includes('spreadsheets')) mimeType = 'spreadsheet';
+                  else mimeType = 'unknown';
+
+                  if (mimeType !== 'unknown') {
+                     const exportUrl = mimeType === 'document' ? `https://docs.google.com/document/d/${fileId}/export?format=txt` :
+                                       mimeType === 'presentation' ? `https://docs.google.com/presentation/d/${fileId}/export/txt` :
+                                       `https://docs.google.com/spreadsheets/d/${fileId}/export?format=csv`;
+                     
+                     const proxyRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(exportUrl)}`);
+                     if (proxyRes.ok) {
+                        const proxyData = await proxyRes.json();
+                        extractedText = proxyData.contents || "";
+                     }
+                  }
+              } else {
                 if (mimeType.includes('document') || mimeType.includes('presentation') || mimeType.includes('spreadsheet')) {
                   const exportType = mimeType.includes('spreadsheet') ? 'text/csv' : 'text/plain';
                   const docRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${exportType}&key=${driveApiKey}`, { headers });
                   if (docRes.ok) extractedText = await docRes.text();
+                  else isPublicBypass = true;
                 } else if (mimeType === 'application/pdf') {
                   const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${driveApiKey}`, { headers });
                   if (fileRes.ok) {
@@ -379,14 +408,31 @@ export default function MockExam() {
                     for (let i = 1; i <= maxPages; i++) {
                       const page = await pdf.getPage(i);
                       const textContent = await page.getTextContent();
-                      extractedText += textContent.items.map((item: any) => item.str).join(' ') + '\\n';
+                      extractedText += textContent.items.map((item: any) => item.str).join(' ') + '\n';
                     }
                   }
                 }
                 
-                if (extractedText.trim()) {
-                  extraDocsContext += `\n[TÀI LIỆU HỆ THỐNG: ${doc.title}]\n${extractedText.substring(0, 30000)}...\n`;
+                if (isPublicBypass && (mimeType.includes('document') || mimeType.includes('presentation') || mimeType.includes('spreadsheet'))) {
+                   const parsedMime = mimeType.includes('document') ? 'document' : mimeType.includes('presentation') ? 'presentation' : 'spreadsheet';
+                   const exportUrl = parsedMime === 'document' ? `https://docs.google.com/document/d/${fileId}/export?format=txt` :
+                                     parsedMime === 'presentation' ? `https://docs.google.com/presentation/d/${fileId}/export/txt` :
+                                     `https://docs.google.com/spreadsheets/d/${fileId}/export?format=csv`;
+                   
+                   const proxyRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(exportUrl)}`);
+                   if (proxyRes.ok) {
+                      const proxyData = await proxyRes.json();
+                      extractedText = proxyData.contents || "";
+                   }
                 }
+              }
+                
+              if (extractedText && (extractedText.includes('<!DOCTYPE html>') || extractedText.includes('<html'))) {
+                 extractedText = "";
+              }
+                
+              if (extractedText.trim()) {
+                extraDocsContext += `\n[TÀI LIỆU HỆ THỐNG: ${doc.title}]\n${extractedText.substring(0, 30000)}...\n`;
               }
             } catch (e) {
               console.error("Lỗi khi đọc file drive trong tạo quiz", e);
