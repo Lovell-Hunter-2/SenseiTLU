@@ -50,32 +50,63 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
   if (process.env.GEMINI_API_KEY) {
     try {
         console.log("Đang thử Gemini API...");
-        // Ghép system prompt vào prompt của user (vì Gemini flash 2.5 API SDK mới chưa chắc dễ xài roles array, hoặc build prompt thủ công)
         const systemMsg = options.messages.filter(m => m.role === 'system').map(m => m.content).join("\n");
-        const userMsg = options.messages.filter(m => m.role === 'user').map(m => m.content).join("\n");
+        let geminiContents: any[] = [];
         
-        let contentsParts: any = systemMsg ? `${systemMsg}\n\n${userMsg}` : userMsg;
-        if (options.attachedFileString) {
-          const match = options.attachedFileString.match(/^data:([\w+/.-]+);base64,(.*)$/);
-          if (match) {
-            contentsParts = [
-              {
-                inlineData: {
-                  data: match[2],
-                  mimeType: match[1]
+        for (const m of options.messages) {
+            if (m.role === 'system') continue;
+            const role = m.role === 'assistant' ? 'model' : 'user';
+            let text = m.content || " ";
+            const parts: any[] = [];
+            
+            if (m.attachedFileData) {
+                const match = m.attachedFileData.match(/^data:([\w+/.-]+);base64,(.*)$/);
+                if (match && m.attachedFileType?.startsWith('image/')) {
+                    parts.push({
+                        inlineData: {
+                            data: match[2],
+                            mimeType: match[1]
+                        }
+                    });
+                } else if (!m.attachedFileType?.startsWith('image/')) {
+                    text = `[Tệp đính kèm: ${m.attachedFileName || 'Tài liệu'}]\n\n${text}`;
                 }
-              },
-              systemMsg ? `${systemMsg}\n\n${userMsg}` : userMsg
-            ];
-          }
+            }
+            // fallback if legacy attachedFileString is present on the last message
+            else if (options.attachedFileString && m === options.messages[options.messages.length - 1]) {
+                const match = options.attachedFileString.match(/^data:([\w+/.-]+);base64,(.*)$/);
+                if (match) {
+                    if (match[1].startsWith('image/')) {
+                        parts.push({
+                            inlineData: {
+                                data: match[2],
+                                mimeType: match[1]
+                            }
+                        });
+                    }
+                }
+            }
+            
+            parts.push({ text });
+
+            if (geminiContents.length > 0 && geminiContents[geminiContents.length - 1].role === role) {
+                // Merge parts if the same role is contiguous
+                geminiContents[geminiContents.length - 1].parts.push(...parts);
+            } else {
+                geminiContents.push({ role, parts });
+            }
         }
 
         const response = await gemini.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: contentsParts,
+        model: 'gemini-3.5-flash',
+        contents: geminiContents.length > 0 ? geminiContents : [{ role: 'user', parts: [{ text: "Hello" }] }],
         config: {
+            systemInstruction: systemMsg ? systemMsg : undefined,
             temperature: 0.7,
             responseMimeType: options.jsonMode ? "application/json" : "text/plain",
+            httpOptions: {
+               headers: { 'User-Agent': 'aistudio-build' }
+            }
         }
         });
 
