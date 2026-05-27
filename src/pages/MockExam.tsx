@@ -191,6 +191,51 @@ export default function MockExam() {
   // UI State
   const [isNavOpen, setIsNavOpen] = useState(window.innerWidth >= 1024);
 
+  // AI Tutor State
+  const [isAskingTutor, setIsAskingTutor] = useState(false);
+  const [tutorHint, setTutorHint] = useState<string | null>(null);
+  const [tutorQId, setTutorQId] = useState<number | null>(null);
+
+  useEffect(() => {
+    setTutorHint(null);
+  }, [currentIndex, status]);
+
+  const askAITutor = async () => {
+    if (isAskingTutor || !questions[currentIndex]) return;
+    setIsAskingTutor(true);
+    const q = questions[currentIndex];
+    const hasAnswered = status === 'review' || userAnswers[currentIndex] !== undefined;
+
+    const prompt = hasAnswered 
+      ? `Hãy đóng vai gia sư, giảng giải thật chi tiết cho câu hỏi trắc nghiệm ĐẠI HỌC sau đây. Trọng tâm: ${subject?.name || 'Môn học đại học'}
+Câu hỏi: ${q.question}
+Các đáp án:
+${q.options.map((o, idx) => `${['A', 'B', 'C', 'D'][idx]}. ${o}`).join('\n')}
+Đáp án đúng của hệ thống là: ${['A', 'B', 'C', 'D'][q.correctIndex]}.
+Người dùng đã chọn: ${userAnswers[currentIndex] !== undefined ? ['A', 'B', 'C', 'D'][userAnswers[currentIndex]] : 'Chưa chọn'}
+Hãy giải thích thật kỹ tại sao đáp án đúng lại đúng, và các đáp án khác sai ở đâu, cung cấp ví dụ nếu cần.`
+      : `Gợi ý cách giải quyết câu hỏi trắc nghiệm ĐẠI HỌC này mà KHÔNG được nói trực tiếp đáp án đúng. Hãy phân tích ngắn gọn đề bài và đưa ra hướng tư duy (hint). Nếu câu hỏi cần tính toán thì chỉ công thức. Trọng tâm: ${subject?.name || 'Môn học đại học'}
+Câu hỏi: ${q.question}
+Các đáp án:
+${q.options.map((o, idx) => `${['A', 'B', 'C', 'D'][idx]}. ${o}`).join('\n')}
+
+Lưu ý: Không giải thích quá dài. Không chọn đáp án. Chỉ gợi ý.`;
+    
+    try {
+      const resp = await generateWithFallback({
+        messages: [{ role: 'user', content: prompt }]
+      });
+      setTutorHint(resp);
+      setTutorQId(currentIndex);
+    } catch (err) {
+      console.error(err);
+      setTutorHint("Xin lỗi, AI tạm thời quá tải hoặc không thể kết nối. Bạn thử lại sau nhé.");
+      setTutorQId(currentIndex);
+    } finally {
+      setIsAskingTutor(false);
+    }
+  };
+
   // Save state to sessionStorage whenever it changes
   useEffect(() => {
     if (status !== 'setup' && status !== 'generating') {
@@ -1358,6 +1403,30 @@ export default function MockExam() {
                 <p className="text-blue-900 dark:text-blue-200 text-sm md:text-base leading-relaxed">
                   {currentQ.explanation}
                 </p>
+              </div>
+            )}
+            
+            {(status === 'active' || isReview) && (
+              <div className="mt-6 flex flex-col items-center">
+                <button
+                  onClick={askAITutor}
+                  disabled={isAskingTutor}
+                  className="px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 dark:bg-indigo-900/30 dark:hover:bg-indigo-800/50 dark:text-indigo-300 rounded-full font-medium transition-colors flex items-center justify-center gap-2 text-sm border border-indigo-200 dark:border-indigo-800 disabled:opacity-50"
+                >
+                  {isAskingTutor ? <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div> : <Lightbulb className="w-4 h-4" />}
+                  {isReview || userAnswer !== undefined ? "Hỏi Gia sư AI giảng giải sâu câu này" : "Hỏi Gia sư AI gợi ý cách làm"}
+                </button>
+              </div>
+            )}
+
+            {tutorHint && tutorQId === currentIndex && (
+              <div className="mt-6 p-5 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800/50 rounded-xl relative">
+                <h4 className="font-bold text-indigo-800 dark:text-indigo-300 mb-2 flex items-center gap-2">
+                  <span className="text-xl">🎓</span> {isReview || userAnswer !== undefined ? "Giải thích chuyên sâu từ Gia Sư AI" : "Gợi ý từ Gia Sư AI"}
+                </h4>
+                <div className="text-indigo-900 dark:text-indigo-200 text-sm md:text-base leading-relaxed whitespace-pre-wrap">
+                  {tutorHint}
+                </div>
               </div>
             )}
           </div>
