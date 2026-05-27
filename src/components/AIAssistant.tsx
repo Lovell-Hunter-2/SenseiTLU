@@ -349,7 +349,7 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
       
       const chatMessages = [
         systemMessage,
-        ...messages.map(m => ({ role: m.role, content: m.content })),
+        ...messages.slice(-8).map(m => ({ role: m.role, content: m.content })),
         userMessage
       ];
 
