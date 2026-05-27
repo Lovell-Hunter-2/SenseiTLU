@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Clock, Calendar, Timer } from 'lucide-react';
 
 export default function ClockWidget() {
   const [now, setNow] = useState(new Date());
@@ -27,8 +26,11 @@ export default function ClockWidget() {
   }, []);
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
   };
+  const getSeconds = (date: Date) => {
+     return date.getSeconds().toString().padStart(2, '0');
+  }
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit' });
@@ -44,23 +46,23 @@ export default function ClockWidget() {
   };
 
   return (
-    <div className={`hidden md:flex items-center gap-3 bg-indigo-50/80 dark:bg-indigo-900/20 px-3 py-1.5 rounded-full border border-indigo-100 dark:border-indigo-800/50 shadow-sm transition-all duration-300 mr-2`}>
-       <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-medium">
-          <Clock className="w-4 h-4 animate-pulse" />
-          <span className="text-sm tracking-widest font-mono">{formatTime(now)}</span>
+    <div className={`hidden md:flex items-center gap-2 mr-2 font-mono`}>
+       <div className="flex items-center gap-1.5 bg-gradient-to-r from-pink-100 to-rose-100 dark:from-pink-900/40 dark:to-rose-900/40 px-3 py-1.5 rounded-2xl border border-pink-200 dark:border-pink-800/50 shadow-sm text-pink-700 dark:text-pink-300 font-bold transition-transform hover:scale-105 cursor-default relative overflow-hidden group">
+          <span className="text-base group-hover:animate-bounce">🌸</span>
+          <span className="ml-1">{formatTime(now)}</span>
+          <span className="text-xs opacity-60 animate-pulse">{getSeconds(now)}</span>
        </div>
        
        {isHome && (
          <>
-           <div className="w-px h-4 bg-indigo-200 dark:bg-indigo-700/50 hidden lg:block" />
-           <div className="hidden lg:flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-medium">
-              <Calendar className="w-4 h-4" />
-              <span className="text-sm">{formatDate(now)}</span>
+           <div className="hidden lg:flex items-center gap-2 bg-gradient-to-r from-cyan-100 to-blue-100 dark:from-cyan-900/40 dark:to-blue-900/40 px-3 py-1.5 rounded-2xl border border-cyan-200 dark:border-cyan-800/50 shadow-sm text-cyan-700 dark:text-cyan-300 font-bold transition-transform hover:scale-105 cursor-default group">
+              <span className="text-base group-hover:scale-110 transition-transform">☁️</span>
+              <span>{formatDate(now)}</span>
            </div>
-           <div className="w-px h-4 bg-indigo-200 dark:bg-indigo-700/50" />
-           <div className="flex items-center gap-1.5 text-orange-500 dark:text-orange-400 font-medium relative group">
-              <Timer className="w-4 h-4" />
-              <span className="text-sm font-mono tracking-widest">{formatSpent(timeSpent)}</span>
+           
+           <div className="flex items-center gap-2 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40 px-3 py-1.5 rounded-2xl border border-amber-200 dark:border-amber-800/50 shadow-sm text-amber-700 dark:text-amber-300 font-bold transition-transform hover:scale-105 cursor-default group" title="Thời gian học hôm nay">
+              <span className="text-base group-hover:animate-spin origin-bottom">🌱</span>
+              <span className="tracking-wider">{formatSpent(timeSpent)}</span>
            </div>
          </>
        )}
