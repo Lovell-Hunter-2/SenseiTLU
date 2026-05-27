@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { generateWithFallback, AIMessage } from '../services/aiService';
-import { ArrowLeft, Settings, Play, CheckCircle2, XCircle, RefreshCcw, Lightbulb, Book, Menu, X, User, Quote, Home as HomeIcon, RotateCcw, Eye, Minus, Plus, UploadCloud, FileText, Trash2, Share2, ClipboardCheck, Lock, LogIn } from 'lucide-react';
+import { ArrowLeft, Settings, Play, CheckCircle2, XCircle, RefreshCcw, Lightbulb, Book, Menu, X, User, Quote, Home as HomeIcon, RotateCcw, Eye, Minus, Plus, UploadCloud, FileText, Trash2, Share2, ClipboardCheck, Lock, LogIn, Sparkles } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -196,6 +196,10 @@ export default function MockExam() {
   const [tutorHint, setTutorHint] = useState<string | null>(null);
   const [tutorQId, setTutorQId] = useState<number | null>(null);
 
+  // General AI Evaluation
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evaluationResult, setEvaluationResult] = useState<string | null>(null);
+
   useEffect(() => {
     setTutorHint(null);
   }, [currentIndex, status]);
@@ -233,6 +237,34 @@ Lưu ý: Không giải thích quá dài. Không chọn đáp án. Chỉ gợi ý
       setTutorQId(currentIndex);
     } finally {
       setIsAskingTutor(false);
+    }
+  };
+
+  const handleEvaluateWithAI = async () => {
+    if (isEvaluating || questions.length === 0) return;
+    setIsEvaluating(true);
+
+    const questionsSummary = questions.map((q, idx) => {
+      const isCorrect = userAnswers[idx] === q.correctIndex;
+      return `Câu ${idx + 1}: ${q.question}
+- Người dùng làm: ${isCorrect ? "Đúng" : "Sai"}`;
+    }).join('\n\n');
+
+    const prompt = `Dựa vào kết quả bài thi trắc nghiệm môn "${subject?.name || 'Đại học'}" dưới đây, hãy phân tích điểm mạnh và điểm yếu của sinh viên này về kiến thức. Gợi ý cho họ cần tập trung ôn tập thêm phần nào. Hãy viết bằng tiếng Việt, thân thiện, dễ hiểu, trình bày mạch lạc, ngắn gọn (dưới 400 chữ). KHÔNG CẦN CHÀO HỎI, vào việc luôn.
+    
+Kết quả từng câu:
+${questionsSummary}`;
+
+    try {
+      const resp = await generateWithFallback({
+        messages: [{ role: 'user', content: prompt }]
+      });
+      setEvaluationResult(resp);
+    } catch (err: any) {
+      console.error(err);
+      setEvaluationResult(`Xin lỗi, không thể đánh giá lúc này. Lỗi: ${err.message}`);
+    } finally {
+      setIsEvaluating(false);
     }
   };
 
@@ -644,6 +676,7 @@ Lưu ý: Không giải thích quá dài. Không chọn đáp án. Chỉ gợi ý
     setCurrentIndex(0);
     setTimeRemaining(timeLimit > 0 ? timeLimit * 60 : null);
     setStatus('active');
+    setEvaluationResult(null);
   };
 
   const startRetakeWrong = () => {
@@ -1277,12 +1310,36 @@ Lưu ý: Không giải thích quá dài. Không chọn đáp án. Chỉ gợi ý
             <button onClick={handleShareExam} className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium transition-colors border border-emerald-500">
               {isCopied ? <ClipboardCheck className="w-4 h-4" /> : <Share2 className="w-4 h-4" />} {isCopied ? 'Đã copy link' : 'Chia sẻ đề'}
             </button>
-            <button onClick={() => { setStatus('setup'); setQuestions([]); setUserAnswers({}); sessionStorage.removeItem(STORAGE_KEY); }} className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 bg-[#24283b] hover:bg-[#2f344d] text-white rounded-xl font-medium transition-colors border border-slate-700">
+            <button onClick={() => { setStatus('setup'); setQuestions([]); setUserAnswers({}); sessionStorage.removeItem(STORAGE_KEY); setEvaluationResult(null); }} className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 bg-[#24283b] hover:bg-[#2f344d] text-white rounded-xl font-medium transition-colors border border-slate-700">
               <Settings className="w-4 h-4" /> Cài đặt đề
             </button>
             <button onClick={() => navigate('/')} className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 bg-[#24283b] hover:bg-[#2f344d] text-white rounded-xl font-medium transition-colors border border-slate-700">
               <HomeIcon className="w-4 h-4" /> Trang chủ
             </button>
+          </div>
+
+          <div className="mt-8 flex flex-col items-center w-full mb-8">
+             {!evaluationResult && (
+                <button 
+                  onClick={handleEvaluateWithAI} 
+                  disabled={isEvaluating} 
+                  className="px-6 py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-2xl font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 disabled:opacity-50 disabled:-translate-y-0 disabled:shadow-none flex items-center gap-2 w-full sm:w-auto"
+                >
+                    {isEvaluating ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Sparkles className="w-5 h-5" />}
+                    {isEvaluating ? "Đang phân tích..." : "Đánh giá năng lực bằng AI"}
+                </button>
+             )}
+             {evaluationResult && (
+                <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-2xl p-6 md:p-8 text-left w-full shadow-sm relative overflow-hidden">
+                   <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-200/50 dark:bg-indigo-800/20 rounded-bl-full -mr-8 -mt-8 pointer-events-none blur-2xl"></div>
+                   <h3 className="text-xl md:text-2xl font-bold text-indigo-800 dark:text-indigo-300 mb-6 flex items-center gap-2 relative z-10">
+                       <Sparkles className="w-6 h-6 text-indigo-500" /> Phân tích & Gợi ý từ AI
+                   </h3>
+                   <div className="text-indigo-950 dark:text-indigo-100 whitespace-pre-wrap leading-relaxed relative z-10 text-sm md:text-base">
+                       {evaluationResult}
+                   </div>
+                </div>
+             )}
           </div>
 
           <div className="bg-[#151723] dark:bg-[#0f111a] rounded-2xl p-6 border border-slate-800/50 relative overflow-hidden">
