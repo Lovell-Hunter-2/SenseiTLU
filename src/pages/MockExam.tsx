@@ -5,6 +5,10 @@ import { generateWithFallback, AIMessage } from '../services/aiService';
 import { ArrowLeft, Settings, Play, CheckCircle2, XCircle, RefreshCcw, Lightbulb, Book, Menu, X, User, Quote, Home as HomeIcon, RotateCcw, Eye, Minus, Plus, UploadCloud, FileText, Trash2, Share2, ClipboardCheck, Lock, LogIn, Sparkles } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 const loadPdfJs = async (): Promise<any> => {
   if ((window as any).pdfjsLib) {
@@ -1442,8 +1446,8 @@ ${questionsSummary}`;
                    <h3 className="text-xl md:text-2xl font-bold text-indigo-800 dark:text-indigo-300 mb-6 flex items-center gap-2 relative z-10">
                        <Sparkles className="w-6 h-6 text-indigo-500" /> Phân tích & Gợi ý từ AI
                    </h3>
-                   <div className="text-indigo-950 dark:text-indigo-100 whitespace-pre-wrap leading-relaxed relative z-10 text-sm md:text-base">
-                       {evaluationResult}
+                   <div className="text-indigo-950 dark:text-indigo-100 whitespace-pre-wrap leading-relaxed relative z-10 text-sm md:text-base prose prose-indigo dark:prose-invert max-w-none">
+                       <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{evaluationResult}</ReactMarkdown>
                    </div>
                 </div>
              )}
@@ -1567,9 +1571,9 @@ ${questionsSummary}`;
                 <h4 className="font-bold text-blue-800 dark:text-blue-300 mb-2 flex items-center gap-2">
                   <Lightbulb className="w-5 h-5" /> Giải thích
                 </h4>
-                <p className="text-blue-900 dark:text-blue-200 text-sm md:text-base leading-relaxed">
-                  {currentQ.explanation}
-                </p>
+                <div className="text-blue-900 dark:text-blue-200 text-sm md:text-base leading-relaxed prose prose-blue dark:prose-invert max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{currentQ.explanation}</ReactMarkdown>
+                </div>
               </div>
             )}
             
@@ -1591,8 +1595,8 @@ ${questionsSummary}`;
                 <h4 className="font-bold text-indigo-800 dark:text-indigo-300 mb-2 flex items-center gap-2">
                   <span className="text-xl">🎓</span> {isReview || userAnswer !== undefined ? "Giải thích chuyên sâu từ Gia Sư AI" : "Gợi ý từ Gia Sư AI"}
                 </h4>
-                <div className="text-indigo-900 dark:text-indigo-200 text-sm md:text-base leading-relaxed whitespace-pre-wrap">
-                  {tutorHint}
+                <div className="text-indigo-900 dark:text-indigo-200 text-sm md:text-base leading-relaxed whitespace-pre-wrap prose prose-indigo dark:prose-invert max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{tutorHint}</ReactMarkdown>
                 </div>
               </div>
             )}
