@@ -3,6 +3,8 @@ import { motion, AnimatePresence, useDragControls } from 'motion/react';
 import { X, Search, Sparkles, Send, Minimize2, Minimize, Minus, Image as ImageIcon, Camera, Trash2, Settings2 } from 'lucide-react';
 import { generateWithFallback, AIMessage } from '../services/aiService';
 import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import { Link, useLocation } from 'react-router-dom';
 import { collection, getDocs, query, where, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -487,6 +489,8 @@ Khi nhắc đến môn học, có thể dùng format Link Markdown để ngườ
               ) : (
                 <div className="text-sm">
                   <ReactMarkdown
+                    remarkPlugins={[remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
                     components={{
                       a: ({ node, ...props }) => (
                         <Link to={props.href || "#"} className="text-blue-600 dark:text-blue-400 hover:text-blue-700 underline font-semibold transition-colors" onClick={onMinimize}>
