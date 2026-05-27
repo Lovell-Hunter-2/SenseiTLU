@@ -91,6 +91,66 @@ const highScoreQuotes = [
   "Đỉnh cao tri thức là đây! Tiếp tục chinh phục những đỉnh cao mới nhé."
 ];
 
+const getThemeClasses = (theme: 'default' | 'sakura' | 'cookie' | 'panda' | 'capybara') => {
+  switch (theme) {
+    case 'sakura':
+       return {
+          wrapper: "bg-pink-50/50 dark:bg-pink-950/20 min-h-screen",
+          card: "bg-white/80 dark:bg-pink-950/40 backdrop-blur border-pink-200 dark:border-pink-800 shadow-sm",
+          buttonSelected: "border-pink-400 bg-pink-50 dark:bg-pink-900/40 text-pink-700 dark:text-pink-300 ring-1 ring-pink-400",
+          buttonHover: "hover:border-pink-300 hover:bg-pink-50/50 dark:hover:bg-pink-900/20",
+          accentText: "text-pink-600 dark:text-pink-400",
+          accentBg: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300",
+          buttonPrimary: "bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white shadow-sm border border-transparent",
+          icon: "🌸"
+       };
+    case 'cookie':
+       return {
+          wrapper: "bg-amber-50/50 dark:bg-amber-950/20 min-h-screen",
+          card: "bg-[#fffdf8]/90 dark:bg-amber-950/40 backdrop-blur border-amber-200 dark:border-amber-800 shadow-sm",
+          buttonSelected: "border-amber-500 bg-amber-50 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 ring-1 ring-amber-500",
+          buttonHover: "hover:border-amber-300 hover:bg-amber-50/50 dark:hover:bg-amber-900/20",
+          accentText: "text-amber-700 dark:text-amber-400",
+          accentBg: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+          buttonPrimary: "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-sm border border-transparent",
+          icon: "🍪"
+       };
+    case 'panda':
+       return {
+          wrapper: "bg-emerald-50/50 dark:bg-emerald-950/20 min-h-screen",
+          card: "bg-white/90 dark:bg-emerald-950/20 backdrop-blur border-emerald-200 dark:border-emerald-800 shadow-sm",
+          buttonSelected: "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 ring-1 ring-emerald-500",
+          buttonHover: "hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20",
+          accentText: "text-emerald-700 dark:text-emerald-400",
+          accentBg: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
+          buttonPrimary: "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-sm border border-transparent",
+          icon: "🐼"
+       };
+    case 'capybara':
+       return {
+          wrapper: "bg-orange-50/50 dark:bg-orange-950/20 min-h-screen",
+          card: "bg-[#fffaf0]/90 dark:bg-orange-950/40 backdrop-blur border-orange-200 dark:border-orange-800 shadow-sm",
+          buttonSelected: "border-orange-500 bg-orange-50 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200 ring-1 ring-orange-500",
+          buttonHover: "hover:border-orange-300 hover:bg-orange-50/50 dark:hover:bg-orange-900/20",
+          accentText: "text-orange-700 dark:text-orange-400",
+          accentBg: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
+          buttonPrimary: "bg-gradient-to-r from-orange-400 to-amber-500 hover:from-orange-500 hover:to-amber-600 text-white shadow-sm border border-transparent",
+          icon: "🦦"
+       };
+    default:
+       return {
+          wrapper: "",
+          card: "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm",
+          buttonSelected: "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 ring-1 ring-blue-500",
+          buttonHover: "hover:border-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800/50",
+          accentText: "text-slate-500 dark:text-slate-400",
+          accentBg: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+          buttonPrimary: "bg-orange-500 hover:bg-orange-600 text-white border border-transparent",
+          icon: "🌱"
+       };
+  }
+};
+
 export default function MockExam() {
   const { id, examId } = useParams<{ id: string, examId?: string }>();
   const navigate = useNavigate();
@@ -111,6 +171,7 @@ export default function MockExam() {
   const [retakeWrong, setRetakeWrong] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [examMode, setExamMode] = useState<'instant' | 'submit'>('submit');
+  const [examTheme, setExamTheme] = useState<'default' | 'sakura' | 'cookie' | 'panda' | 'capybara'>('default');
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   
   // Custom File Upload
@@ -142,6 +203,13 @@ export default function MockExam() {
   const [questions, setQuestions] = useState<Question[]>(initialState?.questions || []);
   const [currentIndex, setCurrentIndex] = useState(initialState?.currentIndex || 0);
   const [userAnswers, setUserAnswers] = useState<Record<number, number>>(initialState?.userAnswers || {});
+  
+  // Theme sync
+  useEffect(() => {
+    if (initialState?.examTheme) {
+      setExamTheme(initialState.examTheme);
+    }
+  }, []);
   
   // Timer Effect
   useEffect(() => {
@@ -275,12 +343,13 @@ ${questionsSummary}`;
         status,
         questions,
         currentIndex,
-        userAnswers
+        userAnswers,
+        examTheme
       }));
     } else if (status === 'setup') {
       sessionStorage.removeItem(STORAGE_KEY);
     }
-  }, [status, questions, currentIndex, userAnswers, STORAGE_KEY]);
+  }, [status, questions, currentIndex, userAnswers, examTheme, STORAGE_KEY]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -840,11 +909,13 @@ ${questionsSummary}`;
 
   // --- RENDER HELPERS ---
 
-  const renderQuestionNav = () => (
-    <div className={`fixed lg:sticky lg:top-24 inset-y-0 right-0 z-40 w-72 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 transform transition-transform duration-300 ease-in-out flex flex-col h-screen lg:h-[calc(100vh-8rem)] rounded-xl shadow-sm ${isNavOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0 lg:hidden'}`}>
-      <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+  const renderQuestionNav = () => {
+    const themeClasses = getThemeClasses(examTheme);
+    return (
+    <div className={`fixed lg:sticky lg:top-24 inset-y-0 right-0 z-40 w-72 ${themeClasses.card} transform transition-transform duration-300 ease-in-out flex flex-col h-screen lg:h-[calc(100vh-8rem)] rounded-xl shadow-sm border-l lg:border-l-0 ${isNavOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0 lg:hidden'}`}>
+      <div className="p-4 border-b border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between">
         <h3 className="font-bold text-lg">Bảng câu hỏi</h3>
-        <button className="lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => setIsNavOpen(false)}>
+        <button className="lg:hidden p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5" onClick={() => setIsNavOpen(false)}>
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -869,14 +940,14 @@ ${questionsSummary}`;
                 btnClass += "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 ";
               }
             } else {
-              if (isCurrent) btnClass += "ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-900 ";
+              if (isCurrent) btnClass += "ring-2 ring-offset-2 dark:ring-offset-slate-900 ring-current border-current ";
               if (examMode === 'instant' && isAnswered) {
                 const isCorrect = userAnswers[idx] === questions[idx].correctIndex;
                 if (isCorrect) btnClass += "bg-green-500 text-white ";
                 else btnClass += "bg-red-500 text-white ";
               } else {
-                if (isAnswered) btnClass += "bg-blue-500 text-white ";
-                else btnClass += "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 ";
+                if (isAnswered) btnClass += `text-white ${themeClasses.buttonPrimary.split('hover:')[0]} border-transparent `;
+                else btnClass += `bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 ${themeClasses.accentText} border-transparent `;
               }
             }
 
@@ -918,7 +989,8 @@ ${questionsSummary}`;
         </div>
       )}
     </div>
-  );
+    );
+  };
 
   // --- RENDER STATES ---
 
@@ -1071,6 +1143,38 @@ ${questionsSummary}`;
                   </div>
                   <p className="text-xs text-slate-500 ml-6">Biết đúng/sai và có giải thích liền ngay khi chọn câu trả lời.</p>
                 </div>
+              </div>
+            </div>
+
+            {/* Theme Selector */}
+            <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <label className="block text-sm font-medium">Giao diện (Chủ đề)</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {[
+                  { id: 'default', label: 'Truyền thống', icon: '📝', colors: 'from-blue-500 to-indigo-500' },
+                  { id: 'sakura', label: 'Hoa anh đào', icon: '🌸', colors: 'from-pink-400 to-rose-400' },
+                  { id: 'cookie', label: 'Bánh Cookie', icon: '🍪', colors: 'from-amber-400 to-orange-500' },
+                  { id: 'panda', label: 'Gấu Trúc', icon: '🐼', colors: 'from-emerald-400 to-teal-500' },
+                  { id: 'capybara', label: 'Capybara', icon: '🦦', colors: 'from-orange-400 to-amber-600' }
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setExamTheme(t.id as any)}
+                    className={`relative p-3 rounded-xl border flex flex-col items-center gap-2 transition-all overflow-hidden ${
+                      examTheme === t.id 
+                        ? 'border-transparent ring-2 ring-offset-2 ring-blue-500 shadow-md transform scale-[1.02]' 
+                        : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    {examTheme === t.id && (
+                       <div className={`absolute inset-0 bg-gradient-to-br ${t.colors} opacity-10 dark:opacity-20`}></div>
+                    )}
+                    <span className="text-2xl relative z-10">{t.icon}</span>
+                    <span className={`text-xs font-semibold relative z-10 ${examTheme === t.id ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
+                      {t.label}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -1255,6 +1359,8 @@ ${questionsSummary}`;
     let message = 'Xuất sắc!';
     let quoteList = highScoreQuotes;
     
+    const themeClasses = getThemeClasses(examTheme);
+
     if (percentage < 50) { 
       emoji = '😅'; 
       message = 'Ôn tập lại nha!'; 
@@ -1269,16 +1375,17 @@ ${questionsSummary}`;
     const randomQuote = quoteList[Math.floor(Math.random() * quoteList.length)];
 
     return (
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-[#1a1d2d] dark:bg-[#131524] rounded-3xl p-8 shadow-xl border border-slate-800 text-white">
-          <div className="text-center space-y-2 mb-8">
-            <div className="text-6xl mb-4">{emoji}</div>
-            <h2 className="text-3xl font-bold">{message}</h2>
-            <p className="text-slate-400">Bạn đúng {correct}/{questions.length} câu</p>
-            <div className="flex items-center justify-center gap-2 text-sm text-blue-400 mt-2">
-              <User className="w-4 h-4" /> {user?.displayName || 'Khách'}
+      <div className={`min-h-screen ${themeClasses.wrapper} -mx-4 sm:mx-0 p-4 sm:p-8 flex items-center justify-center`}>
+        <div className="max-w-3xl w-full mx-auto">
+          <div className={`${themeClasses.card} rounded-3xl p-8 shadow-xl text-slate-800 dark:text-white border`}>
+            <div className="text-center space-y-2 mb-8">
+              <div className="text-6xl mb-4">{themeClasses.icon !== '🌱' ? themeClasses.icon : emoji}</div>
+              <h2 className="text-3xl font-bold">{message}</h2>
+              <p className={`font-medium ${themeClasses.accentText}`}>Bạn đúng {correct}/{questions.length} câu</p>
+              <div className={`flex items-center justify-center gap-2 text-sm mt-2 ${themeClasses.accentText}`}>
+                <User className="w-4 h-4" /> {user?.displayName || 'Khách'}
+              </div>
             </div>
-          </div>
 
           <div className="grid grid-cols-3 gap-4 mb-8">
             <div className="bg-[#24283b] dark:bg-[#1a1d2d] rounded-2xl p-4 text-center border border-slate-800/50">
@@ -1356,6 +1463,7 @@ ${questionsSummary}`;
           </div>
         </div>
       </div>
+    </div>
     );
   }
 
@@ -1364,6 +1472,7 @@ ${questionsSummary}`;
   const userAnswer = userAnswers[currentIndex];
   const isReview = status === 'review';
   const showInstantFeedback = examMode === 'instant' && userAnswer !== undefined && !isReview && status !== 'retake_wrong';
+  const themeClasses = getThemeClasses(examTheme);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -1372,10 +1481,10 @@ ${questionsSummary}`;
   };
 
   return (
-    <div className="flex flex-col lg:flex-row -mx-4 sm:mx-0">
+    <div className={`flex flex-col lg:flex-row -mx-4 sm:-mx-6 lg:-mx-8 lg:px-8 sm:px-6 px-4 min-h-screen ${themeClasses.wrapper}`}>
       {/* Main Content */}
-      <div className="flex-1 min-w-0 px-4 sm:px-0">
-        <div className="max-w-3xl w-full mx-auto py-6 space-y-6">
+      <div className="flex-1 min-w-0 py-6">
+        <div className="max-w-3xl w-full mx-auto space-y-6">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <button onClick={confirmExit} className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700 px-3 py-1.5 rounded-lg -ml-3">
@@ -1396,18 +1505,19 @@ ${questionsSummary}`;
               <button onClick={() => setIsNavOpen(!isNavOpen)} className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300">
                 <Menu className="w-6 h-6" />
               </button>
-              <span className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <span className={`text-sm font-bold uppercase tracking-wider ${themeClasses.accentText}`}>
                 Câu {currentIndex + 1} / {questions.length}
                 {status === 'retake_wrong' && " (Làm lại câu sai)"}
               </span>
             </div>
-            <span className="px-3 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-full text-sm font-medium truncate max-w-[150px] sm:max-w-xs hidden sm:inline-block">
+            <span className={`px-3 py-1 rounded-full text-sm font-medium truncate max-w-[150px] sm:max-w-xs hidden sm:inline-block ${themeClasses.accentBg}`}>
               {subject.name}
             </span>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 shadow-sm">
+          <div className={`${themeClasses.card} rounded-2xl p-6 md:p-8 shadow-sm border`}>
             <h2 className="text-xl md:text-2xl font-medium mb-8 leading-relaxed">
+              {themeClasses.icon !== '🌱' && <span className="mr-2 text-2xl">{themeClasses.icon}</span>}
               {currentQ.question}
             </h2>
 
@@ -1417,23 +1527,23 @@ ${questionsSummary}`;
                 
                 if (showInstantFeedback) {
                   if (idx === currentQ.correctIndex) {
-                    btnClass += "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300";
+                    btnClass += "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 ring-2 ring-green-500";
                   } else if (idx === userAnswer) {
-                    btnClass += "border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300";
+                    btnClass += "border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 ring-2 ring-red-500";
                   } else {
-                    btnClass += "border-slate-200 dark:border-slate-700 opacity-50";
+                    btnClass += "border-slate-200 dark:border-slate-800 opacity-50";
                   }
                 } else if (!isReview) {
                   if (userAnswer === idx) {
-                    btnClass += "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 ring-1 ring-blue-500";
+                    btnClass += themeClasses.buttonSelected;
                   } else {
-                    btnClass += "border-slate-200 dark:border-slate-700 hover:border-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800/50";
+                    btnClass += `border-slate-200 dark:border-slate-700 ${themeClasses.buttonHover}`;
                   }
                 } else {
                   if (idx === currentQ.correctIndex) {
-                    btnClass += "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300";
+                    btnClass += "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 ring-2 ring-green-500";
                   } else if (idx === userAnswer) {
-                    btnClass += "border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300";
+                    btnClass += "border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 ring-2 ring-red-500";
                   } else {
                     btnClass += "border-slate-200 dark:border-slate-800 opacity-50";
                   }
