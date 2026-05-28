@@ -78,6 +78,13 @@ const iconMap: Record<string, React.ElementType> = {
   TrendingUp, BadgeDollarSign, Receipt, Gavel, Building2, HandCoins, MessageCircle, Globe2, MapIcon, HeartHandshake, Vote, MonitorPlay, Smartphone, Terminal, Server, Wifi, Fingerprint, Microchip, Bot
 };
 
+const emojiMap: Record<string, string> = {
+  Book: '📚', Calculator: '🧮', Code: '💻', Globe: '🌐', Database: '💽', Cpu: '🧠', FileText: '📝', Briefcase: '💼', Scale: '⚖️', Lightbulb: '💡', Brain: '🧠', PieChart: '🥧', ShoppingCart: '🛒', Rocket: '🚀',
+  ChartBar: '📊', PenTool: '🖌️', Milestone: '🚩', Activity: '💓', Building: '🏢', Leaf: '🍃', Shield: '🛡️', History: '🕰️', Compass: '🧭', GraduationCap: '🎓', Microscope: '🔬', Palette: '🎨', Landmark: '🏛️', 
+  Component: '🧩', Cloud: '☁️', DatabaseZap: '⚡', DollarSign: '💲', Euro: '💶', Frame: '🖼️', Users: '👥', Target: '🎯', Network: '🕸️', Layers: '🥞', LayoutDashboard: '🎛️', LineChart: '📈', FileSpreadsheet: '🧾', Bitcoin: '🪙', CandlestickChart: '📉',
+  TrendingUp: '🚀', BadgeDollarSign: '🏅', Receipt: '🧾', Gavel: '🔨', Building2: '🏢', HandCoins: '🤲', MessageCircle: '💬', Globe2: '🌎', MapIcon: '🗺️', HeartHandshake: '🤝', Vote: '🗳️', MonitorPlay: '📺', Smartphone: '📱', Terminal: '💻', Server: '🗄️', Wifi: '📶', Fingerprint: '👆', Microchip: '🔌', Bot: '🤖'
+};
+
 export default function Home() {
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
   const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -314,7 +321,16 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredSubjects.map(subject => {
+          {filteredSubjects.length === 0 ? (
+            <div className="col-span-full py-16 flex flex-col items-center justify-center text-center">
+              <div className="w-32 h-32 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 animate-bounce shadow-lg mt-8">
+                <span className="text-6xl">👻</span>
+              </div>
+              <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">Trống trơn rồi!</h3>
+              <p className="text-slate-500 max-w-md">Không tìm thấy môn học nào. Có vẻ chúng đang đi trốn đâu đó quanh đây... 🐾</p>
+            </div>
+          ) : (
+            filteredSubjects.map(subject => {
             const Icon = iconMap[subject.iconName] || Book;
             const isFav = favorites.includes(subject.id);
             return (
@@ -377,8 +393,8 @@ export default function Home() {
                     </button>
                   </div>
                 )}
-                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4 text-blue-600 dark:text-blue-400">
-                  <Icon className="w-5 h-5" />
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 border border-slate-200/50 dark:border-slate-700/50 flex items-center justify-center mb-5 text-2xl shadow-sm group-hover:scale-110 transition-transform duration-300">
+                  {emojiMap[subject.iconName] || '📚'}
                 </div>
                 <h3 className="text-lg font-bold mb-2">{subject.name}</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 flex-1">
@@ -392,14 +408,9 @@ export default function Home() {
                 </Link>
               </div>
             );
-          })}
+          }))}
         </div>
         
-        {filteredSubjects.length === 0 && (
-          <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-            <p>Không tìm thấy môn học nào phù hợp. <br /> Nếu vừa cập nhật hãy đợi vài giây hoặc F5 lại trang nhé!</p> 
-          </div>
-        )}
       </div>
 
       {/* Add Subject Modal */}
@@ -434,9 +445,9 @@ export default function Home() {
                   value={newSubject.iconName}
                   onChange={e => setNewSubject({...newSubject, iconName: e.target.value})}
                 >
-                  {Object.keys(iconMap).map(key => (
-                    <option key={key} value={key} className="text-slate-900">
-                      {key} {iconLabels[key] ? `- ${iconLabels[key]}` : ''}
+                  {Object.keys(emojiMap).map(key => (
+                    <option key={key} value={key} className="text-slate-900 drop-shadow-sm">
+                      {emojiMap[key]} {iconLabels[key] ? `- ${iconLabels[key]}` : key}
                     </option>
                   ))}
                 </select>
@@ -493,9 +504,9 @@ export default function Home() {
                   value={editingSubject.iconName}
                   onChange={e => setEditingSubject({...editingSubject, iconName: e.target.value})}
                 >
-                  {Object.keys(iconMap).map(key => (
-                    <option key={key} value={key} className="text-slate-900">
-                      {key} {iconLabels[key] ? `- ${iconLabels[key]}` : ''}
+                  {Object.keys(emojiMap).map(key => (
+                    <option key={key} value={key} className="text-slate-900 drop-shadow-sm">
+                      {emojiMap[key]} {iconLabels[key] ? `- ${iconLabels[key]}` : key}
                     </option>
                   ))}
                 </select>
