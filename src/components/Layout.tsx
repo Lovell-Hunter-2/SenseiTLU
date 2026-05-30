@@ -9,7 +9,6 @@ import HeroImageManagerModal from './HeroImageManagerModal';
 import { AIAssistantWidget, toggleAIAssistant, pingAIAssistant } from './AIAssistantWidget';
 import { TextSelectionHelper } from './TextSelectionHelper';
 import ClockWidget from './ClockWidget';
-import { PetOverlay } from './PetOverlay';
 import avtTlu from '../assets/avt_tlu.jpg';
 
 export default function Layout() {
@@ -302,7 +301,6 @@ export default function Layout() {
       )}
       
       <TextSelectionHelper />
-      <PetOverlay />
       <AIAssistantWidget />
     </div>
   );
