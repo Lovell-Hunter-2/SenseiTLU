@@ -32,17 +32,17 @@ export default function StudyWorkspace() {
   return (
     <div className="fixed inset-0 w-full h-full bg-black overflow-hidden z-50 flex flex-col dark">
       {/* Background YouTube Video */}
-      <div className="absolute inset-0 w-full h-full pointer-events-none">
+      <div className="absolute inset-0 w-full h-full">
         <iframe
           src={`https://www.youtube.com/embed/${activeVideo.id}?autoplay=1&mute=0&loop=1&playlist=${activeVideo.id}&controls=0&showinfo=0&rel=0&modestbranding=1${activeVideo.start ? `&start=${activeVideo.start}` : ''}`}
           allow="autoplay; encrypted-media"
           allowFullScreen
-          className="w-full h-full object-cover scale-[1.1]" // scale to hide yt logo/borders
+          className="w-full h-full object-cover scale-[1.15]" // scale to hide yt logo/borders
         />
       </div>
 
-      {/* Overlay to dim the video if needed, and to catch clicks */}
-      <div className="absolute inset-0 bg-black/10 pointer-events-none" />
+      {/* Overlay to dim the video if needed */}
+      <div className="absolute inset-0 bg-black/20 pointer-events-none" />
 
       {/* Top Left Controls */}
       <div className="absolute top-6 left-6 z-40 flex items-center gap-4">
