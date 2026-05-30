@@ -12,7 +12,7 @@ const VIDEOS = [
   { id: 'N2m4RFhCqKg', name: 'Rainny day' }
 ];
 
-export default function StudyWorkspace() {
+export default function StudyRoom() {
   const navigate = useNavigate();
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
 
