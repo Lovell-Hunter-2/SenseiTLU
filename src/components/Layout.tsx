@@ -9,6 +9,7 @@ import HeroImageManagerModal from './HeroImageManagerModal';
 import { AIAssistantWidget, toggleAIAssistant, pingAIAssistant } from './AIAssistantWidget';
 import { TextSelectionHelper } from './TextSelectionHelper';
 import ClockWidget from './ClockWidget';
+import { PomodoroWidget } from './PomodoroWidget';
 import avtTlu from '../assets/avt_tlu.jpg';
 
 export default function Layout() {
