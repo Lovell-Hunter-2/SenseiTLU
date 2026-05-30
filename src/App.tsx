@@ -11,7 +11,7 @@ import Contribute from './pages/Contribute';
 import Blog from './pages/Blog';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
-import StudyRoom from './pages/StudyRoom';
+import StudyWorkspace from './pages/StudyWorkspace';
 
 export default function App() {
   return (
@@ -30,7 +30,7 @@ export default function App() {
               <Route path="privacy" element={<PrivacyPolicy />} />
               <Route path="terms" element={<TermsOfService />} />
             </Route>
-            <Route path="/workspace" element={<StudyRoom />} />
+            <Route path="/workspace" element={<StudyWorkspace />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>
