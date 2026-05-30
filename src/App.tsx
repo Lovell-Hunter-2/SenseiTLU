@@ -11,7 +11,7 @@ import Contribute from './pages/Contribute';
 import Blog from './pages/Blog';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
-import StudyWorkspace from './pages/StudyWorkspace';
+import StudyWorkspace from './pages/study-workspace';
 
 export default function App() {
   return (
