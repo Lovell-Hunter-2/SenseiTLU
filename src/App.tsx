@@ -11,26 +11,29 @@ import Contribute from './pages/Contribute';
 import Blog from './pages/Blog';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import StudyWorkspace from './pages/StudyWorkspace';
+
 export default function App() {
-return (
-<ThemeProvider defaultTheme="system">
-<AuthProvider>
-<BrowserRouter>
-<Routes>
-<Route path="/" element={<Layout />}>
-<Route index element={<Home />} />
-<Route path="subject/:id" element={<SubjectDetail />} />
-<Route path="subject/:id/mock-exam" element={<MockExam />} />
-<Route path="subject/:id/mock-exam/:examId" element={<MockExam />} />
-<Route path="about" element={<About />} />
-<Route path="contribute" element={<Contribute />} />
-<Route path="blog" element={<Blog />} />
-<Route path="privacy" element={<PrivacyPolicy />} />
-<Route path="terms" element={<TermsOfService />} />
-</Route>
-</Routes>
-</BrowserRouter>
-</AuthProvider>
-</ThemeProvider>
-);
+  return (
+    <ThemeProvider defaultTheme="system">
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Home />} />
+              <Route path="subject/:id" element={<SubjectDetail />} />
+              <Route path="subject/:id/mock-exam" element={<MockExam />} />
+              <Route path="subject/:id/mock-exam/:examId" element={<MockExam />} />
+              <Route path="about" element={<About />} />
+              <Route path="contribute" element={<Contribute />} />
+              <Route path="blog" element={<Blog />} />
+              <Route path="privacy" element={<PrivacyPolicy />} />
+              <Route path="terms" element={<TermsOfService />} />
+            </Route>
+            <Route path="/workspace" element={<StudyWorkspace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
+  );
 }
