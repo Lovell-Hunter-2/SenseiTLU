@@ -557,6 +557,18 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Floating Workspace Button */}
+      <Link
+        to="/workspace"
+        className="fixed bottom-6 left-6 z-40 flex items-center justify-center p-3 sm:p-4 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
+        title="Vào Study Space"
+      >
+        <div className="flex items-center justify-center gap-2">
+          <MonitorPlay className="w-5 h-5 sm:w-6 sm:h-6" />
+          <span className="font-medium hidden sm:inline">Study Space</span>
+        </div>
+      </Link>
     </div>
   );
 }
