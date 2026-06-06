@@ -1,6 +1,12 @@
 {
-  "name": "",
+  "name": "senseiTLU",
   "description": "",
-  "requestFramePermissions": [],
-  "majorCapabilities": []
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "display-capture"
+  ],
+  "majorCapabilities": [],
+  "z7": [],
+  "Yp": []
 }
