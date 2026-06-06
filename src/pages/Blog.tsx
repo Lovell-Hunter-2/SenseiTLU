@@ -265,6 +265,38 @@ export default function Blog() {
                   className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-transparent focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                   value={newPost.content}
                   onChange={e => setNewPost({...newPost, content: e.target.value})}
+                  onPaste={(e) => {
+                    const file = e.clipboardData?.files?.[0];
+                    if (!file || !file.type.startsWith('image/')) return;
+                    e.preventDefault();
+                    if (file.size > 800 * 1024) {
+                      alert('Kích thước ảnh quá lớn. Vui lòng chọn ảnh/gif dưới 800KB.');
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      if (file.type === 'image/gif') {
+                        setNewPost({ ...newPost, content: newPost.content + `\n![image](${reader.result})\n` });
+                      } else {
+                        const img = new Image();
+                        img.onload = () => {
+                          const canvas = document.createElement('canvas');
+                          let w = img.width, h = img.height;
+                          const MAX = 800;
+                          if (w > h && w > MAX) { h *= MAX/w; w = MAX; }
+                          else if (h > MAX) { w *= MAX/h; h = MAX; }
+                          canvas.width = w; canvas.height = h;
+                          const ctx = canvas.getContext('2d');
+                          ctx?.drawImage(img, 0, 0, w, h);
+                          const base64 = canvas.toDataURL('image/webp', 0.8);
+                          setNewPost({ ...newPost, content: newPost.content + `\n![image](${base64})\n` });
+                        };
+                        img.src = reader.result as string;
+                      }
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                  placeholder="Nhập nội dung... (Bạn có thể Ctrl+V ảnh trực tiếp vào đây)"
                 ></textarea>
               </div>
               <div className="flex gap-3 pt-4">
