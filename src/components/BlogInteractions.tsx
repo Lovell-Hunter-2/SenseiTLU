@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc, setDoc } from 'firebase/firestore';
-import { ThumbsUp, Trash2, MessageCircle, Send } from 'lucide-react';
+import { ThumbsUp, Trash2, MessageCircle, Send, Plus, X, Image as ImageIcon } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -37,6 +37,8 @@ export default function BlogInteractions({ postId }: Props) {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const [attachmentUrl, setAttachmentUrl] = useState('');
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
   
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const hoverTimer = useRef<NodeJS.Timeout | null>(null);
@@ -89,20 +91,56 @@ export default function BlogInteractions({ postId }: Props) {
       alert('Vui lòng đăng nhập để bình luận.');
       return;
     }
-    if (!newComment.trim()) return;
+    if (!newComment.trim() && !attachmentUrl) return;
 
     try {
       await addDoc(collection(db, 'blog', postId, 'comments'), {
         content: newComment.trim(),
+        imageUrl: attachmentUrl,
         userId: user.uid,
         userEmail: user.email || 'Anonymous',
         createdAt: serverTimestamp()
       });
       setNewComment('');
+      setAttachmentUrl('');
+      setShowAttachMenu(false);
     } catch (error) {
       console.error('Error adding comment:', error);
     }
   };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const file = e.clipboardData?.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    
+    e.preventDefault();
+    if (file.size > 800 * 1024) {
+      alert('Kích thước ảnh quá lớn. Vui lòng chọn ảnh dưới 800KB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (file.type === 'image/gif') {
+        setAttachmentUrl(reader.result as string);
+      } else {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let w = img.width, h = img.height;
+          const MAX = 800;
+          if (w > h && w > MAX) { h *= MAX/w; w = MAX; }
+          else if (h > MAX) { w *= MAX/h; h = MAX; }
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, w, h);
+          setAttachmentUrl(canvas.toDataURL('image/webp', 0.8));
+        };
+        img.src = reader.result as string;
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
 
   const handleDeleteComment = async (commentId: string) => {
     if (!window.confirm('Chắc chắn xóa bình luận này?')) return;
@@ -265,7 +303,10 @@ export default function BlogInteractions({ postId }: Props) {
                 <div className="flex-1">
                   <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl px-4 py-2 inline-block">
                     <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">{(comment.userEmail || 'Anonymous').split('@')[0]}</p>
-                    <p className="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap">{comment.content}</p>
+                    {comment.content && <p className="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap">{comment.content}</p>}
+                    {comment.imageUrl && (
+                       <img src={comment.imageUrl} alt="attachment" className="rounded-lg max-w-full max-h-64 mt-2 object-contain" referrerPolicy="no-referrer" />
+                    )}
                   </div>
                   <div className="flex items-center gap-4 mt-1 px-4 text-xs text-slate-500">
                     <span>{formatDate(comment.createdAt)}</span>
@@ -283,25 +324,83 @@ export default function BlogInteractions({ postId }: Props) {
             ))}
           </div>
 
-          <form onSubmit={handleAddComment} className="flex gap-2 items-center">
-            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm shrink-0">
+          <form onSubmit={handleAddComment} className="flex gap-2 items-end">
+            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm shrink-0 mt-1">
               {(user?.email || 'A').charAt(0).toUpperCase()}
             </div>
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder="Viết bình luận..."
-                className="w-full pl-4 pr-10 py-2 bg-slate-100 dark:bg-slate-800 border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-0 rounded-full text-sm outline-none transition-all"
-                value={newComment}
-                onChange={e => setNewComment(e.target.value)}
-              />
-              <button 
-                type="submit" 
-                disabled={!newComment.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full disabled:opacity-50 transition-colors"
-              >
-                <Send className="w-4 h-4" />
-              </button>
+            <div className="flex-1 relative flex flex-col gap-2">
+              {attachmentUrl && (
+                <div className="relative inline-block w-fit">
+                  <img src={attachmentUrl} alt="Preview" className="h-20 rounded-lg object-contain border border-slate-200 dark:border-slate-700 bg-white" />
+                  <button type="button" onClick={() => setAttachmentUrl('')} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X className="w-3 h-3" /></button>
+                </div>
+              )}
+              <div className="relative flex items-center bg-slate-100 dark:bg-slate-800 rounded-full border border-transparent focus-within:border-blue-500 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all">
+                <button
+                  type="button"
+                  className="pl-3 pr-2 py-2 text-slate-500 hover:text-blue-500 transition-colors"
+                  onClick={() => setShowAttachMenu(!showAttachMenu)}
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+                {showAttachMenu && (
+                  <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden z-10 p-1">
+                    <label className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg cursor-pointer text-sm whitespace-nowrap">
+                      <ImageIcon className="w-4 h-4" /> Tải lên ảnh
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 800 * 1024) {
+                            alert('Ảnh quá lớn!');
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            if (file.type === 'image/gif') {
+                              setAttachmentUrl(reader.result as string);
+                            } else {
+                              const img = new Image();
+                              img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                let w = img.width, h = img.height;
+                                const MAX = 800;
+                                if (w > h && w > MAX) { h *= MAX/w; w = MAX; }
+                                else if (h > MAX) { w *= MAX/h; h = MAX; }
+                                canvas.width = w; canvas.height = h;
+                                const ctx = canvas.getContext('2d');
+                                ctx?.drawImage(img, 0, 0, w, h);
+                                setAttachmentUrl(canvas.toDataURL('image/webp', 0.8));
+                              };
+                              img.src = reader.result as string;
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                          setShowAttachMenu(false);
+                        }}
+                      />
+                    </label>
+                  </div>
+                )}
+                <input
+                  type="text"
+                  placeholder="Viết bình luận... (Có thể dán ảnh)"
+                  className="flex-1 py-2 bg-transparent outline-none text-sm placeholder-slate-400"
+                  value={newComment}
+                  onChange={e => setNewComment(e.target.value)}
+                  onPaste={handlePaste}
+                />
+                <button 
+                  type="submit" 
+                  disabled={!newComment.trim() && !attachmentUrl}
+                  className="mr-2 p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full disabled:opacity-50 transition-colors"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </form>
         </div>
