@@ -109,70 +109,72 @@ export function NotificationBell() {
   };
 
   return (
-    <div className="relative" ref={popoverRef}>
-      <button
-        onClick={handleOpen}
-        className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative"
-        title="Thông báo"
-      >
-        <Bell className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-        {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-950">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
-      </button>
+    <>
+      <div className="relative" ref={popoverRef}>
+        <button
+          onClick={handleOpen}
+          className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative"
+          title="Thông báo"
+        >
+          <Bell className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-950">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+        </button>
 
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 z-50 overflow-hidden flex flex-col max-h-[80vh]">
-          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50">
-            <h3 className="font-bold text-lg flex items-center gap-2">
-              <Inbox className="w-5 h-5 text-blue-500" />
-              Thông báo
-            </h3>
-            {isAdmin && (
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  setShowAddModal(true);
-                }}
-                className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors flex items-center gap-1 text-sm font-medium"
-              >
-                <Plus className="w-4 h-4" /> Thêm
-              </button>
-            )}
+        {isOpen && (
+          <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 z-50 overflow-hidden flex flex-col max-h-[80vh]">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50">
+              <h3 className="font-bold text-lg flex items-center gap-2">
+                <Inbox className="w-5 h-5 text-blue-500" />
+                Thông báo
+              </h3>
+              {isAdmin && (
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    setShowAddModal(true);
+                  }}
+                  className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors flex items-center gap-1 text-sm font-medium"
+                >
+                  <Plus className="w-4 h-4" /> Thêm
+                </button>
+              )}
+            </div>
+            
+            <div className="overflow-y-auto flex-1 p-2">
+              {notifications.length === 0 ? (
+                <div className="py-8 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center">
+                  <CheckCircle2 className="w-12 h-12 mb-2 opacity-20" />
+                  <p>Không có thông báo nào.</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {notifications.map((notif) => (
+                    <div key={notif.id} className="relative group">
+                      {notif.link ? (
+                        <Link 
+                          to={notif.link} 
+                          onClick={() => setIsOpen(false)}
+                          className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-800"
+                        >
+                          <NotifContent notif={notif} />
+                        </Link>
+                      ) : (
+                        <div className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-800">
+                          <NotifContent notif={notif} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-          
-          <div className="overflow-y-auto flex-1 p-2">
-            {notifications.length === 0 ? (
-              <div className="py-8 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center">
-                <CheckCircle2 className="w-12 h-12 mb-2 opacity-20" />
-                <p>Không có thông báo nào.</p>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {notifications.map((notif) => (
-                  <div key={notif.id} className="relative group">
-                    {notif.link ? (
-                      <Link 
-                        to={notif.link} 
-                        onClick={() => setIsOpen(false)}
-                        className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-800"
-                      >
-                        <NotifContent notif={notif} />
-                      </Link>
-                    ) : (
-                      <div className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-800">
-                        <NotifContent notif={notif} />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Add Notification Modal */}
       {showAddModal && isAdmin && (
@@ -245,7 +247,7 @@ export function NotificationBell() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
