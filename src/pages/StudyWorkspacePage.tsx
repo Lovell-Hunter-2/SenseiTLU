@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Maximize, Volume2, VolumeX, Plus, X } from 'lucide-react';
+import { ArrowLeft, Maximize, Volume2, VolumeX, Plus, X, Users } from 'lucide-react';
 import { PomodoroWidget } from '../components/PomodoroWidget';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
@@ -27,6 +27,7 @@ export default function StudyWorkspace() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newVideoName, setNewVideoName] = useState('');
   const [newVideoUrl, setNewVideoUrl] = useState('');
+  const [showStudyStream, setShowStudyStream] = useState(false);
   
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -99,7 +100,7 @@ export default function StudyWorkspace() {
     <div className="fixed inset-0 w-full h-full bg-black overflow-hidden z-50 flex flex-col dark">
       {/* Background YouTube Video */}
       <div className="absolute inset-0 w-full h-full pointer-events-none">
-        {activeVideo && (
+        {activeVideo && !showStudyStream && (
           <iframe
             ref={iframeRef}
             src={`https://www.youtube.com/embed/${activeVideo.id}?autoplay=1&mute=1&loop=1&playlist=${activeVideo.id}&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1${activeVideo.start ? `&start=${activeVideo.start}` : ''}`}
@@ -109,6 +110,17 @@ export default function StudyWorkspace() {
           />
         )}
       </div>
+
+      {showStudyStream && (
+        <div className="absolute inset-0 w-full h-full bg-black z-30">
+          <iframe
+            src="https://app.studystream.live/focus/room"
+            className="w-full h-full border-none"
+            allow="camera; microphone; display-capture; autoplay; encrypted-media"
+            allowFullScreen
+          />
+        </div>
+      )}
 
       {/* Overlay to dim the video if needed */}
       <div className="absolute inset-0 bg-black/20 pointer-events-none" />
@@ -171,6 +183,17 @@ export default function StudyWorkspace() {
         
         <div className="w-px h-6 bg-white/30 mx-1 sm:mx-2 shrink-0" />
         
+        <button
+          onClick={() => setShowStudyStream(!showStudyStream)}
+          className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-colors whitespace-nowrap shrink-0 flex items-center gap-2 ${
+            showStudyStream ? 'bg-indigo-600 text-white' : 'text-white hover:bg-white/20'
+          }`}
+          title="Học cùng mọi người trên StudyStream"
+        >
+          <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="hidden sm:inline">StudyStream</span>
+        </button>
+
         {isAdmin && (
           <button
             onClick={() => setShowAddModal(true)}
