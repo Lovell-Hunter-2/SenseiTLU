@@ -8,6 +8,7 @@ import {
   MessageSquare,
   GraduationCap,
   Sparkles,
+  Headphones,
 } from 'lucide-react';
 
 export default function About() {
@@ -45,6 +46,12 @@ export default function About() {
       title: "Góc Thảo Luận & Blog",
       description: "Không gian chia sẻ kinh nghiệm học tập, các mẹo thi cử hiệu quả qua môn, cũng như nơi để sinh viên thảo luận học thuật, giao lưu và tương tác sôi nổi.",
       bgColor: "bg-pink-100 dark:bg-pink-900/40 text-pink-600 dark:text-pink-400"
+    },
+    {
+      icon: <Headphones className="w-6 h-6" />,
+      title: "Không Gian Học Tập (Study Space)",
+      description: "Tập trung tối đa với đồng hồ Pomodoro, âm thanh Lofi/Tự nhiên thư giãn và tích hợp StudyStream để học tập cùng cộng đồng toàn cầu.",
+      bgColor: "bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400"
     }
   ];
 
@@ -88,11 +95,7 @@ export default function About() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.4, delay: index * 0.1 }}
-              className={`bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/60 dark:border-slate-800/60 shadow-[0_2px_20px_-8px_rgba(0,0,0,0.1)] hover:shadow-lg dark:hover:shadow-slate-900/50 transition-all duration-300 relative overflow-hidden group md:col-span-2 lg:col-span-2 ${
-                index === 3 ? 'lg:col-start-2' : ''
-              } ${
-                index === 4 ? 'md:col-start-2 lg:col-start-auto' : ''
-              }`}
+              className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm rounded-3xl p-8 border border-slate-200/60 dark:border-slate-800/60 shadow-[0_2px_20px_-8px_rgba(0,0,0,0.1)] hover:shadow-lg dark:hover:shadow-slate-900/50 transition-all duration-300 relative overflow-hidden group md:col-span-2 lg:col-span-2"
             >
               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 shadow-sm transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3 ${feature.bgColor}`}>
                 {feature.icon}
