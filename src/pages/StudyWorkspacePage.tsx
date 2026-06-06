@@ -4,7 +4,7 @@ import { ArrowLeft, Maximize, Volume2, VolumeX } from 'lucide-react';
 import { PomodoroWidget } from '../components/PomodoroWidget';
 
 const VIDEOS = [
-  { id: 'bCFhyL0N82A', name: 'Sunset in the beach' },
+  { id: 'bCFhyL0N82A', name: 'Sunset on the beach' },
   { id: 'NJuSStkIZBg', name: 'Café zone' },
   { id: '5jJfQIUsDOY', name: 'Study with me' },
   { id: 'gZknpSi4CP8', name: 'Natural sound' },
