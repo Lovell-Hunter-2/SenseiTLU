@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Bell, CheckCircle2, ChevronRight, Inbox, Plus, X } from 'lucide-react';
 import { collection, onSnapshot, query, orderBy, limit, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -190,7 +191,7 @@ export function NotificationBell() {
       </div>
 
       {/* Add Notification Modal */}
-      {showAddModal && isAdmin && (
+      {showAddModal && isAdmin && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-6 border border-slate-200 dark:border-slate-700 shadow-2xl">
             <div className="flex justify-between items-center mb-6">
@@ -258,7 +259,8 @@ export function NotificationBell() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
