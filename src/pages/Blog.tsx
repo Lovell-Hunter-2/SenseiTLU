@@ -62,6 +62,15 @@ export default function Blog() {
         isAdminPost: isAdmin,
         createdAt: serverTimestamp()
       });
+      
+      // Automatically add a notification for new blog post
+      await addDoc(collection(db, 'notifications'), {
+        title: `Bài viết mới: ${newPost.title}`,
+        message: `${user.email?.split('@')[0] || 'Một thành viên'} vừa đăng một bài viết mới trên Blog.`,
+        link: '/blog',
+        createdAt: serverTimestamp()
+      });
+
       setIsAddModalOpen(false);
       setNewPost({ title: '', content: '', imageUrl: '' });
     } catch (error) {
