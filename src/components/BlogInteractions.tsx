@@ -114,8 +114,11 @@ export default function BlogInteractions({ postId }: Props) {
     if (!file || !file.type.startsWith('image/')) return;
     
     e.preventDefault();
-    if (file.size > 800 * 1024) {
-      alert('Kích thước ảnh quá lớn. Vui lòng chọn ảnh dưới 800KB.');
+    if (file.type === 'image/gif' && file.size > 700 * 1024) {
+      alert('Kích thước ảnh GIF quá lớn. Vui lòng chọn GIF dưới 700KB.');
+      return;
+    } else if (file.size > 5 * 1024 * 1024) {
+      alert('Kích thước ảnh quá lớn. Vui lòng chọn ảnh dưới 5MB.');
       return;
     }
     const reader = new FileReader();
@@ -127,7 +130,7 @@ export default function BlogInteractions({ postId }: Props) {
         img.onload = () => {
           const canvas = document.createElement('canvas');
           let w = img.width, h = img.height;
-          const MAX = 800;
+          const MAX = 1200;
           if (w > h && w > MAX) { h *= MAX/w; w = MAX; }
           else if (h > MAX) { w *= MAX/h; h = MAX; }
           canvas.width = w; canvas.height = h;
@@ -354,8 +357,11 @@ export default function BlogInteractions({ postId }: Props) {
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (!file) return;
-                          if (file.size > 800 * 1024) {
-                            alert('Ảnh quá lớn!');
+                          if (file.type === 'image/gif' && file.size > 700 * 1024) {
+                            alert('Kích thước ảnh GIF quá lớn. Vui lòng chọn GIF dưới 700KB.');
+                            return;
+                          } else if (file.size > 5 * 1024 * 1024) {
+                            alert('Kích thước ảnh quá lớn. Vui lòng chọn ảnh dưới 5MB.');
                             return;
                           }
                           const reader = new FileReader();
@@ -367,7 +373,7 @@ export default function BlogInteractions({ postId }: Props) {
                               img.onload = () => {
                                 const canvas = document.createElement('canvas');
                                 let w = img.width, h = img.height;
-                                const MAX = 800;
+                                const MAX = 1200;
                                 if (w > h && w > MAX) { h *= MAX/w; w = MAX; }
                                 else if (h > MAX) { w *= MAX/h; h = MAX; }
                                 canvas.width = w; canvas.height = h;
