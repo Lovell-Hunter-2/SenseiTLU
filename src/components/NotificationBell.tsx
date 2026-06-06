@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, CheckCircle2, ChevronRight, Inbox, Plus, X } from 'lucide-react';
-import { collection, onSnapshot, query, orderBy, limit, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, limit, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
@@ -66,7 +66,12 @@ export function NotificationBell() {
         const lastReadTime = lastReadStr ? parseInt(lastReadStr, 10) : 0;
         let unread = 0;
         for (const doc of docs) {
-          if (doc.createdAt && doc.createdAt.toMillis() > lastReadTime) {
+          if (doc.createdAt && typeof doc.createdAt.toMillis === 'function') {
+            if (doc.createdAt.toMillis() > lastReadTime) {
+              unread++;
+            }
+          } else if (!doc.createdAt) {
+            // Pending local write
             unread++;
           }
         }
@@ -98,15 +103,15 @@ export function NotificationBell() {
         title: newTitle.trim(),
         message: newMessage.trim(),
         link: newLink.trim(),
-        createdAt: Timestamp.now(),
+        createdAt: serverTimestamp(),
       });
       setShowAddModal(false);
       setNewTitle('');
       setNewMessage('');
       setNewLink('');
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Có lỗi xảy ra khi tạo thông báo.');
+      alert('Có lỗi xảy ra khi tạo thông báo: ' + error?.message);
     } finally {
       setIsSubmitting(false);
     }
