@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, CheckCircle2, ChevronRight, Inbox, Plus, X } from 'lucide-react';
-import { collection, onSnapshot, query, orderBy, limit, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, limit, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
@@ -23,6 +23,7 @@ export function NotificationBell() {
   const [newTitle, setNewTitle] = useState('');
   const [newMessage, setNewMessage] = useState('');
   const [newLink, setNewLink] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -89,14 +90,15 @@ export function NotificationBell() {
 
   const handleAddNotification = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim() || !newMessage.trim()) return;
+    if (!newTitle.trim() || !newMessage.trim() || isSubmitting) return;
 
+    setIsSubmitting(true);
     try {
       await addDoc(collection(db, 'notifications'), {
-        title: newTitle,
-        message: newMessage,
-        link: newLink,
-        createdAt: serverTimestamp(),
+        title: newTitle.trim(),
+        message: newMessage.trim(),
+        link: newLink.trim(),
+        createdAt: Timestamp.now(),
       });
       setShowAddModal(false);
       setNewTitle('');
@@ -105,6 +107,8 @@ export function NotificationBell() {
     } catch (error) {
       console.error(error);
       alert('Có lỗi xảy ra khi tạo thông báo.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -238,9 +242,10 @@ export function NotificationBell() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors"
+                  disabled={isSubmitting}
+                  className="px-6 py-2 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
-                  Gửi thông báo
+                  {isSubmitting ? 'Đang gửi...' : 'Gửi thông báo'}
                 </button>
               </div>
             </form>
