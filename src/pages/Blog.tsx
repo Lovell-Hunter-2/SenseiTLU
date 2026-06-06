@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc, setDoc, Timestamp } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc, setDoc } from 'firebase/firestore';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { db } from '../firebase';
@@ -68,7 +68,7 @@ export default function Blog() {
           title: `Bài viết mới: ${newPost.title}`,
           message: `${user.email?.split('@')[0] || 'Một thành viên'} vừa đăng một bài viết mới trên Blog.`,
           link: '/blog',
-          createdAt: Timestamp.now()
+          createdAt: serverTimestamp()
         });
       } catch (notifErr) {
         console.error("Error adding notification:", notifErr);
