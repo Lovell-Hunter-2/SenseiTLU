@@ -7,7 +7,7 @@ import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const DEFAULT_VIDEOS = [
-  { id: 'bCFhyL0N82A', name: 'Sunset in the beach' },
+  { id: 'bCFhyL0N82A', name: 'Sunset on the beach' },
   { id: 'NJuSStkIZBg', name: 'Café zone' },
   { id: '5jJfQIUsDOY', name: 'Study with me' },
   { id: 'gZknpSi4CP8', name: 'Natural sound' },
