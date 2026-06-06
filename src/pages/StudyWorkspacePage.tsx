@@ -38,6 +38,7 @@ export default function StudyWorkspace() {
 
   // Fetch workspaces from Firestore
   useEffect(() => {
+    document.title = "StudySpace TLU";
     const unsub = onSnapshot(doc(db, 'settings', 'studyWorkspaces'), (docSnap) => {
       if (docSnap.exists() && docSnap.data().videos) {
         setVideos(docSnap.data().videos);
