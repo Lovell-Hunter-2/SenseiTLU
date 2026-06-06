@@ -1,10 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Maximize, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Maximize, Volume2, VolumeX, Plus, X } from 'lucide-react';
 import { PomodoroWidget } from '../components/PomodoroWidget';
+import { useAuth } from '../contexts/AuthContext';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
-const VIDEOS = [
-  { id: 'bCFhyL0N82A', name: 'Sunset on the beach' },
+const DEFAULT_VIDEOS = [
+  { id: 'bCFhyL0N82A', name: 'Sunset in the beach' },
   { id: 'NJuSStkIZBg', name: 'Café zone' },
   { id: '5jJfQIUsDOY', name: 'Study with me' },
   { id: 'gZknpSi4CP8', name: 'Natural sound' },
@@ -14,25 +17,48 @@ const VIDEOS = [
 
 export default function StudyWorkspace() {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
+  
+  const [videos, setVideos] = useState(DEFAULT_VIDEOS);
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
   const [volume, setVolume] = useState(50);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true); // default to true for autoplay
+  
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newVideoName, setNewVideoName] = useState('');
+  const [newVideoUrl, setNewVideoUrl] = useState('');
+  
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const activeVideo = VIDEOS[activeVideoIndex];
+  // Fallback to active index 0 if list is truncated
+  const safeIndex = activeVideoIndex < videos.length ? activeVideoIndex : 0;
+  const activeVideo = videos[safeIndex];
+
+  // Fetch workspaces from Firestore
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'studyWorkspaces'), (docSnap) => {
+      if (docSnap.exists() && docSnap.data().videos) {
+        setVideos(docSnap.data().videos);
+      }
+    });
+    return () => unsub();
+  }, []);
 
   // Update volume in iframe
   useEffect(() => {
     if (iframeRef.current && iframeRef.current.contentWindow) {
-      const targetVolume = isMuted ? 0 : volume;
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({
-          event: 'command',
-          func: 'setVolume',
-          args: [targetVolume]
-        }),
-        '*'
-      );
+      if (isMuted || volume === 0) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'mute', args: [] }), '*'
+        );
+      } else {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
+        );
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'setVolume', args: [volume] }), '*'
+        );
+      }
     }
   }, [volume, isMuted, activeVideoIndex]);
 
@@ -47,17 +73,41 @@ export default function StudyWorkspace() {
     }
   };
 
+  const handleAddVideo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    let id = newVideoUrl;
+    const match = newVideoUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})/);
+    if (match && match[1]) {
+      id = match[1];
+    }
+    
+    if (!id || !newVideoName) return;
+
+    const updatedVideos = [...videos, { id, name: newVideoName }];
+    try {
+      await setDoc(doc(db, 'settings', 'studyWorkspaces'), { videos: updatedVideos }, { merge: true });
+      setShowAddModal(false);
+      setNewVideoName('');
+      setNewVideoUrl('');
+    } catch (error) {
+      console.error(error);
+      alert('Có lỗi xảy ra khi lưu video');
+    }
+  };
+
   return (
     <div className="fixed inset-0 w-full h-full bg-black overflow-hidden z-50 flex flex-col dark">
       {/* Background YouTube Video */}
-      <div className="absolute inset-0 w-full h-full">
-        <iframe
-          ref={iframeRef}
-          src={`https://www.youtube.com/embed/${activeVideo.id}?autoplay=1&mute=0&loop=1&playlist=${activeVideo.id}&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1${activeVideo.start ? `&start=${activeVideo.start}` : ''}`}
-          allow="autoplay; encrypted-media"
-          allowFullScreen
-          className="w-full h-full"
-        />
+      <div className="absolute inset-0 w-full h-full pointer-events-none">
+        {activeVideo && (
+          <iframe
+            ref={iframeRef}
+            src={`https://www.youtube.com/embed/${activeVideo.id}?autoplay=1&mute=1&loop=1&playlist=${activeVideo.id}&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1${activeVideo.start ? `&start=${activeVideo.start}` : ''}`}
+            allow="autoplay; encrypted-media"
+            allowFullScreen
+            className="w-full h-full"
+          />
+        )}
       </div>
 
       {/* Overlay to dim the video if needed */}
@@ -104,9 +154,9 @@ export default function StudyWorkspace() {
         <div className="w-px h-6 bg-white/30 mx-1 sm:mx-2 shrink-0" />
 
         <div className="flex items-center gap-2 shrink-0">
-          {VIDEOS.map((video, index) => (
+          {videos.map((video, index) => (
             <button
-              key={video.id}
+              key={video.id + index}
               onClick={() => setActiveVideoIndex(index)}
               className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                 activeVideoIndex === index
@@ -121,6 +171,16 @@ export default function StudyWorkspace() {
         
         <div className="w-px h-6 bg-white/30 mx-1 sm:mx-2 shrink-0" />
         
+        {isAdmin && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="text-white hover:bg-white/20 p-2 rounded-full transition-colors shrink-0"
+            title="Thêm video workspace"
+          >
+            <Plus className="w-5 h-5" />
+          </button>
+        )}
+
         <button
           onClick={handleFullscreen}
           className="text-white hover:bg-white/20 p-2 rounded-full transition-colors shrink-0"
@@ -129,6 +189,71 @@ export default function StudyWorkspace() {
           <Maximize className="w-5 h-5" />
         </button>
       </div>
+
+      {/* Add Workspace Video Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-gray-900 rounded-2xl w-full max-w-md p-6 border border-white/10 shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-white">Thêm Workspace mới</h3>
+              <button 
+                onClick={() => setShowAddModal(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+                title="Đóng"
+                type="button"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddVideo} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Tên Workspace
+                </label>
+                <input
+                  type="text"
+                  value={newVideoName}
+                  onChange={(e) => setNewVideoName(e.target.value)}
+                  placeholder="Ví dụ: Lofi Chill"
+                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/30"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Link hoặc ID Youtube
+                </label>
+                <input
+                  type="text"
+                  value={newVideoUrl}
+                  onChange={(e) => setNewVideoUrl(e.target.value)}
+                  placeholder="https://youtube.com/watch?v=..."
+                  className="w-full px-4 py-2 bg-black/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/30"
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-white text-black font-medium rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  Thêm
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
