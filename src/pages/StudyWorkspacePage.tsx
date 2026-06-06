@@ -56,7 +56,7 @@ export default function StudyWorkspace() {
           src={`https://www.youtube.com/embed/${activeVideo.id}?autoplay=1&mute=0&loop=1&playlist=${activeVideo.id}&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1${activeVideo.start ? `&start=${activeVideo.start}` : ''}`}
           allow="autoplay; encrypted-media"
           allowFullScreen
-          className="w-full h-full object-cover scale-[1.15]" // scale to hide yt logo/borders
+          className="w-full h-full"
         />
       </div>
 
