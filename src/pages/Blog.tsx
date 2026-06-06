@@ -63,13 +63,16 @@ export default function Blog() {
         createdAt: serverTimestamp()
       });
       
-      // Automatically add a notification for new blog post
-      await addDoc(collection(db, 'notifications'), {
-        title: `Bài viết mới: ${newPost.title}`,
-        message: `${user.email?.split('@')[0] || 'Một thành viên'} vừa đăng một bài viết mới trên Blog.`,
-        link: '/blog',
-        createdAt: serverTimestamp()
-      });
+      try {
+        await addDoc(collection(db, 'notifications'), {
+          title: `Bài viết mới: ${newPost.title}`,
+          message: `${user.email?.split('@')[0] || 'Một thành viên'} vừa đăng một bài viết mới trên Blog.`,
+          link: '/blog',
+          createdAt: serverTimestamp()
+        });
+      } catch (notifErr) {
+        console.error("Error adding notification:", notifErr);
+      }
 
       setIsAddModalOpen(false);
       setNewPost({ title: '', content: '', imageUrl: '' });
@@ -357,3 +360,9 @@ export default function Blog() {
                 Xóa
               </button>
             </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
