@@ -93,9 +93,13 @@ export function NotificationBell() {
     }
   };
 
-  const handleAddNotification = async (e: React.FormEvent) => {
+  const handleAddNotification = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
-    if (!newTitle.trim() || !newMessage.trim() || isSubmitting) return;
+    if (!newTitle.trim() || !newMessage.trim()) {
+      alert("Vui lòng điền đầy đủ Tiêu đề và Nội dung thông báo.");
+      return;
+    }
+    if (isSubmitting) return;
 
     setIsSubmitting(true);
     try {
@@ -201,28 +205,26 @@ export function NotificationBell() {
               </button>
             </div>
             
-            <form onSubmit={handleAddNotification} className="space-y-4">
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Tiêu đề</label>
+                <label className="block text-sm font-medium mb-1">Tiêu đề (*)</label>
                 <input
                   type="text"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="Tiêu đề thông báo..."
                   className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
-                  required
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-1">Nội dung</label>
+                <label className="block text-sm font-medium mb-1">Nội dung (*)</label>
                 <textarea
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Nội dung chi tiết..."
                   rows={3}
                   className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-transparent focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-                  required
                 />
               </div>
 
@@ -246,14 +248,15 @@ export function NotificationBell() {
                   Hủy
                 </button>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleAddNotification}
                   disabled={isSubmitting}
                   className="px-6 py-2 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
                   {isSubmitting ? 'Đang gửi...' : 'Gửi thông báo'}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
