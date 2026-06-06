@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Maximize, Volume2, VolumeX, Plus, X, Users } from 'lucide-react';
+import { ArrowLeft, Maximize, Volume2, VolumeX, Plus, X, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import { PomodoroWidget } from '../components/PomodoroWidget';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
@@ -28,6 +28,7 @@ export default function StudyWorkspace() {
   const [newVideoName, setNewVideoName] = useState('');
   const [newVideoUrl, setNewVideoUrl] = useState('');
   const [showStudyStream, setShowStudyStream] = useState(false);
+  const [isControlsVisible, setIsControlsVisible] = useState(true);
   
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -139,8 +140,28 @@ export default function StudyWorkspace() {
       {/* Top Right Pomodoro Widget */}
       <PomodoroWidget variant="fixed" position="top-right" />
 
+      {/* Bottom Controls Toggle Button (when hidden) */}
+      <div 
+        className={`absolute bottom-6 left-1/2 -translate-x-1/2 z-40 transition-all duration-500 ease-in-out ${
+          isControlsVisible ? 'opacity-0 translate-y-8 pointer-events-none' : 'opacity-100 translate-y-0'
+        }`}
+      >
+        <button
+          onClick={() => setIsControlsVisible(true)}
+          className="bg-black/40 backdrop-blur-lg border border-white/20 p-2 sm:p-3 rounded-full shadow-2xl text-white hover:bg-white/20 transition-colors"
+          title="Hiện thanh công cụ"
+        >
+          <ChevronUp className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+      </div>
+
       {/* Bottom Controls */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 sm:gap-3 bg-black/40 backdrop-blur-lg border border-white/20 p-2 px-3 sm:px-4 rounded-full shadow-2xl w-[95vw] sm:w-auto max-w-full overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+      <div 
+        className={`absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 sm:gap-3 bg-black/40 backdrop-blur-lg border border-white/20 p-2 px-3 sm:px-4 rounded-full shadow-2xl w-[95vw] sm:w-auto max-w-full overflow-x-auto transition-all duration-500 ease-in-out ${
+          isControlsVisible ? 'translate-y-0 opacity-100' : 'translate-y-24 opacity-0 pointer-events-none'
+        }`} 
+        style={{ scrollbarWidth: 'none' }}
+      >
         {/* Volume Control */}
         <div className="flex items-center gap-2 shrink-0">
           <button 
@@ -210,6 +231,16 @@ export default function StudyWorkspace() {
           title="Toàn màn hình"
         >
           <Maximize className="w-5 h-5" />
+        </button>
+
+        <div className="w-px h-6 bg-white/30 mx-1 sm:mx-2 shrink-0" />
+
+        <button
+          onClick={() => setIsControlsVisible(false)}
+          className="text-white hover:bg-white/20 p-2 rounded-full transition-colors shrink-0"
+          title="Ẩn thanh công cụ"
+        >
+          <ChevronDown className="w-5 h-5" />
         </button>
       </div>
 
