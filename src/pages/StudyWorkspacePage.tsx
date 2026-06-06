@@ -48,20 +48,36 @@ export default function StudyWorkspace() {
 
   // Update volume in iframe
   useEffect(() => {
-    if (iframeRef.current && iframeRef.current.contentWindow) {
-      if (isMuted || volume === 0) {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'mute', args: [] }), '*'
-        );
-      } else {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
-        );
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'setVolume', args: [volume] }), '*'
-        );
+    const updateVolume = () => {
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+        if (isMuted || volume === 0) {
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'mute', args: [] }), '*'
+          );
+        } else {
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
+          );
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'setVolume', args: [volume] }), '*'
+          );
+        }
       }
-    }
+    };
+
+    updateVolume();
+    
+    // When video changes, the iframe takes time to load. We send the volume command
+    // multiple times to ensure it catches the player when it becomes ready.
+    const timers = [
+      setTimeout(updateVolume, 500),
+      setTimeout(updateVolume, 1500),
+      setTimeout(updateVolume, 3000)
+    ];
+
+    return () => {
+      timers.forEach(clearTimeout);
+    };
   }, [volume, isMuted, activeVideoIndex]);
 
   // Request fullscreen
