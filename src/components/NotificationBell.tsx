@@ -39,6 +39,12 @@ export function NotificationBell() {
 
   // Fetch notifications
   useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
+
     const q = query(
       collection(db, 'notifications'),
       orderBy('createdAt', 'desc'),
