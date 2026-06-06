@@ -10,6 +10,7 @@ import { AIAssistantWidget, toggleAIAssistant, pingAIAssistant } from './AIAssis
 import { TextSelectionHelper } from './TextSelectionHelper';
 import ClockWidget from './ClockWidget';
 import { PomodoroWidget } from './PomodoroWidget';
+import { NotificationBell } from './NotificationBell';
 import avtTlu from '../assets/avt_tlu.jpg';
 
 export default function Layout() {
@@ -76,6 +77,7 @@ export default function Layout() {
 
           <div className="flex items-center gap-4">
             <ClockWidget />
+            <NotificationBell />
             {/* Support icon next to theme toggle (only on subpages) */}
             {location.pathname !== '/' && (
               <a
