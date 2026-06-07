@@ -84,121 +84,127 @@ export default function Layout() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-4">
-            <ClockWidget />
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="hidden md:block">
+              <ClockWidget />
+            </div>
+            
             <NotificationBell />
-            {/* Support icon next to theme toggle (only on subpages) */}
-            {location.pathname !== '/' && (
-              <a
-                href="https://www.facebook.com/lovelltitussof1910"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded-full text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
-                title="Hỗ trợ"
-              >
-                <MessageCircle className="w-5 h-5" />
-              </a>
-            )}
-
-            {/* Admin only: Hero Image Manager */}
-            {isAdmin && (
-              <button
-                onClick={() => setIsHeroImageModalOpen(true)}
-                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-blue-600 dark:text-blue-400"
-                title="Quản lý ảnh trang trí"
-              >
-                <ImageIcon className="w-5 h-5" />
-              </button>
-            )}
-
-            {/* AIAssistant Toggle */}
-            <button
-              onClick={() => {
-                toggleAIAssistant();
-                pingAIAssistant();
-              }}
-              className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-blue-600 dark:text-blue-400"
-              title="Trợ lý AI"
-            >
-              <Sparkles className="w-5 h-5" />
-            </button>
-
-            {/* Theme Toggle */}
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
-
-            {/* Auth */}
-            {user ? (
-              <div className="relative">
-                <button 
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center gap-2 p-1 pr-3 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            
+            <div className="hidden md:flex items-center gap-2 sm:gap-4">
+              {/* Support icon next to theme toggle (only on subpages) */}
+              {location.pathname !== '/' && (
+                <a
+                  href="https://www.facebook.com/lovelltitussof1910"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-full text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+                  title="Hỗ trợ"
                 >
-                  <img src={user.photoURL || ''} alt="Avatar" className="w-8 h-8 rounded-full" referrerPolicy="no-referrer" />
-                  <span className="text-sm font-medium hidden sm:block max-w-[120px] truncate">{user.displayName}</span>
-                </button>
-                
-                {isProfileOpen && (
-                  <>
-                    <div 
-                      className="fixed inset-0 z-40"
-                      onClick={() => setIsProfileOpen(false)}
-                    ></div>
-                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-800 transition-all duration-200 z-50">
-                      <div className="p-3 border-b border-slate-200 dark:border-slate-800">
-                        <p className="text-sm font-medium truncate">{user.displayName}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
-                      </div>
-                      
-                      {isAdmin && (
-                        <>
-                          <button
-                            onClick={() => {
-                              setIsProfileOpen(false);
-                              setIsAdminModalOpen(true);
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800"
-                          >
-                            <Shield className="w-4 h-4" /> Quản lý Admin
-                          </button>
-                          <button
-                            onClick={() => {
-                              setIsProfileOpen(false);
-                              setIsUserManagerModalOpen(true);
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800"
-                          >
-                            <Users className="w-4 h-4" /> Quản lý Người dùng
-                          </button>
-                        </>
-                      )}
+                  <MessageCircle className="w-5 h-5" />
+                </a>
+              )}
 
-                      <button
-                        onClick={() => {
-                          setIsProfileOpen(false);
-                          logout();
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 rounded-b-lg"
-                      >
-                        <LogOut className="w-4 h-4" /> Đăng xuất
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ) : (
+              {/* Admin only: Hero Image Manager */}
+              {isAdmin && (
+                <button
+                  onClick={() => setIsHeroImageModalOpen(true)}
+                  className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-blue-600 dark:text-blue-400"
+                  title="Quản lý ảnh trang trí"
+                >
+                  <ImageIcon className="w-5 h-5" />
+                </button>
+              )}
+
+              {/* AIAssistant Toggle */}
               <button
-                onClick={login}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                onClick={() => {
+                  toggleAIAssistant();
+                  pingAIAssistant();
+                }}
+                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-blue-600 dark:text-blue-400"
+                title="Trợ lý AI"
               >
-                <LogIn className="w-4 h-4" /> Đăng nhập
+                <Sparkles className="w-5 h-5" />
               </button>
-            )}
+
+              {/* Theme Toggle */}
+              <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                aria-label="Toggle theme"
+              >
+                {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+
+              {/* Auth */}
+              {user ? (
+                <div className="relative">
+                  <button 
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    className="flex items-center gap-2 p-1 pr-3 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    <img src={user.photoURL || ''} alt="Avatar" className="w-8 h-8 rounded-full" referrerPolicy="no-referrer" />
+                    <span className="text-sm font-medium hidden sm:block max-w-[120px] truncate">{user.displayName}</span>
+                  </button>
+                  
+                  {isProfileOpen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-40"
+                        onClick={() => setIsProfileOpen(false)}
+                      ></div>
+                      <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-800 transition-all duration-200 z-50">
+                        <div className="p-3 border-b border-slate-200 dark:border-slate-800">
+                          <p className="text-sm font-medium truncate">{user.displayName}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+                        </div>
+                        
+                        {isAdmin && (
+                          <>
+                            <button
+                              onClick={() => {
+                                setIsProfileOpen(false);
+                                setIsAdminModalOpen(true);
+                              }}
+                              className="w-full text-left px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800"
+                            >
+                              <Shield className="w-4 h-4" /> Quản lý Admin
+                            </button>
+                            <button
+                              onClick={() => {
+                                setIsProfileOpen(false);
+                                setIsUserManagerModalOpen(true);
+                              }}
+                              className="w-full text-left px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800"
+                            >
+                              <Users className="w-4 h-4" /> Quản lý Người dùng
+                            </button>
+                          </>
+                        )}
+
+                        <button
+                          onClick={() => {
+                            setIsProfileOpen(false);
+                            logout();
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 rounded-b-lg"
+                        >
+                          <LogOut className="w-4 h-4" /> Đăng xuất
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={login}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <LogIn className="w-4 h-4" /> Đăng nhập
+                </button>
+              )}
+            </div>
 
             {/* Mobile Menu Toggle */}
             <button
@@ -212,31 +218,142 @@ export default function Layout() {
 
         {/* Mobile Nav */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-4">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`block text-sm font-medium ${
-                  location.pathname === link.path
-                    ? 'text-blue-600 dark:text-blue-400'
-                    : 'text-slate-600 dark:text-slate-300'
-                }`}
+          <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-4 shadow-inner">
+            <div className="flex flex-col space-y-3">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block text-sm font-medium py-2 ${
+                    location.pathname === link.path
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              ))}
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setIsDonateModalOpen(true);
+                }}
+                className="flex items-center gap-1.5 w-full text-left text-sm font-bold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors py-2"
               >
-                {link.name}
-              </Link>
-            ))}
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                setIsDonateModalOpen(true);
-              }}
-              className="flex items-center gap-1.5 w-full text-left text-sm font-bold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
-            >
-              <Heart className="w-4 h-4 fill-current" />
-              Ủng hộ Web
-            </button>
+                <Heart className="w-4 h-4 fill-current" />
+                Ủng hộ Web
+              </button>
+            </div>
+
+            {/* Mobile Tool Row */}
+            <div className="flex items-center gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <button
+                onClick={() => {
+                  setTheme(theme === 'dark' ? 'light' : 'dark');
+                  setMobileMenuOpen(false);
+                }}
+                className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                aria-label="Toggle theme"
+              >
+                {theme === 'dark' ? <Sun className="w-5 h-5 text-slate-800 dark:text-slate-200" /> : <Moon className="w-5 h-5 text-slate-800 dark:text-slate-200" />}
+              </button>
+
+              <button
+                onClick={() => {
+                  toggleAIAssistant();
+                  pingAIAssistant();
+                  setMobileMenuOpen(false);
+                }}
+                className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-blue-600 dark:text-blue-400"
+                title="Trợ lý AI"
+              >
+                <Sparkles className="w-5 h-5" />
+              </button>
+
+              {isAdmin && (
+                <button
+                  onClick={() => {
+                    setIsHeroImageModalOpen(true);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-blue-600 dark:text-blue-400"
+                  title="Quản lý ảnh trang trí"
+                >
+                  <ImageIcon className="w-5 h-5" />
+                </button>
+              )}
+
+              {location.pathname !== '/' && (
+                <a
+                  href="https://www.facebook.com/lovelltitussof1910"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-500"
+                  title="Hỗ trợ"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                </a>
+              )}
+            </div>
+
+            {/* Mobile Auth Row */}
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
+              {user ? (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-3 mb-2 px-1">
+                    <img src={user.photoURL || ''} alt="Avatar" className="w-10 h-10 rounded-full" referrerPolicy="no-referrer" />
+                    <div className="overflow-hidden">
+                      <p className="text-sm font-medium truncate text-slate-900 dark:text-white">{user.displayName}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+                    </div>
+                  </div>
+                  
+                  {isAdmin && (
+                    <>
+                      <button
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          setIsAdminModalOpen(true);
+                        }}
+                        className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-blue-600 dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
+                      >
+                        <Shield className="w-5 h-5" /> Quản lý Admin
+                      </button>
+                      <button
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          setIsUserManagerModalOpen(true);
+                        }}
+                        className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-blue-600 dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
+                      >
+                        <Users className="w-5 h-5" /> Quản lý Người dùng
+                      </button>
+                    </>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      logout();
+                    }}
+                    className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-2 mt-1"
+                  >
+                    <LogOut className="w-5 h-5" /> Đăng xuất
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    login();
+                  }}
+                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <LogIn className="w-5 h-5" /> Đăng nhập
+                </button>
+              )}
+            </div>
           </div>
         )}
       </header>
