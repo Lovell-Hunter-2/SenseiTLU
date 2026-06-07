@@ -36,6 +36,7 @@ export function useActivityLogger() {
   const lastPathRef = useRef<string | null>(null);
 
   useEffect(() => {
+    console.log("ActivityTracker route change:", location.pathname, user?.uid);
     if (!user || !user.uid) return;
     if (lastPathRef.current === location.pathname) return;
 
