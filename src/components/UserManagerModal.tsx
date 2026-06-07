@@ -72,13 +72,18 @@ export default function UserManagerModal({ onClose }: UserManagerModalProps) {
     setLoadingActivities(true);
     const q = query(
       collection(db, 'users', selectedUser.id, 'activities'),
-      orderBy('timestamp', 'desc'),
-      limit(50)
+      limit(100)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedActivities = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ActivityData));
-      setActivities(fetchedActivities);
+      // Sort on client side to avoid needing an index
+      fetchedActivities.sort((a, b) => {
+         const timeA = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 0;
+         const timeB = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 0;
+         return timeB - timeA;
+      });
+      setActivities(fetchedActivities.slice(0, 50));
       setLoadingActivities(false);
     }, (error) => {
       console.error("Error fetching activities:", error);
