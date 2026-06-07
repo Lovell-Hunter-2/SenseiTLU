@@ -139,7 +139,7 @@ export function NotificationBell() {
         </button>
 
         {isOpen && (
-          <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 z-50 overflow-hidden flex flex-col max-h-[80vh]">
+          <div className="absolute -right-20 sm:right-0 mt-2 w-[calc(100vw-2rem)] max-w-[320px] sm:max-w-none sm:w-96 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 z-50 overflow-hidden flex flex-col max-h-[80vh]">
             <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50">
               <h3 className="font-bold text-lg flex items-center gap-2">
                 <Inbox className="w-5 h-5 text-blue-500" />
