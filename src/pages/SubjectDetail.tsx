@@ -4,6 +4,7 @@ import { doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, s
 import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon, ClipboardList, ScrollText, Lightbulb, Sigma, X, LayoutTemplate, Lock, LogIn } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
+import { logActivityEvent } from '../useActivityLogger';
 
 const typeIcons: Record<string, React.ElementType> = {
   'Giáo trình': Book,
@@ -164,6 +165,10 @@ export default function SubjectDetail() {
         const data = docSnap.data();
         setSubject({ id: docSnap.id, ...data });
         document.title = `Tài liệu ${data.name} TLU`;
+
+        if (user && user.uid) {
+           logActivityEvent(user.uid, "Xem môn học", data.name, `/subject/${id}`);
+        }
       }
     };
     fetchSubject();
