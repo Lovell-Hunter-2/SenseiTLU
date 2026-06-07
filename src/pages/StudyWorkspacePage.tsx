@@ -5,6 +5,7 @@ import { PomodoroWidget } from '../components/PomodoroWidget';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { logActivityEvent } from '../useActivityLogger';
 
 const DEFAULT_VIDEOS = [
   { id: 'bCFhyL0N82A', name: 'Sunset on the beach' },
@@ -17,7 +18,7 @@ const DEFAULT_VIDEOS = [
 
 export default function StudyWorkspace() {
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   
   const [videos, setVideos] = useState(DEFAULT_VIDEOS);
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
@@ -32,13 +33,18 @@ export default function StudyWorkspace() {
   
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  useEffect(() => {
+    if (user && user.uid) {
+      logActivityEvent(user.uid, "Truy cập không gian", "Study Space (Workspace)", "/workspace");
+    }
+  }, [user]);
+
   // Fallback to active index 0 if list is truncated
   const safeIndex = activeVideoIndex < videos.length ? activeVideoIndex : 0;
   const activeVideo = videos[safeIndex];
 
   // Fetch workspaces from Firestore
   useEffect(() => {
-    document.title = "Study Space TLU";
     const unsub = onSnapshot(doc(db, 'settings', 'studyWorkspaces'), (docSnap) => {
       if (docSnap.exists() && docSnap.data().videos) {
         setVideos(docSnap.data().videos);
