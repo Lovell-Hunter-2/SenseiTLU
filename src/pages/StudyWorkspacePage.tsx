@@ -33,12 +33,6 @@ export default function StudyWorkspace() {
   
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  useEffect(() => {
-    if (user && user.uid) {
-      logActivityEvent(user.uid, "Truy cập không gian", "Study Space (Workspace)", "/workspace");
-    }
-  }, [user]);
-
   // Fallback to active index 0 if list is truncated
   const safeIndex = activeVideoIndex < videos.length ? activeVideoIndex : 0;
   const activeVideo = videos[safeIndex];
