@@ -190,12 +190,6 @@ export default function MockExam() {
   const [isFetchingDrive, setIsFetchingDrive] = useState(false);
   const [driveError, setDriveError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user && user.uid) {
-      logActivityEvent(user.uid, "Vào chế độ", "Thi thử / Tạo bài tập AI", `/subject/${id}/mock-exam`);
-    }
-  }, [user, id]);
-
   // Initialize state from sessionStorage if available
   const STORAGE_KEY = `mockExamState_${id}`;
   const getInitialState = () => {
