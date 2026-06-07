@@ -24,6 +24,12 @@ service cloud.firestore {
                     (request.resource.data.role == 'user' || isAdmin());
       allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role);
       allow delete: if isAdmin();
+
+      match /activities/{activityId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId);
+        allow update, delete: if isAdmin();
+      }
     }
 
     match /subjects/{subjectId} {
