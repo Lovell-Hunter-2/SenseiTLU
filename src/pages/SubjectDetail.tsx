@@ -165,10 +165,6 @@ export default function SubjectDetail() {
         const data = docSnap.data();
         setSubject({ id: docSnap.id, ...data });
         document.title = `Tài liệu ${data.name} TLU`;
-
-        if (user && user.uid) {
-           logActivityEvent(user.uid, "Xem môn học", data.name, `/subject/${id}`);
-        }
       }
     };
     fetchSubject();
