@@ -12,12 +12,19 @@ import Blog from './pages/Blog';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import StudyWorkspace from './pages/StudyWorkspacePage';
+import { useActivityLogger } from './useActivityLogger';
+
+function ActivityTracker() {
+  useActivityLogger();
+  return null;
+}
 
 export default function App() {
   return (
     <ThemeProvider defaultTheme="system">
       <AuthProvider>
         <BrowserRouter>
+          <ActivityTracker />
           <Routes>
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
