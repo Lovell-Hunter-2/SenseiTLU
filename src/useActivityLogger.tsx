@@ -36,7 +36,7 @@ export function useActivityLogger() {
   const lastPathRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !user.uid) return;
     if (lastPathRef.current === location.pathname) return;
 
     lastPathRef.current = location.pathname;
@@ -76,9 +76,9 @@ export function useActivityLogger() {
           action: actionStr,
           details: detailStr,
           path: location.pathname,
-          timestamp: Timestamp.now() // Sử dụng Timestamp.now() để có thời gian local lập tức, tránh lỗi delay của serverTimestamp
+          timestamp: Timestamp.now()
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to log activity:", error);
       }
     };
