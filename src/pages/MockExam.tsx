@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
+import { logActivityEvent } from '../useActivityLogger';
 
 const loadPdfJs = async (): Promise<any> => {
   if ((window as any).pdfjsLib) {
@@ -189,6 +189,12 @@ export default function MockExam() {
   const [driveLink, setDriveLink] = useState('');
   const [isFetchingDrive, setIsFetchingDrive] = useState(false);
   const [driveError, setDriveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user && user.uid) {
+      logActivityEvent(user.uid, "Vào chế độ", "Thi thử / Tạo bài tập AI", `/subject/${id}/mock-exam`);
+    }
+  }, [user, id]);
 
   // Initialize state from sessionStorage if available
   const STORAGE_KEY = `mockExamState_${id}`;
