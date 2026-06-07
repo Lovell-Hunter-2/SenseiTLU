@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
-import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
 
 const routeNames: Record<string, string> = {
@@ -13,6 +13,22 @@ const routeNames: Record<string, string> = {
   '/workspace': 'Không gian học tập (Study Space)',
   '/blog': 'Blog / Thảo luận',
 };
+
+// Hàm tiện ích để log các sự kiện tùy chỉnh (bấm nút, bắt đầu làm bài, v.v.)
+export async function logActivityEvent(userUid: string | undefined, action: string, details: string, path: string = '') {
+  if (!userUid) return;
+  try {
+    await addDoc(collection(db, 'users', userUid, 'activities'), {
+      type: 'custom_event',
+      action,
+      details,
+      path,
+      timestamp: Timestamp.now()
+    });
+  } catch (error) {
+    console.error("Failed to log custom activity:", error);
+  }
+}
 
 export function useActivityLogger() {
   const { user } = useAuth();
@@ -60,7 +76,7 @@ export function useActivityLogger() {
           action: actionStr,
           details: detailStr,
           path: location.pathname,
-          timestamp: serverTimestamp()
+          timestamp: Timestamp.now() // Sử dụng Timestamp.now() để có thời gian local lập tức, tránh lỗi delay của serverTimestamp
         });
       } catch (error) {
         console.error("Failed to log activity:", error);
@@ -70,3 +86,4 @@ export function useActivityLogger() {
     logActivity();
   }, [location.pathname, user]);
 }
+
