@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Heart } from 'lucide-react';
+import qrCodeImage from '../assets/qr-mbbank.jpg';
 
 interface DonateModalProps {
   isOpen: boolean;
@@ -43,20 +44,9 @@ export default function DonateModal({ isOpen, onClose }: DonateModalProps) {
             {/* The image should be named qr-donate.jpg or .png and placed in public/ by the user */}
             <div className="w-full max-w-[250px] aspect-[1/1] sm:aspect-auto bg-white rounded-lg p-2 flex items-center justify-center">
                <img 
-                 src="/qr-donate.jpg" 
+                 src={qrCodeImage} 
                  alt="Mã QR Donate" 
                  className="w-full h-auto rounded-lg object-contain"
-                 onError={(e) => {
-                   // Fallback visual if they haven't uploaded it yet
-                   e.currentTarget.style.display = 'none';
-                   const target = e.currentTarget.parentElement;
-                   if (target) {
-                     const div = document.createElement('div');
-                     div.className = 'text-sm text-slate-500 p-4 border-2 border-dashed border-slate-300 rounded-lg w-full h-full flex items-center justify-center';
-                     div.innerHTML = 'Vui lòng upload ảnh QR vào<br/><b>public/qr-donate.jpg</b>';
-                     target.appendChild(div);
-                   }
-                 }}
                />
             </div>
           </div>
