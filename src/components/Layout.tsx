@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Moon, Sun, LogIn, LogOut, MessageCircle, Menu, X, Minus, Shield, ArrowLeft, Image as ImageIcon, Users, Sparkles } from 'lucide-react';
+import { Moon, Sun, LogIn, LogOut, MessageCircle, Menu, X, Minus, Shield, ArrowLeft, Image as ImageIcon, Users, Sparkles, Heart } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import AdminManagerModal from './AdminManagerModal';
 import UserManagerModal from './UserManagerModal';
 import HeroImageManagerModal from './HeroImageManagerModal';
+import DonateModal from './DonateModal';
 import { AIAssistantWidget, toggleAIAssistant, pingAIAssistant } from './AIAssistantWidget';
 import { TextSelectionHelper } from './TextSelectionHelper';
 import ClockWidget from './ClockWidget';
@@ -24,6 +25,7 @@ export default function Layout() {
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isUserManagerModalOpen, setIsUserManagerModalOpen] = useState(false);
   const [isHeroImageModalOpen, setIsHeroImageModalOpen] = useState(false);
+  const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
 
   // Reset popover state when returning to home
   useEffect(() => {
@@ -72,6 +74,13 @@ export default function Layout() {
                   {link.name}
                 </Link>
               ))}
+              <button
+                onClick={() => setIsDonateModalOpen(true)}
+                className="flex items-center gap-1.5 text-sm font-bold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors animate-pulse hover:animate-none"
+              >
+                <Heart className="w-4 h-4 fill-current" />
+                Ủng hộ Web
+              </button>
             </nav>
           </div>
 
@@ -218,6 +227,16 @@ export default function Layout() {
                 {link.name}
               </Link>
             ))}
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setIsDonateModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 w-full text-left text-sm font-bold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
+            >
+              <Heart className="w-4 h-4 fill-current" />
+              Ủng hộ Web
+            </button>
           </div>
         )}
       </header>
@@ -254,6 +273,11 @@ export default function Layout() {
       <HeroImageManagerModal
         isOpen={isHeroImageModalOpen}
         onClose={() => setIsHeroImageModalOpen(false)}
+      />
+
+      <DonateModal
+        isOpen={isDonateModalOpen}
+        onClose={() => setIsDonateModalOpen(false)}
       />
 
       {/* Floating Mascot & Support Button */}
