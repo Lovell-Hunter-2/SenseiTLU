@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 
-const gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : '' });
 
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant';
@@ -159,10 +159,10 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.GROK_API_KEY}`
+            "Authorization": `Bearer ${process.env.GROK_API_KEY.trim()}`
         },
         body: JSON.stringify({
-            model: "grok-2-latest", // Hoặc grok-beta
+            model: "grok-2", // Hoặc grok-beta
             messages: processStandardMessages(true),
             temperature: 0.7,
             response_format: options.jsonMode ? { type: "json_object" } : undefined
@@ -189,7 +189,7 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+            "Authorization": `Bearer ${process.env.OPENAI_API_KEY.trim()}`
         },
         body: JSON.stringify({
             model: "gpt-4o-mini",
@@ -213,7 +213,18 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
 
   if (errors.length > 0) {
       console.error("All AI providers failed. Errors:", errors);
-      throw new Error(`Không thể gọi được AI nào. Vui lòng kiểm tra lại quota hoặc thêm API key! Chi tiết: ${errors.map(e => e.message).join(' | ')}`);
+      const errorMsg = errors.map(e => {
+        let msg = e.message;
+        try {
+           const match = msg.match(/({.*})/);
+           if (match) {
+               const parsed = JSON.parse(match[1]);
+               msg = msg.substring(0, msg.indexOf('{')) + (parsed.error?.message || parsed.error || match[1]);
+           }
+        } catch(err) {}
+        return msg;
+      }).join('\n- ');
+      throw new Error(`Không thể gọi AI. Vui lòng kiểm tra lại quota hoặc thêm API key!\n\nChi tiết:\n- ${errorMsg}`);
   }
 
   throw new Error("Không có API key nào được cấu hình!");
