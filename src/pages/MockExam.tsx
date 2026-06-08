@@ -695,7 +695,7 @@ ${questionsSummary}`;
       let errorMessage = "Có lỗi xảy ra khi tạo đề thi. Vui lòng thử lại.";
       
       if (error?.message?.includes("429") || error?.status === 429 || error?.message?.toLowerCase().includes("quota") || error?.message?.includes("429 Too Many Requests")) {
-        errorMessage = "Hệ thống đang quá tải do có nhiều người sử dụng (hết lượng request API). Cậu vào phần Cài đặt của app này (kéo xuống chỗ biến môi trường), và điền DEEPSEEK_API_KEY vào để có thêm phương án dự phòng khi Gemini bị nghẽn nhé!";
+        errorMessage = "Hệ thống đang quá tải do có nhiều người sử dụng (hết lượng request API). Các phương án dự phòng (DeepSeek, OpenAI, Grok) cũng có thể đã hết quota hoặc báo lỗi. Cậu vào phần Cài đặt của app này để kiểm tra lại các API key nhé!";
       } else if (error?.message) {
         errorMessage = `Lỗi: ${error.message}`;
       }
