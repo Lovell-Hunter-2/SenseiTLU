@@ -162,7 +162,7 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
             "Authorization": `Bearer ${process.env.GROK_API_KEY.trim()}`
         },
         body: JSON.stringify({
-            model: "grok-2-1212", // Sử dụng mô hình có sẵn
+            model: "grok-latest", // Thay vì grok-2-1212 đã cũ, dùng grok-latest cho an toàn
             messages: processStandardMessages(true),
             temperature: 0.7,
             response_format: options.jsonMode ? { type: "json_object" } : undefined
