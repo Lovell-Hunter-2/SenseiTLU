@@ -695,7 +695,7 @@ ${questionsSummary}`;
       let errorMessage = "Có lỗi xảy ra khi tạo đề thi. Vui lòng thử lại.";
       
       if (error?.message?.includes("429") || error?.status === 429 || error?.message?.toLowerCase().includes("quota") || error?.message?.includes("429 Too Many Requests")) {
-        errorMessage = "Hệ thống đang quá tải do có nhiều người sử dụng (hết lượng request API). Các phương án dự phòng (DeepSeek, OpenAI, Grok) cũng có thể đã hết quota hoặc báo lỗi. Cậu vào phần Cài đặt của app này để kiểm tra lại các API key nhé!";
+        errorMessage = "Hệ thống đang quá tải do có nhiều người sử dụng (hết lượng request API). Các phương án dự phòng (DeepSeek, OpenAI, Grok) cũng có thể đã hết quota hoặc báo lỗi. Cậu vào phần Cài đặt của app để kiểm tra lại API key nhé!\n\n(Lỗi: " + error.message + ")";
       } else if (error?.message) {
         errorMessage = `Lỗi: ${error.message}`;
       }
