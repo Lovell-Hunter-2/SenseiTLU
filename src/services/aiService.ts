@@ -129,7 +129,7 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
+            "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY.trim()}`
         },
         body: JSON.stringify({
             model: "deepseek-chat",
@@ -213,7 +213,7 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
 
   if (errors.length > 0) {
       console.error("All AI providers failed. Errors:", errors);
-      throw new Error("Không thể gọi được AI nào. Vui lòng kiểm tra lại quota hoặc thêm API key! Chi tiết lỗi được in trong console.");
+      throw new Error(`Không thể gọi được AI nào. Vui lòng kiểm tra lại quota hoặc thêm API key! Chi tiết: ${errors.map(e => e.message).join(' | ')}`);
   }
 
   throw new Error("Không có API key nào được cấu hình!");
