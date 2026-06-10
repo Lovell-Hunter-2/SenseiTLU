@@ -4,7 +4,7 @@ import { doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, s
 import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon, ClipboardList, ScrollText, Lightbulb, Sigma, X, LayoutTemplate, Lock, LogIn } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { logActivityEvent } from '../useActivityLogger';
+import { logActivityEvent, logSubjectDocumentView } from '../useActivityLogger';
 
 const typeIcons: Record<string, React.ElementType> = {
   'Giáo trình': Book,
@@ -41,6 +41,9 @@ export default function SubjectDetail() {
   const handleDocumentClick = (e: React.MouseEvent, title: string, url: string) => {
     e.preventDefault();
     setSelectedDocument({ title, url });
+    if (subject && user) {
+      logSubjectDocumentView(user.uid, subject.id, subject.name, title, window.location.pathname);
+    }
     setShowChoiceModal(true);
   };
 
