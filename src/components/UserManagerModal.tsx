@@ -35,6 +35,7 @@ export default function UserManagerModal({ onClose }: UserManagerModalProps) {
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [activities, setActivities] = useState<ActivityData[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
+  const [activitiesError, setActivitiesError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -66,10 +67,12 @@ export default function UserManagerModal({ onClose }: UserManagerModalProps) {
   useEffect(() => {
     if (!selectedUser) {
       setActivities([]);
+      setActivitiesError(null);
       return;
     }
 
     setLoadingActivities(true);
+    setActivitiesError(null);
     const q = query(
       collection(db, 'users', selectedUser.id, 'activities'),
       orderBy('timestamp', 'desc'),
@@ -82,6 +85,7 @@ export default function UserManagerModal({ onClose }: UserManagerModalProps) {
       setLoadingActivities(false);
     }, (error) => {
       console.error("Error fetching activities:", error);
+      setActivitiesError(error.message);
       setLoadingActivities(false);
     });
 
@@ -168,6 +172,11 @@ export default function UserManagerModal({ onClose }: UserManagerModalProps) {
                  {loadingActivities ? (
                    <div className="absolute inset-0 flex justify-center items-center">
                      <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+                   </div>
+                 ) : activitiesError ? (
+                   <div className="p-8 text-center text-red-500 flex flex-col items-center">
+                     <Activity className="w-12 h-12 text-red-300 dark:text-red-700 mb-2" />
+                     <p>Lỗi hiển thị dữ liệu: {activitiesError}</p>
                    </div>
                  ) : activities.length === 0 ? (
                    <div className="p-8 text-center text-slate-500 flex flex-col items-center">
