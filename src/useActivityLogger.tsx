@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
-import { collection, addDoc, doc, getDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
 
 const routeNames: Record<string, string> = {
@@ -27,6 +27,44 @@ export async function logActivityEvent(userUid: string | undefined, action: stri
     });
   } catch (error) {
     console.error("Failed to log custom activity:", error);
+  }
+}
+
+// Hàm log riêng cho việc xem tài liệu để gom nhóm chung theo môn học trong ngày
+export async function logSubjectDocumentView(userUid: string | undefined, subjectId: string, subjectName: string, docTitle: string, path: string = '') {
+  if (!userUid || !subjectId) return;
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const actDocId = `doc_view_${subjectId}_${today}`;
+    const activityRef = doc(db, 'users', userUid, 'activities', actDocId);
+    
+    const docSnap = await getDoc(activityRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const existingDocs: string[] = data.viewedDocs || [];
+      if (!existingDocs.includes(docTitle)) {
+         const newDocs = [...existingDocs, docTitle];
+         await setDoc(activityRef, {
+           viewedDocs: newDocs,
+           action: `Xem ${newDocs.length} tài liệu`,
+           details: `Môn: ${subjectName} (${newDocs.join(', ')})`,
+           timestamp: Timestamp.now()
+         }, { merge: true });
+      } else {
+         await setDoc(activityRef, { timestamp: Timestamp.now() }, { merge: true });
+      }
+    } else {
+      await setDoc(activityRef, {
+        type: 'document_view',
+        action: 'Xem 1 tài liệu',
+        details: `Môn: ${subjectName} (${docTitle})`,
+        viewedDocs: [docTitle],
+        path,
+        timestamp: Timestamp.now()
+      });
+    }
+  } catch (error) {
+    console.error("Failed to log document view activity:", error);
   }
 }
 
