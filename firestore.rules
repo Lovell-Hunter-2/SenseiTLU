@@ -27,8 +27,8 @@ service cloud.firestore {
 
       match /activities/{activityId} {
         allow read: if isOwner(userId) || isAdmin();
-        allow create: if isOwner(userId);
-        allow update, delete: if isAdmin();
+        allow create, update: if isOwner(userId);
+        allow delete: if isAdmin();
       }
     }
 
