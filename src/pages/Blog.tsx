@@ -20,7 +20,7 @@ export default function Blog() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = "Blog TLU";
+    document.title = "Blog |SenseiTLU";
     const q = query(collection(db, 'blog'), orderBy('createdAt', 'desc'));
     const unsubscribePosts = onSnapshot(q, (snapshot) => {
       const fetchedPosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
