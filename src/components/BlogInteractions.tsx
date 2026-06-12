@@ -93,6 +93,14 @@ export default function BlogInteractions({ postId }: Props) {
     }
     if (!newComment.trim() && !attachmentUrl) return;
 
+    // Check cooldown
+    const lastCommentTime = localStorage.getItem('last_comment_time');
+    if (lastCommentTime && Date.now() - parseInt(lastCommentTime) < 20000) {
+      alert('Hệ thống đang xử lý. Vui lòng đợi 20 giây trước khi bình luận mới để tránh spam!');
+      return;
+    }
+    localStorage.setItem('last_comment_time', Date.now().toString());
+
     try {
       await addDoc(collection(db, 'blog', postId, 'comments'), {
         content: newComment.trim(),
