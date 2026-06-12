@@ -52,6 +52,14 @@ export default function Blog() {
     e.preventDefault();
     if (!newPost.title.trim() || !newPost.content.trim() || !user) return;
     
+    // Check cooldown
+    const lastPostTime = localStorage.getItem('last_post_time');
+    if (lastPostTime && Date.now() - parseInt(lastPostTime) < 20000) {
+      alert('Hệ thống đang xử lý. Vui lòng đợi 20 giây trước khi đăng bài mới để tránh spam!');
+      return;
+    }
+    localStorage.setItem('last_post_time', Date.now().toString());
+
     try {
       await addDoc(collection(db, 'blog'), {
         title: newPost.title,
