@@ -13,7 +13,7 @@ import {
 
 export default function About() {
   useEffect(() => {
-    document.title = "Về chúng tôi TLU | SenseiTLU";
+    document.title = "Về chúng tôi | SenseiTLU";
   }, []);
 
   const features = [
