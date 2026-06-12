@@ -3,7 +3,7 @@ import { UploadCloud, Heart, ArrowRight } from 'lucide-react';
 
 export default function Contribute() {
   useEffect(() => {
-    document.title = "Đóng góp tài liệu TLU";
+    document.title = "Đóng góp tài liệu | SenseiTLU";
   }, []);
 
   const driveLink = "https://drive.google.com/drive/folders/1L3e4ugId-e5o6qxCA3dfOKTh8S0l4U3q?usp=sharing";
