@@ -238,7 +238,13 @@ export default function Home() {
         {/* Left Image */}
         {heroImages.leftUrl && (
           <div className="hidden lg:block absolute left-8 xl:left-16 w-48 xl:w-64 z-0 animate-in fade-in zoom-in duration-700">
-            <img src={heroImages.leftUrl} alt="Trái" className="w-full h-auto object-contain rounded-2xl drop-shadow-2xl" />
+            <img 
+              src={heroImages.leftUrl} 
+              alt="Trái" 
+              className="w-full h-auto object-contain rounded-2xl drop-shadow-2xl pointer-events-none select-none"
+              draggable="false"
+              onContextMenu={(e) => e.preventDefault()}
+            />
           </div>
         )}
         
@@ -295,7 +301,13 @@ export default function Home() {
         {/* Right Image */}
         {heroImages.rightUrl && (
           <div className="hidden lg:block absolute right-8 xl:right-16 w-48 xl:w-64 z-0 animate-in fade-in zoom-in duration-700 delay-150">
-            <img src={heroImages.rightUrl} alt="Phải" className="w-full h-auto object-contain rounded-2xl drop-shadow-2xl" />
+            <img 
+              src={heroImages.rightUrl} 
+              alt="Phải" 
+              className="w-full h-auto object-contain rounded-2xl drop-shadow-2xl pointer-events-none select-none"
+              draggable="false"
+              onContextMenu={(e) => e.preventDefault()}
+            />
           </div>
         )}
       </div>
