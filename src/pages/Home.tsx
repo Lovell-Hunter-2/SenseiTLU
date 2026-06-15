@@ -338,8 +338,8 @@ export default function Home() {
               <div className="w-32 h-32 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 animate-bounce shadow-lg mt-8">
                 <span className="text-6xl">👻</span>
               </div>
-              <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">Trống trơn rồi!</h3>
-              <p className="text-slate-500 max-w-md">Không tìm thấy môn học nào. Bạn hãy đăng nhập và F5 lại trang để load tài liệu nhé 🐾</p>
+              <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">Không tìm thấy môn học nào!</h3>
+              <p className="text-slate-500 max-w-md">Bạn hãy đăng nhập và F5 lại trang để load tài liệu nhé 🐾</p>
             </div>
           ) : (
             filteredSubjects.map(subject => {
