@@ -339,7 +339,7 @@ export default function Home() {
                 <span className="text-6xl">👻</span>
               </div>
               <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">Trống trơn rồi!</h3>
-              <p className="text-slate-500 max-w-md">Không tìm thấy môn học nào. Có vẻ chúng đang đi trốn đâu đó quanh đây... 🐾</p>
+              <p className="text-slate-500 max-w-md">Không tìm thấy môn học nào. Bạn hãy đăng nhập và F5 lại trang để load lại tài liệu nhé 🐾</p>
             </div>
           ) : (
             filteredSubjects.map(subject => {
