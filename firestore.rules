@@ -33,7 +33,7 @@ service cloud.firestore {
     }
 
     match /subjects/{subjectId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow create, update, delete: if isAdmin();
     }
 
