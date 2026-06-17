@@ -694,12 +694,10 @@ ${questionsSummary}`;
       console.error("Error generating quiz:", error);
       let errorMessage = "Có lỗi xảy ra khi tạo đề thi. Vui lòng thử lại.";
       
-      if (error?.message?.includes("Không thể gọi AI. \nHãy down tài liệu về rồi tải lên Gemini và yêu cầu tạo quiz để câu hỏi bám sát tài liệu nhất nhé!") || (error?.message?.includes("quota") && !error?.message?.includes("429"))) {
-        errorMessage = error.message;
-      } else if (error?.message?.includes("429") || error?.status === 429 || error?.message?.includes("429 Too Many Requests")) {
-        errorMessage = "Hệ thống đang quá tải do có nhiều người sử dụng (hết lượng request API). Các phương án dự phòng (DeepSeek, OpenAI, Grok) cũng có thể đã hết quota hoặc báo lỗi. Cậu vào phần Cài đặt của app để kiểm tra lại API key nhé!\n\n(Lỗi: " + error.message + ")";
+      if (error?.message?.includes("Không thể gọi AI") || (error?.message?.includes("quota") && !error?.message?.includes("429")) || error?.message?.includes("429") || error?.status === 429 || error?.message?.includes("429 Too Many Requests")) {
+        errorMessage = "Hệ thống quá tải. Hãy thử lại sau.\n\nHãy tải tài liệu về và up lên gemini, yêu cầu tạo quiz để ôn tập thay cho chế độ làm đề thi này tạm thời.";
       } else if (error?.message) {
-        errorMessage = `Lỗi: ${error.message}`;
+        errorMessage = "Hệ thống quá tải. Hãy thử lại sau.\n\nHãy tải tài liệu về và up lên gemini, yêu cầu tạo quiz để ôn tập thay cho chế độ làm đề thi này tạm thời.";
       }
       
       alert(errorMessage);
