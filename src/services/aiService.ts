@@ -46,7 +46,69 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
     });
   };
 
-  // Provider 1: Gemini
+  // 1: OpenRouter (Free tier models: gemini-2.0 or llama-3)
+  if (process.env.OPENROUTER_API_KEY) {
+    try {
+        console.log("Đang thử OpenRouter API...");
+        const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY.trim()}`,
+            "HTTP-Referer": window.location.origin || "https://senseitlu.vercel.app",
+            "X-Title": "SenseiTLU"
+        },
+        body: JSON.stringify({
+            model: "google/gemini-2.0-flash-lite-preview-02-05:free",
+            messages: processStandardMessages(false),
+            temperature: 0.7,
+            response_format: options.jsonMode ? { type: "json_object" } : undefined
+        })
+        });
+
+        if (res.ok) {
+        const data = await res.json();
+        return data.choices[0].message.content.trim();
+        } else {
+        const errorData = await res.text();
+        errors.push(new Error(`OpenRouter error: ${res.status} ${errorData}`));
+        }
+    } catch (e: any) {
+        errors.push(new Error(`OpenRouter network error: ${e.message}`));
+    }
+  }
+
+  // 2: Groq
+  if (process.env.GROQ_API_KEY) {
+    try {
+        console.log("Đang thử Groq API...");
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.GROQ_API_KEY.trim()}`
+        },
+        body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: processStandardMessages(false),
+            temperature: 0.7,
+            response_format: options.jsonMode ? { type: "json_object" } : undefined
+        })
+        });
+
+        if (res.ok) {
+        const data = await res.json();
+        return data.choices[0].message.content.trim();
+        } else {
+        const errorData = await res.text();
+        errors.push(new Error(`Groq error: ${res.status} ${errorData}`));
+        }
+    } catch (e: any) {
+        errors.push(new Error(`Groq network error: ${e.message}`));
+    }
+  }
+
+  // 3: Google Gemini (Native API)
   if (process.env.GEMINI_API_KEY) {
     try {
         console.log("Đang thử Gemini API...");
@@ -72,7 +134,6 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
                     text = `[Tệp đính kèm: ${m.attachedFileName || 'Tài liệu'}]\n\n${text}`;
                 }
             }
-            // fallback if legacy attachedFileString is present on the last message
             else if (options.attachedFileString && m === options.messages[options.messages.length - 1]) {
                 const match = options.attachedFileString.match(/^data:([\w+/.-]+);base64,(.*)$/);
                 if (match) {
@@ -90,7 +151,6 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
             parts.push({ text });
 
             if (geminiContents.length > 0 && geminiContents[geminiContents.length - 1].role === role) {
-                // Merge parts if the same role is contiguous
                 geminiContents[geminiContents.length - 1].parts.push(...parts);
             } else {
                 geminiContents.push({ role, parts });
@@ -98,7 +158,7 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
         }
 
         const response = await gemini.models.generateContent({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-1.5-flash',
         contents: geminiContents.length > 0 ? geminiContents : [{ role: 'user', parts: [{ text: "Hello" }] }],
         config: {
             systemInstruction: systemMsg ? systemMsg : undefined,
@@ -121,7 +181,7 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
     }
   }
 
-  // Provider 2: DeepSeek
+  // 4: DeepSeek
   if (process.env.DEEPSEEK_API_KEY) {
     try {
         console.log("Đang thử DeepSeek API...");
@@ -133,7 +193,7 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
         },
         body: JSON.stringify({
             model: "deepseek-chat",
-            messages: processStandardMessages(false), // Deepseek chat chưa hỗ trợ file vision tốt
+            messages: processStandardMessages(false),
             temperature: 0.7,
             response_format: options.jsonMode ? { type: "json_object" } : undefined
         })
@@ -151,37 +211,7 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
     }
   }
 
-  // Provider 3: Grok
-  if (process.env.GROK_API_KEY) {
-    try {
-        console.log("Đang thử Grok API...");
-        const res = await fetch("https://api.x.ai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.GROK_API_KEY.trim()}`
-        },
-        body: JSON.stringify({
-            model: "grok-latest", // Thay vì grok-2-1212 đã cũ, dùng grok-latest cho an toàn
-            messages: processStandardMessages(true),
-            temperature: 0.7,
-            response_format: options.jsonMode ? { type: "json_object" } : undefined
-        })
-        });
-
-        if (res.ok) {
-        const data = await res.json();
-        return data.choices[0].message.content.trim();
-        } else {
-        const errorData = await res.text();
-        errors.push(new Error(`Grok error: ${res.status} ${errorData}`));
-        }
-    } catch (e: any) {
-        errors.push(new Error(`Grok network error: ${e.message}`));
-    }
-  }
-
-  // Provider 4: OpenAI
+  // 5: OpenAI
   if (process.env.OPENAI_API_KEY) {
     try {
         console.log("Đang thử OpenAI API...");
@@ -211,21 +241,19 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
     }
   }
 
-  // Provider 5: OpenRouter
-  if (process.env.OPENROUTER_API_KEY) {
+  // 6: Grok
+  if (process.env.GROK_API_KEY) {
     try {
-        console.log("Đang thử OpenRouter API...");
-        const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        console.log("Đang thử Grok API...");
+        const res = await fetch("https://api.x.ai/v1/chat/completions", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY.trim()}`,
-            "HTTP-Referer": window.location.origin,
-            "X-Title": "SenseiTLU"
+            "Authorization": `Bearer ${process.env.GROK_API_KEY.trim()}`
         },
         body: JSON.stringify({
-            model: "google/gemma-7b-it:free",
-            messages: processStandardMessages(false),
+            model: "grok-latest",
+            messages: processStandardMessages(true),
             temperature: 0.7,
             response_format: options.jsonMode ? { type: "json_object" } : undefined
         })
@@ -236,44 +264,14 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
         return data.choices[0].message.content.trim();
         } else {
         const errorData = await res.text();
-        errors.push(new Error(`OpenRouter error: ${res.status} ${errorData}`));
+        errors.push(new Error(`Grok error: ${res.status} ${errorData}`));
         }
     } catch (e: any) {
-        errors.push(new Error(`OpenRouter network error: ${e.message}`));
+        errors.push(new Error(`Grok network error: ${e.message}`));
     }
   }
 
-  // Provider 6: Groq
-  if (process.env.GROQ_API_KEY) {
-    try {
-        console.log("Đang thử Groq API...");
-        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.GROQ_API_KEY.trim()}`
-        },
-        body: JSON.stringify({
-            model: "llama3-8b-8192",
-            messages: processStandardMessages(false),
-            temperature: 0.7,
-            response_format: options.jsonMode ? { type: "json_object" } : undefined
-        })
-        });
-
-        if (res.ok) {
-        const data = await res.json();
-        return data.choices[0].message.content.trim();
-        } else {
-        const errorData = await res.text();
-        errors.push(new Error(`Groq error: ${res.status} ${errorData}`));
-        }
-    } catch (e: any) {
-        errors.push(new Error(`Groq network error: ${e.message}`));
-    }
-  }
-
-  // Provider 7: Cohere
+  // 7: Cohere
   if (process.env.COHERE_API_KEY) {
     try {
         console.log("Đang thử Cohere API...");
@@ -291,7 +289,7 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
             "Authorization": `Bearer ${process.env.COHERE_API_KEY.trim()}`
         },
         body: JSON.stringify({
-            model: "command-r-plus",
+            model: "command-r-plus-08-2024",
             message: lastMessage,
             chat_history: chatHistory,
             preamble: preamble,
