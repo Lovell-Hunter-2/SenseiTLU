@@ -224,8 +224,8 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
         } catch(err) {}
         return msg;
       }).join('\n- ');
-      throw new Error(`Không thể gọi AI. Vui lòng kiểm tra lại quota hoặc thêm API key!\n\nChi tiết:\n- ${errorMsg}`);
+      throw new Error(`Hệ thống quá tải. Hãy thử lại sau.\n\nHãy tải tài liệu về và up lên gemini, yêu cầu tạo quiz để ôn tập thay cho chế độ làm đề thi này tạm thời.`);
   }
 
-  throw new Error("Không có API key nào được cấu hình!");
+  throw new Error("Hệ thống quá tải. Hãy thử lại sau.\n\nHãy tải tài liệu về và up lên gemini, yêu cầu tạo quiz để ôn tập thay cho chế độ làm đề thi này tạm thời.");
 };
