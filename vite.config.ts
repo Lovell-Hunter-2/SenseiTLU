@@ -12,6 +12,9 @@ export default defineConfig(({mode}) => {
       'process.env.DEEPSEEK_API_KEY': JSON.stringify(process.env.DEEPSEEK_API_KEY || process.env.VITE_DEEPSEEK_API_KEY || env.DEEPSEEK_API_KEY || env.VITE_DEEPSEEK_API_KEY || ''),
       'process.env.OPENAI_API_KEY': JSON.stringify(process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || env.OPENAI_API_KEY || env.VITE_OPENAI_API_KEY || ''),
       'process.env.GROK_API_KEY': JSON.stringify(process.env.GROK_API_KEY || process.env.VITE_GROK_API_KEY || env.GROK_API_KEY || env.VITE_GROK_API_KEY || ''),
+      'process.env.OPENROUTER_API_KEY': JSON.stringify(process.env.OPENROUTER_API_KEY || process.env.VITE_OPENROUTER_API_KEY || env.OPENROUTER_API_KEY || env.VITE_OPENROUTER_API_KEY || ''),
+      'process.env.GROQ_API_KEY': JSON.stringify(process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY || env.GROQ_API_KEY || env.VITE_GROQ_API_KEY || ''),
+      'process.env.COHERE_API_KEY': JSON.stringify(process.env.COHERE_API_KEY || process.env.VITE_COHERE_API_KEY || env.COHERE_API_KEY || env.VITE_COHERE_API_KEY || ''),
     },
     resolve: {
       alias: {
