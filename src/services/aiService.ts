@@ -211,6 +211,106 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
     }
   }
 
+  // Provider 5: OpenRouter
+  if (process.env.OPENROUTER_API_KEY) {
+    try {
+        console.log("Đang thử OpenRouter API...");
+        const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY.trim()}`,
+            "HTTP-Referer": window.location.origin,
+            "X-Title": "SenseiTLU"
+        },
+        body: JSON.stringify({
+            model: "google/gemma-7b-it:free",
+            messages: processStandardMessages(false),
+            temperature: 0.7,
+            response_format: options.jsonMode ? { type: "json_object" } : undefined
+        })
+        });
+
+        if (res.ok) {
+        const data = await res.json();
+        return data.choices[0].message.content.trim();
+        } else {
+        const errorData = await res.text();
+        errors.push(new Error(`OpenRouter error: ${res.status} ${errorData}`));
+        }
+    } catch (e: any) {
+        errors.push(new Error(`OpenRouter network error: ${e.message}`));
+    }
+  }
+
+  // Provider 6: Groq
+  if (process.env.GROQ_API_KEY) {
+    try {
+        console.log("Đang thử Groq API...");
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.GROQ_API_KEY.trim()}`
+        },
+        body: JSON.stringify({
+            model: "llama3-8b-8192",
+            messages: processStandardMessages(false),
+            temperature: 0.7,
+            response_format: options.jsonMode ? { type: "json_object" } : undefined
+        })
+        });
+
+        if (res.ok) {
+        const data = await res.json();
+        return data.choices[0].message.content.trim();
+        } else {
+        const errorData = await res.text();
+        errors.push(new Error(`Groq error: ${res.status} ${errorData}`));
+        }
+    } catch (e: any) {
+        errors.push(new Error(`Groq network error: ${e.message}`));
+    }
+  }
+
+  // Provider 7: Cohere
+  if (process.env.COHERE_API_KEY) {
+    try {
+        console.log("Đang thử Cohere API...");
+        const chatHistory = options.messages.filter(m => m.role !== 'system').map(m => ({
+          role: m.role === 'assistant' ? 'CHATBOT' : 'USER',
+          message: m.content
+        }));
+        const lastMessage = chatHistory.pop()?.message || "";
+        const preamble = options.messages.find(m => m.role === 'system')?.content || "";
+
+        const res = await fetch("https://api.cohere.com/v1/chat", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.COHERE_API_KEY.trim()}`
+        },
+        body: JSON.stringify({
+            model: "command-r-plus",
+            message: lastMessage,
+            chat_history: chatHistory,
+            preamble: preamble,
+            temperature: 0.7,
+        })
+        });
+
+        if (res.ok) {
+        const data = await res.json();
+        return data.text.trim();
+        } else {
+        const errorData = await res.text();
+        errors.push(new Error(`Cohere error: ${res.status} ${errorData}`));
+        }
+    } catch (e: any) {
+        errors.push(new Error(`Cohere network error: ${e.message}`));
+    }
+  }
+
   if (errors.length > 0) {
       console.error("All AI providers failed. Errors:", errors);
       const errorMsg = errors.map(e => {
