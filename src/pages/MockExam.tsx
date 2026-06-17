@@ -496,6 +496,30 @@ ${questionsSummary}`;
     setStatus('generating');
 
     try {
+      const isCustomRequest = uploadedFiles.filter(f => f.status === 'done').length > 0 || !!customPrompt;
+      const cacheKey = !isCustomRequest 
+        ? `${subject.id}_${[...selectedDocs].sort().join(',')}_${[...selectedChapters].sort().join(',')}_${numQuestions}`
+        : null;
+
+      if (cacheKey) {
+        try {
+          const q = query(collection(db, 'quizzes'), where('cacheKey', '==', cacheKey));
+          const querySnapshot = await getDocs(q);
+          if (!querySnapshot.empty) {
+            const cachedQuiz = querySnapshot.docs[0].data();
+            setQuestions(cachedQuiz.questions);
+            setStatus('active');
+            setCurrentIndex(0);
+            setUserAnswers({});
+            setTimeRemaining(timeLimit > 0 ? timeLimit * 60 : null);
+            if (window.innerWidth < 1024) setIsNavOpen(false);
+            return;
+          }
+        } catch (e) {
+          console.error("Lỗi khi kiểm tra cache từ Firestore", e);
+        }
+      }
+
       let extraDocsContext = "";
       if (selectedDocs.length > 0) {
         setStatus('generating'); // Just to keep UI state
@@ -681,6 +705,18 @@ ${questionsSummary}`;
         }
 
         if (parsedQuestions && parsedQuestions.length > 0) {
+          if (cacheKey) {
+            try {
+               await addDoc(collection(db, 'quizzes'), {
+                 cacheKey,
+                 questions: parsedQuestions,
+                 subjectId: subject.id,
+                 createdAt: serverTimestamp()
+               });
+            } catch (e) {
+               console.error("Lỗi khi lưu câu hỏi vào cache", e);
+            }
+          }
           setQuestions(parsedQuestions);
           setStatus('active');
           setCurrentIndex(0);
