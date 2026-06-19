@@ -70,6 +70,18 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    match /analytics/{docId} {
+      allow read, write: if true;
+    }
+
+    match /analytics_subjects/{docId} {
+      allow read, write: if true;
+    }
+
+    match /analytics_documents/{docId} {
+      allow read, write: if true;
+    }
+
     match /notifications/{notificationId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
