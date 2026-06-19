@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { collection, addDoc, doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
+import { logGlobalPageView, logSubjectView, logDocumentView } from './services/analyticsService';
 
 const routeNames: Record<string, string> = {
   '/': 'Trang chủ',
@@ -38,6 +39,9 @@ export async function logSubjectDocumentView(userUid: string | undefined, subjec
     const actDocId = `doc_view_${subjectId}_${today}`;
     const activityRef = doc(db, 'users', userUid, 'activities', actDocId);
     
+    // Log document globally
+    logDocumentView(docTitle, subjectName);
+
     const docSnap = await getDoc(activityRef);
     if (docSnap.exists()) {
       const data = docSnap.data();
@@ -79,6 +83,7 @@ export function useActivityLogger() {
     if (lastPathRef.current === location.pathname) return;
 
     lastPathRef.current = location.pathname;
+    logGlobalPageView(); // Log global visit
 
     const logActivity = async () => {
       try {
@@ -101,6 +106,7 @@ export function useActivityLogger() {
               const subjectDoc = await getDoc(doc(db, 'subjects', subjectId));
               if (subjectDoc.exists()) {
                 detailStr = subjectDoc.data().name;
+                logSubjectView(subjectId, detailStr); // Log global subject view
               } else {
                 detailStr = `Môn học (ID: ${subjectId})`;
               }
