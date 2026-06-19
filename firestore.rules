@@ -18,6 +18,10 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    match /{path=**}/activities/{activityId} {
+      allow read: if isAdmin();
+    }
+
     match /error_logs/{logId} {
       allow read: if isAdmin();
       allow create: if true;
