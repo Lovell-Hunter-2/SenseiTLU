@@ -17,6 +17,7 @@ export default function AdminDashboard() {
   const [dailyVisits, setDailyVisits] = useState(0);
   const [topSubjects, setTopSubjects] = useState<any[]>([]);
   const [topDocs, setTopDocs] = useState<any[]>([]);
+  const [totalUsers, setTotalUsers] = useState(0);
 
   const [isUserManagerOpen, setIsUserManagerOpen] = useState(false);
   const [isHeroManagerOpen, setIsHeroManagerOpen] = useState(false);
@@ -51,6 +52,10 @@ export default function AdminDashboard() {
         const docsQuery = query(collection(db, 'analytics_documents'), orderBy('views', 'desc'), limit(6));
         const docsSnap = await getDocs(docsQuery);
         setTopDocs(docsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        
+        // Total Users
+        const usersSnap = await getDocs(collection(db, 'users'));
+        setTotalUsers(usersSnap.size);
       } catch (error) {
         console.error("Error fetching analytics:", error);
       }
@@ -148,7 +153,7 @@ export default function AdminDashboard() {
                      <Users className="w-5 h-5" />
                      <h3 className="font-medium">Tổng tài khoản</h3>
                   </div>
-                  <p className="text-4xl font-bold text-slate-800 dark:text-white">--</p>
+                  <p className="text-4xl font-bold text-slate-800 dark:text-white">{totalUsers}</p>
                 </div>
               </div>
 
@@ -199,53 +204,25 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === 'users' && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm text-center">
-              <Users className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-              <h2 className="text-2xl font-bold mb-2">Quản lý Người dùng</h2>
-              <p className="text-slate-500 mb-6 max-w-md mx-auto">Kiểm tra thông tin người dùng, lịch sử hoạt động, và cấp quyền truy cập tài nguyên nền tảng.</p>
-              <button 
-                onClick={() => setIsUserManagerOpen(true)}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors inline-flex items-center gap-2"
-              >
-                Mở Bảng Mở Rộng Quản Lý Người Dùng
-              </button>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden relative">
+              <UserManagerModal inline />
             </div>
           )}
 
           {activeTab === 'admins' && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm text-center">
-              <Shield className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-              <h2 className="text-2xl font-bold mb-2">Phân quyền Admin</h2>
-              <p className="text-slate-500 mb-6 max-w-md mx-auto">Thêm hoặc xóa các tài khoản có quyền truy cập vào Dashboard Quản trị này.</p>
-              <button 
-                onClick={() => setIsAdminManagerOpen(true)}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors inline-flex items-center gap-2"
-              >
-                Mở Cài Đặt Admin
-              </button>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden relative">
+              <AdminManagerModal inline />
             </div>
           )}
 
           {activeTab === 'ui' && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm text-center">
-              <ImageIcon className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-              <h2 className="text-2xl font-bold mb-2">Cài đặt Giao diện</h2>
-              <p className="text-slate-500 mb-6 max-w-md mx-auto">Thay đổi ảnh banner 2 bên khung hình, tùy chỉnh các thành phần hiển thị trên trang chủ để phù hợp với các sự kiện.</p>
-              <button 
-                onClick={() => setIsHeroManagerOpen(true)}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors inline-flex items-center gap-2"
-              >
-                Mở Quản lý Ảnh Widget
-              </button>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden relative">
+              <HeroImageManagerModal inline />
             </div>
           )}
 
         </div>
       </div>
-
-      {isUserManagerOpen && <UserManagerModal isOpen={isUserManagerOpen} onClose={() => setIsUserManagerOpen(false)} />}
-      {isHeroManagerOpen && <HeroImageManagerModal isOpen={isHeroManagerOpen} onClose={() => setIsHeroManagerOpen(false)} />}
-      {isAdminManagerOpen && <AdminManagerModal isOpen={isAdminManagerOpen} onClose={() => setIsAdminManagerOpen(false)} />}
     </div>
   );
 }
