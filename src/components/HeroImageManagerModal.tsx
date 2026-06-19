@@ -101,7 +101,7 @@ export default function HeroImageManagerModal({ isOpen, onClose, inline }: Props
   };
 
   const content = (
-    <div className={inline ? "w-full p-6 flex flex-col h-[600px] max-w-2xl mx-auto overflow-y-auto" : "bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 shadow-xl border border-slate-200 dark:border-slate-800"}>
+    <div className={inline ? "w-full p-6 flex flex-col max-w-2xl mx-auto" : "bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 shadow-xl border border-slate-200 dark:border-slate-800"}>
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-bold flex items-center gap-2">
           <ImageIcon className="w-6 h-6 text-blue-500" />
