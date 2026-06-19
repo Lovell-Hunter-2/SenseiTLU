@@ -4,17 +4,18 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 interface Props {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  inline?: boolean;
 }
 
-export default function HeroImageManagerModal({ isOpen, onClose }: Props) {
+export default function HeroImageManagerModal({ isOpen, onClose, inline }: Props) {
   const [leftUrl, setLeftUrl] = useState('');
   const [rightUrl, setRightUrl] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen || inline) {
       const fetchImages = async () => {
         const docRef = doc(db, 'settings', 'heroImages');
         const docSnap = await getDoc(docRef);
@@ -25,9 +26,9 @@ export default function HeroImageManagerModal({ isOpen, onClose }: Props) {
       };
       fetchImages();
     }
-  }, [isOpen]);
+  }, [isOpen, inline]);
 
-  if (!isOpen) return null;
+  if (!isOpen && !inline) return null;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,18 +100,19 @@ export default function HeroImageManagerModal({ isOpen, onClose }: Props) {
     reader.readAsDataURL(file);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm shadow-xl">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 shadow-xl border border-slate-200 dark:border-slate-800">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold flex items-center gap-2">
-            <ImageIcon className="w-6 h-6 text-blue-500" />
-            Hình ảnh hoạt họa & Khung tìm kiếm
-          </h3>
+  const content = (
+    <div className={inline ? "w-full p-6 flex flex-col h-[600px] max-w-2xl mx-auto" : "bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 shadow-xl border border-slate-200 dark:border-slate-800"}>
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-bold flex items-center gap-2">
+          <ImageIcon className="w-6 h-6 text-blue-500" />
+          Hình ảnh hoạt họa & Khung tìm kiếm
+        </h3>
+        {!inline && onClose && (
           <button onClick={onClose} className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
             <X className="w-5 h-5" />
           </button>
-        </div>
+        )}
+      </div>
 
         <form onSubmit={handleSave} className="space-y-6">
           {/* Left Image */}
@@ -170,13 +172,15 @@ export default function HeroImageManagerModal({ isOpen, onClose }: Props) {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium text-slate-700 dark:text-slate-300"
-            >
-              Hủy
-            </button>
+            {!inline && onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium text-slate-700 dark:text-slate-300"
+              >
+                Hủy
+              </button>
+            )}
             <button
               type="submit"
               disabled={saving}
@@ -187,6 +191,13 @@ export default function HeroImageManagerModal({ isOpen, onClose }: Props) {
           </div>
         </form>
       </div>
+  );
+
+  if (inline) return content;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm shadow-xl">
+      {content}
     </div>
   );
 }
