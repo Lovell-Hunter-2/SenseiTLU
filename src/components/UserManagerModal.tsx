@@ -123,7 +123,7 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
   };
 
   const content = (
-    <div className={inline ? "w-full flex-1 flex flex-col h-[600px]" : "bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"}>
+    <div className={inline ? "w-full flex-1 flex flex-col" : "bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"}>
         
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800">
