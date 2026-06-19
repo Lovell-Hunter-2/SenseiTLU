@@ -12,6 +12,7 @@ import Blog from './pages/Blog';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import StudyWorkspace from './pages/StudyWorkspacePage';
+import AdminDashboard from './pages/AdminDashboard';
 import { useActivityLogger } from './useActivityLogger';
 
 function ActivityTracker() {
@@ -36,6 +37,7 @@ export default function App() {
               <Route path="blog" element={<Blog />} />
               <Route path="privacy" element={<PrivacyPolicy />} />
               <Route path="terms" element={<TermsOfService />} />
+              <Route path="admin" element={<AdminDashboard />} />
             </Route>
             <Route path="/workspace" element={<StudyWorkspace />} />
           </Routes>
