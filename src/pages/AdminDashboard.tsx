@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle } from 'lucide-react';
+import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, doc, getDoc, getDocs, query, orderBy, limit, startAt, endAt } from 'firebase/firestore';
 import UserManagerModal from '../components/UserManagerModal';
 import HeroImageManagerModal from '../components/HeroImageManagerModal';
 import AdminManagerModal from '../components/AdminManagerModal';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 export default function AdminDashboard() {
   const { user, isAdmin, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'reports' | 'users' | 'ui' | 'admins'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'reports' | 'storage' | 'users' | 'ui' | 'admins'>('overview');
   
   // Analytics state
   const [totalVisits, setTotalVisits] = useState(0);
@@ -141,6 +141,18 @@ export default function AdminDashboard() {
               <div className="pt-4 pb-2">
                 <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Hệ thống</p>
               </div>
+
+              <button
+                onClick={() => setActiveTab('storage')}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
+                  activeTab === 'storage' 
+                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Database className="w-5 h-5" />
+                Giám sát Lưu trữ
+              </button>
               
               <button
                 onClick={() => setActiveTab('users')}
@@ -350,6 +362,90 @@ export default function AdminDashboard() {
                 <p className="text-slate-500 max-w-sm mx-auto">
                   Tính năng kiểm duyệt nội dung đang trong giai đoạn phát triển. Khi hệ thống bình luận hoặc tải tài liệu của người dùng được mở, các báo cáo sẽ xuất hiện tại đây.
                 </p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'storage' && (
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                  <Database className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Giám sát Lưu trữ (Storage Monitor)</h2>
+                  <p className="text-sm text-slate-500">Quản lý tài nguyên lưu trữ và phân bổ các tệp tin trên Firebase Storage.</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 md:p-6 text-center">
+                  <h3 className="text-sm font-semibold text-slate-500 mb-1">Dung lượng Hệ thống</h3>
+                  <p className="text-3xl font-bold text-slate-800 dark:text-white mt-2">15.4 GB <span className="text-base text-slate-400 font-normal">/ 50 GB</span></p>
+                  
+                  <div className="mt-4 bg-slate-100 dark:bg-slate-800 h-3 rounded-full overflow-hidden flex">
+                    <div className="bg-indigo-500 h-full" style={{ width: '30%' }}></div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2 text-left">Đã dùng 30% dung lượng</p>
+
+                  <div className="grid grid-cols-3 gap-2 mt-6">
+                     <div className="bg-slate-50 dark:bg-slate-800/50 p-2 text-center rounded-lg">
+                        <span className="block text-xs text-slate-500">Tệp PDF</span>
+                        <span className="font-bold">8.2 GB</span>
+                     </div>
+                     <div className="bg-slate-50 dark:bg-slate-800/50 p-2 text-center rounded-lg">
+                        <span className="block text-xs text-slate-500">Hình ảnh</span>
+                        <span className="font-bold">4.5 GB</span>
+                     </div>
+                     <div className="bg-slate-50 dark:bg-slate-800/50 p-2 text-center rounded-lg">
+                        <span className="block text-xs text-slate-500">Mã/File khác</span>
+                        <span className="font-bold">2.7 GB</span>
+                     </div>
+                  </div>
+                </div>
+
+                <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 md:p-6 flex flex-col items-center">
+                  <h3 className="text-sm font-semibold text-slate-500 w-full text-left mb-2">Phân bổ loại tệp tin tải lên</h3>
+                  <div className="h-48 w-full max-w-xs mx-auto">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'PDF', value: 8200, color: '#ef4444' }, // Red
+                            { name: 'Img', value: 4500, color: '#3b82f6' }, // Blue
+                            { name: 'Docx', value: 1200, color: '#10b981' }, // Green
+                            { name: 'Khác', value: 1500, color: '#cbd5e1' }, // Gray
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={80}
+                          paddingAngle={2}
+                          dataKey="value"
+                        >
+                          {
+                            [
+                              { name: 'PDF', value: 8200, color: '#ef4444' },
+                              { name: 'Img', value: 4500, color: '#3b82f6' },
+                              { name: 'Docx', value: 1200, color: '#10b981' },
+                              { name: 'Khác', value: 1500, color: '#cbd5e1' },
+                            ].map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} stroke="transparent" />
+                            ))
+                          }
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value) => `${(Number(value) / 1000).toFixed(1)} GB`}
+                          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
+                        />
+                        <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 text-center text-xs text-slate-500 italic">
+                  *Đây là dữ liệu mẫu để minh họa. Để hiển thị số liệu thật, cần cấu hình metadata Firebase Storage.
               </div>
             </div>
           )}
