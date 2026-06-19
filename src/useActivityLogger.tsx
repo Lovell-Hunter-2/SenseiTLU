@@ -78,12 +78,16 @@ export function useActivityLogger() {
   const lastPathRef = useRef<string | null>(null);
 
   useEffect(() => {
+    // Chỉ đếm 1 truy cập mỗi lần người dùng mở hoặc tải lại trang web
+    logGlobalPageView();
+  }, []);
+
+  useEffect(() => {
     console.log("ActivityTracker route change:", location.pathname, user?.uid);
     if (!user || !user.uid) return;
     if (lastPathRef.current === location.pathname) return;
 
     lastPathRef.current = location.pathname;
-    logGlobalPageView(); // Log global visit
 
     const logActivity = async () => {
       try {
