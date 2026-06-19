@@ -20,38 +20,6 @@ interface ErrorLog {
   details?: string;
 }
 
-const MOCK_ERROR_LOGS: ErrorLog[] = [
-  {
-    id: 'err_001',
-    timestamp: 'Hôm nay 10:45',
-    type: 'Lỗi Tải lên File',
-    message: 'Firebase Storage: Quota exceeded (403)',
-    severity: 'Nghiêm trọng',
-    user: 'user@example.com',
-    location: 'HeroImageManagerModal.tsx - handleUpload',
-    details: 'Storage limit hit when user tried to upload a 5MB image for the hero banner. Need to check billing status or delete old images.',
-  },
-  {
-    id: 'err_002',
-    timestamp: 'Hôm nay 09:12',
-    type: 'Xác thực người dùng',
-    message: 'Auth: ID Token expired',
-    severity: 'Cảnh báo',
-    user: 'guest_user_102',
-    location: 'AuthContext.tsx - verifyToken',
-    details: 'User token expired mid-session. The automatic refresh failed due to a network hiccup.',
-  },
-  {
-    id: 'err_003',
-    timestamp: 'Hôm qua 23:30',
-    type: 'Gián đoạn mạng',
-    message: 'Network Error: Timeout after 10000ms',
-    severity: 'Thấp',
-    location: 'AdminDashboard.tsx - fetchAnalytics',
-    details: 'Firestore query took too long to respond. Could be a temporary outage or the query needs indexing.',
-  }
-];
-
 export default function AdminDashboard() {
   const { user, isAdmin, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'reports' | 'storage' | 'retention' | 'errors' | 'users' | 'ui' | 'admins'>('overview');
@@ -64,6 +32,9 @@ export default function AdminDashboard() {
   const [topDocs, setTopDocs] = useState<any[]>([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [chartData, setChartData] = useState<any[]>([]);
+  const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
+  const [retentionData, setRetentionData] = useState<any[]>([]);
+  const [systemResources, setSystemResources] = useState({ documents: 0, quizzes: 0 });
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -95,16 +66,42 @@ export default function AdminDashboard() {
         const docsSnap = await getDocs(docsQuery);
         setTopDocs(docsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
         
-        // Total Users
+        // Total Users & Retention tracking
         const usersSnap = await getDocs(collection(db, 'users'));
         setTotalUsers(usersSnap.size);
 
-        // Chart Data (Last 7 days)
+        // System resources (Documents & Quizzes)
+        const docSnapshots = await getDocs(collection(db, 'documents'));
+        const quizSnapshots = await getDocs(collection(db, 'quizzes'));
+        setSystemResources({
+          documents: docSnapshots.size,
+          quizzes: quizSnapshots.size
+        });
+
+        // Error Logs
+        const errorLogsQuery = query(collection(db, 'error_logs'), orderBy('timestamp', 'desc'), limit(15));
+        const errorLogsSnap = await getDocs(errorLogsQuery);
+        const fetchedLogs = errorLogsSnap.docs.map(d => {
+          const data = d.data();
+          let tsString = '';
+          if (data.timestamp?.toDate) {
+            tsString = data.timestamp.toDate().toLocaleString('vi-VN');
+          } else {
+            tsString = new Date().toLocaleString('vi-VN');
+          }
+          return { id: d.id, ...data, timestamp: tsString } as ErrorLog;
+        });
+        setErrorLogs(fetchedLogs);
+
+        // Chart Data & Retention Data (Last 7 days)
         const generateChartData = async () => {
           const data = [];
+          const retData = [];
+          const now = new Date();
+          
           for (let i = 6; i >= 0; i--) {
             const date = new Date();
-            date.setDate(date.getDate() - i);
+            date.setDate(now.getDate() - i);
             const dateStr = date.toISOString().split('T')[0];
             const ref = doc(db, 'analytics', `daily_visits_${dateStr}`);
             const snap = await getDoc(ref);
@@ -116,8 +113,38 @@ export default function AdminDashboard() {
               name: displayDate,
               visits: snap.exists() ? snap.data().visits : 0
             });
+
+            // Calculate retention logically based on users array
+            let newUsers = 0;
+            let returningUsers = 0;
+            
+            usersSnap.forEach(userDoc => {
+              const uData = userDoc.data();
+              if (uData.createdAt && uData.lastLoginAt) {
+                 const createdDate = uData.createdAt.split('T')[0];
+                 const lastLoginDate = uData.lastLoginAt.split('T')[0];
+                 
+                 // If created on this iteration's date
+                 if (createdDate === dateStr) {
+                   newUsers++;
+                 } 
+                 // If logged in on this iteration's date, but created earlier
+                 else if (lastLoginDate === dateStr && createdDate !== dateStr) {
+                   returningUsers++;
+                 }
+                 // In a more robust system, we would log logins per day. 
+                 // Here we approximate currently active returning users using lastLoginAt.
+              }
+            });
+
+            retData.push({
+              day: displayDate,
+              newUsers,
+              returningUsers
+            });
           }
           setChartData(data);
+          setRetentionData(retData);
         };
         await generateChartData();
 
@@ -441,79 +468,23 @@ export default function AdminDashboard() {
                   <Database className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">Giám sát Lưu trữ (Storage Monitor)</h2>
-                  <p className="text-sm text-slate-500">Quản lý tài nguyên lưu trữ và phân bổ các tệp tin trên Firebase Storage.</p>
+                  <h2 className="text-xl font-bold">Giám sát Tài nguyên Hệ thống</h2>
+                  <p className="text-sm text-slate-500">Thống kê số lượng bộ dữ liệu thực tế đang tồn tại trên Firestore.</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 md:p-6 text-center">
-                  <h3 className="text-sm font-semibold text-slate-500 mb-1">Dung lượng Hệ thống</h3>
-                  <p className="text-3xl font-bold text-slate-800 dark:text-white mt-2">15.4 GB <span className="text-base text-slate-400 font-normal">/ 50 GB</span></p>
-                  
-                  <div className="mt-4 bg-slate-100 dark:bg-slate-800 h-3 rounded-full overflow-hidden flex">
-                    <div className="bg-indigo-500 h-full" style={{ width: '30%' }}></div>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-2 text-left">Đã dùng 30% dung lượng</p>
-
-                  <div className="grid grid-cols-3 gap-2 mt-6">
-                     <div className="bg-slate-50 dark:bg-slate-800/50 p-2 text-center rounded-lg">
-                        <span className="block text-xs text-slate-500">Tệp PDF</span>
-                        <span className="font-bold">8.2 GB</span>
-                     </div>
-                     <div className="bg-slate-50 dark:bg-slate-800/50 p-2 text-center rounded-lg">
-                        <span className="block text-xs text-slate-500">Hình ảnh</span>
-                        <span className="font-bold">4.5 GB</span>
-                     </div>
-                     <div className="bg-slate-50 dark:bg-slate-800/50 p-2 text-center rounded-lg">
-                        <span className="block text-xs text-slate-500">Mã/File khác</span>
-                        <span className="font-bold">2.7 GB</span>
-                     </div>
-                  </div>
+                  <h3 className="text-sm font-semibold text-slate-500 mb-1">Tài liệu học tập</h3>
+                  <p className="text-3xl font-bold text-slate-800 dark:text-white mt-2">{systemResources.documents} <span className="text-base text-slate-400 font-normal">Tệp</span></p>
                 </div>
-
-                <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 md:p-6 flex flex-col items-center">
-                  <h3 className="text-sm font-semibold text-slate-500 w-full text-left mb-2">Phân bổ loại tệp tin tải lên</h3>
-                  <div className="h-48 w-full max-w-xs mx-auto">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={[
-                            { name: 'PDF', value: 8200, color: '#ef4444' }, // Red
-                            { name: 'Img', value: 4500, color: '#3b82f6' }, // Blue
-                            { name: 'Docx', value: 1200, color: '#10b981' }, // Green
-                            { name: 'Khác', value: 1500, color: '#cbd5e1' }, // Gray
-                          ]}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={80}
-                          paddingAngle={2}
-                          dataKey="value"
-                        >
-                          {
-                            [
-                              { name: 'PDF', value: 8200, color: '#ef4444' },
-                              { name: 'Img', value: 4500, color: '#3b82f6' },
-                              { name: 'Docx', value: 1200, color: '#10b981' },
-                              { name: 'Khác', value: 1500, color: '#cbd5e1' },
-                            ].map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} stroke="transparent" />
-                            ))
-                          }
-                        </Pie>
-                        <Tooltip 
-                          formatter={(value) => `${(Number(value) / 1000).toFixed(1)} GB`}
-                          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
-                        />
-                        <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
+                <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 md:p-6 text-center">
+                  <h3 className="text-sm font-semibold text-slate-500 mb-1">Bộ đề trắc nghiệm (Quiz)</h3>
+                  <p className="text-3xl font-bold text-slate-800 dark:text-white mt-2">{systemResources.quizzes} <span className="text-base text-slate-400 font-normal">Đề thi</span></p>
                 </div>
               </div>
-              <div className="mt-4 text-center text-xs text-slate-500 italic">
-                  *Đây là dữ liệu mẫu để minh họa. Để hiển thị số liệu thật, cần cấu hình metadata Firebase Storage.
+              <div className="mt-6 text-center text-sm text-slate-500 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">Thông tin kỹ thuật:</span> Dữ liệu được đo đếm trực tiếp từ các bộ sưu tập Firestore (documents, quizzes). Đối với dung lượng bộ nhớ thực tế (Cloud Storage cho PDF/JPEG), Firebase Client SDK không cung cấp phương thức đọc tổng dung lượng. Để đọc dung lượng Storage, hệ thống sẽ cần tích hợp Firebase Admin SDK hoặc Cloud Functions (mở rộng sau).
               </div>
             </div>
           )}
@@ -533,15 +504,7 @@ export default function AdminDashboard() {
               <div className="h-80 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
-                    data={[
-                      { day: 'T2', newUsers: 12, returningUsers: 45 },
-                      { day: 'T3', newUsers: 19, returningUsers: 50 },
-                      { day: 'T4', newUsers: 8, returningUsers: 60 },
-                      { day: 'T5', newUsers: 15, returningUsers: 48 },
-                      { day: 'T6', newUsers: 22, returningUsers: 55 },
-                      { day: 'T7', newUsers: 30, returningUsers: 70 },
-                      { day: 'CN', newUsers: 25, returningUsers: 65 },
-                    ]}
+                    data={retentionData}
                     margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -558,7 +521,7 @@ export default function AdminDashboard() {
                 </ResponsiveContainer>
               </div>
               <div className="mt-4 text-center text-xs text-slate-500 italic">
-                  *Biểu đồ sử dụng dữ liệu mẫu để minh họa tính năng Retention.
+                  *Biểu đồ hiển thị dữ liệu thật về lượt đăng ký mới & đăng nhập (active) từ Firebase (`users` collection).
               </div>
             </div>
           )}
@@ -595,7 +558,9 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                    {MOCK_ERROR_LOGS.map((log) => (
+                    {errorLogs.length === 0 ? (
+                      <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500 italic">Chưa ghi nhận lỗi hệ thống nào.</td></tr>
+                    ) : errorLogs.map((log) => (
                       <tr 
                         key={log.id} 
                         onClick={() => setSelectedErrorLog(log)}
