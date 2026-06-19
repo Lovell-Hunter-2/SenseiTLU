@@ -18,6 +18,11 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    match /error_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if true;
+    }
+
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isOwner(userId) && request.resource.data.keys().hasAll(['email', 'role']) &&
