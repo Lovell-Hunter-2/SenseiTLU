@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon, X, FileText, User as UserIcon, MapPin, Clock } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, doc, getDoc, getDocs, query, orderBy, limit, startAt, endAt } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, orderBy, limit, startAt, endAt, collectionGroup } from 'firebase/firestore';
 import UserManagerModal from '../components/UserManagerModal';
 import HeroImageManagerModal from '../components/HeroImageManagerModal';
 import AdminManagerModal from '../components/AdminManagerModal';
@@ -35,12 +35,45 @@ export default function AdminDashboard() {
   const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
   const [retentionData, setRetentionData] = useState<any[]>([]);
   const [systemResources, setSystemResources] = useState({ documents: 0, quizzes: 0 });
+  const [systemActivities, setSystemActivities] = useState<any[]>([]);
 
   useEffect(() => {
     if (!isAdmin) return;
 
     const fetchAnalytics = async () => {
       try {
+        // System Activities
+        const activitiesQuery = query(collectionGroup(db, 'activities'), orderBy('timestamp', 'desc'), limit(15));
+        const activitiesSnap = await getDocs(activitiesQuery);
+        const fetchedActivities = await Promise.all(activitiesSnap.docs.map(async (d) => {
+          const data = d.data();
+          let tsString = '';
+          if (data.timestamp?.toDate) {
+             const t = data.timestamp.toDate();
+             tsString = `${t.toLocaleDateString('vi-VN')} ${t.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
+          } else {
+             tsString = 'Vừa xong';
+          }
+          
+          let userName = 'Người dùng ẩn danh';
+          try {
+             // Extract user ID from ref path: users/{userId}/activities/{activityId}
+             const parts = d.ref.path.split('/');
+             if (parts.length >= 4 && parts[parts.length - 3] === 'users') {
+                 const userId = parts[parts.length - 2];
+                 const userDoc = await getDoc(doc(db, 'users', userId));
+                 if (userDoc.exists() && userDoc.data().email) {
+                    userName = userDoc.data().email.split('@')[0];
+                 }
+             }
+          } catch (e) {
+             console.error("Error parsing user from activity", e);
+          }
+
+          return { id: d.id, ...data, timestampStr: tsString, userName };
+        }));
+        setSystemActivities(fetchedActivities);
+
         // Total visits
         const totalRef = doc(db, 'analytics', 'total_visits');
         const totalSnap = await getDoc(totalRef);
@@ -405,36 +438,29 @@ export default function AdminDashboard() {
               </div>
               
               <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 dark:before:via-slate-800 before:to-transparent">
-                {/* Dummy items */}
-                <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white dark:border-slate-900 bg-blue-500 text-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                    <Activity className="w-4 h-4" />
-                  </div>
-                  <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-slate-900 dark:text-white">Admin Update</span>
-                      <span className="text-xs font-medium text-blue-500">Vừa xong</span>
+                {systemActivities.length === 0 ? (
+                  <p className="text-center text-slate-500 italic relative z-10 bg-white dark:bg-slate-900 py-4">Chưa có hoạt động nào được ghi nhận.</p>
+                ) : (
+                  systemActivities.map((activity, index) => (
+                  <div key={activity.id || index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white dark:border-slate-900 bg-blue-500 text-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                      {activity.type === 'page_view' ? <Activity className="w-4 h-4" /> : <Users className="w-4 h-4" />}
                     </div>
-                    <p className="text-sm text-slate-500">Tính năng Lịch sử hoạt động vừa được thiết lập.</p>
-                  </div>
-                </div>
-
-                <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white dark:border-slate-900 bg-emerald-500 text-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                    <Users className="w-4 h-4" />
-                  </div>
-                  <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-slate-900 dark:text-white">Hệ thống</span>
-                      <span className="text-xs font-medium text-slate-500">2 giờ trước</span>
+                    <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                      <div className="flex items-center justify-between mb-1 gap-2">
+                        <span className="font-bold text-slate-900 dark:text-white line-clamp-1">{activity.action || 'Hành động'}</span>
+                        <span className="text-xs font-medium text-slate-500 shrink-0">{activity.timestampStr}</span>
+                      </div>
+                      <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">{activity.userName}</p>
+                      <p className="text-sm text-slate-500 mt-1">{activity.details}</p>
                     </div>
-                    <p className="text-sm text-slate-500">Cập nhật thống kê truy cập hàng ngày.</p>
                   </div>
-                </div>
+                  ))
+                )}
               </div>
               
               <div className="mt-8 text-center text-sm text-slate-500 italic">
-                *Đang tải thêm kết nối tới Firestore collection `activities`...
+                *Chỉ hiển thị 15 hoạt động hệ thống gần nhất được cập nhật tự động.
               </div>
             </div>
           )}
