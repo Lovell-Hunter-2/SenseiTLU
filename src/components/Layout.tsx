@@ -3,9 +3,6 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Moon, Sun, LogIn, LogOut, MessageCircle, Menu, X, Minus, Shield, ArrowLeft, Image as ImageIcon, Users, Sparkles, Heart } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import AdminManagerModal from './AdminManagerModal';
-import UserManagerModal from './UserManagerModal';
-import HeroImageManagerModal from './HeroImageManagerModal';
 import DonateModal from './DonateModal';
 import { AIAssistantWidget, toggleAIAssistant, pingAIAssistant } from './AIAssistantWidget';
 import { TextSelectionHelper } from './TextSelectionHelper';
@@ -22,9 +19,6 @@ export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showSupportPopover, setShowSupportPopover] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
-  const [isUserManagerModalOpen, setIsUserManagerModalOpen] = useState(false);
-  const [isHeroImageModalOpen, setIsHeroImageModalOpen] = useState(false);
   const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
 
   // Reset popover state when returning to home
@@ -105,17 +99,6 @@ export default function Layout() {
                 </a>
               )}
 
-              {/* Admin only: Hero Image Manager */}
-              {isAdmin && (
-                <button
-                  onClick={() => setIsHeroImageModalOpen(true)}
-                  className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-blue-600 dark:text-blue-400"
-                  title="Quản lý ảnh trang trí"
-                >
-                  <ImageIcon className="w-5 h-5" />
-                </button>
-              )}
-
               {/* AIAssistant Toggle */}
               <button
                 onClick={() => {
@@ -165,20 +148,11 @@ export default function Layout() {
                             <button
                               onClick={() => {
                                 setIsProfileOpen(false);
-                                setIsAdminModalOpen(true);
+                                navigate('/admin');
                               }}
                               className="w-full text-left px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800"
                             >
-                              <Shield className="w-4 h-4" /> Quản lý Admin
-                            </button>
-                            <button
-                              onClick={() => {
-                                setIsProfileOpen(false);
-                                setIsUserManagerModalOpen(true);
-                              }}
-                              className="w-full text-left px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800"
-                            >
-                              <Users className="w-4 h-4" /> Quản lý Người dùng
+                              <Shield className="w-4 h-4" /> Dashboard Quản trị
                             </button>
                           </>
                         )}
@@ -271,19 +245,6 @@ export default function Layout() {
                 <Sparkles className="w-5 h-5" />
               </button>
 
-              {isAdmin && (
-                <button
-                  onClick={() => {
-                    setIsHeroImageModalOpen(true);
-                    setMobileMenuOpen(false);
-                  }}
-                  className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-blue-600 dark:text-blue-400"
-                  title="Quản lý ảnh trang trí"
-                >
-                  <ImageIcon className="w-5 h-5" />
-                </button>
-              )}
-
               {location.pathname !== '/' && (
                 <a
                   href="https://www.facebook.com/lovelltitussof1910"
@@ -314,20 +275,11 @@ export default function Layout() {
                       <button
                         onClick={() => {
                           setMobileMenuOpen(false);
-                          setIsAdminModalOpen(true);
+                          navigate('/admin');
                         }}
                         className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-blue-600 dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
                       >
-                        <Shield className="w-5 h-5" /> Quản lý Admin
-                      </button>
-                      <button
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          setIsUserManagerModalOpen(true);
-                        }}
-                        className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-blue-600 dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
-                      >
-                        <Users className="w-5 h-5" /> Quản lý Người dùng
+                        <Shield className="w-5 h-5" /> Dashboard Quản trị
                       </button>
                     </>
                   )}
@@ -377,20 +329,6 @@ export default function Layout() {
           <p>© {new Date().getFullYear()} LovellTituss161. All rights reserved.</p>
         </div>
       </footer>
-
-      <AdminManagerModal 
-        isOpen={isAdminModalOpen} 
-        onClose={() => setIsAdminModalOpen(false)} 
-      />
-
-      {isUserManagerModalOpen && (
-        <UserManagerModal onClose={() => setIsUserManagerModalOpen(false)} />
-      )}
-
-      <HeroImageManagerModal
-        isOpen={isHeroImageModalOpen}
-        onClose={() => setIsHeroImageModalOpen(false)}
-      />
 
       <DonateModal
         isOpen={isDonateModalOpen}
