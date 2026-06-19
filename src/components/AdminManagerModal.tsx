@@ -4,11 +4,12 @@ import { Shield, Trash2, UserPlus, X, Search } from 'lucide-react';
 import { db } from '../firebase';
 
 interface AdminManagerModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  inline?: boolean;
 }
 
-export default function AdminManagerModal({ isOpen, onClose }: AdminManagerModalProps) {
+export default function AdminManagerModal({ isOpen, onClose, inline }: AdminManagerModalProps) {
   const [admins, setAdmins] = useState<any[]>([]);
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,13 +28,13 @@ export default function AdminManagerModal({ isOpen, onClose }: AdminManagerModal
   };
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen || inline) {
       fetchAdmins();
       setError('');
       setSuccess('');
       setNewAdminEmail('');
     }
-  }, [isOpen]);
+  }, [isOpen, inline]);
 
   const handleAddAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,19 +101,20 @@ export default function AdminManagerModal({ isOpen, onClose }: AdminManagerModal
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen && !inline) return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold flex items-center gap-2">
-            <Shield className="w-6 h-6 text-blue-500" /> Quản lý Admin
-          </h3>
+  const content = (
+    <div className={inline ? "w-full p-6 flex flex-col h-[600px]" : "bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]"}>
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-bold flex items-center gap-2">
+          <Shield className="w-6 h-6 text-blue-500" /> Quản lý Admin
+        </h3>
+        {!inline && onClose && (
           <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
             <X className="w-5 h-5" />
           </button>
-        </div>
+        )}
+      </div>
 
         {/* Add Admin Form */}
         <form onSubmit={handleAddAdmin} className="mb-8">
@@ -165,6 +167,13 @@ export default function AdminManagerModal({ isOpen, onClose }: AdminManagerModal
           </div>
         </div>
       </div>
+  );
+
+  if (inline) return content;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      {content}
     </div>
   );
 }
