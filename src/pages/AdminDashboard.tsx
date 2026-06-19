@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon } from 'lucide-react';
+import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon, X, FileText, User as UserIcon, MapPin, Clock } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, doc, getDoc, getDocs, query, orderBy, limit, startAt, endAt } from 'firebase/firestore';
 import UserManagerModal from '../components/UserManagerModal';
@@ -9,9 +9,53 @@ import HeroImageManagerModal from '../components/HeroImageManagerModal';
 import AdminManagerModal from '../components/AdminManagerModal';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
 
+interface ErrorLog {
+  id: string;
+  timestamp: string;
+  type: string;
+  message: string;
+  severity: 'Nghiêm trọng' | 'Cảnh báo' | 'Thấp';
+  user?: string;
+  location?: string;
+  details?: string;
+}
+
+const MOCK_ERROR_LOGS: ErrorLog[] = [
+  {
+    id: 'err_001',
+    timestamp: 'Hôm nay 10:45',
+    type: 'Lỗi Tải lên File',
+    message: 'Firebase Storage: Quota exceeded (403)',
+    severity: 'Nghiêm trọng',
+    user: 'user@example.com',
+    location: 'HeroImageManagerModal.tsx - handleUpload',
+    details: 'Storage limit hit when user tried to upload a 5MB image for the hero banner. Need to check billing status or delete old images.',
+  },
+  {
+    id: 'err_002',
+    timestamp: 'Hôm nay 09:12',
+    type: 'Xác thực người dùng',
+    message: 'Auth: ID Token expired',
+    severity: 'Cảnh báo',
+    user: 'guest_user_102',
+    location: 'AuthContext.tsx - verifyToken',
+    details: 'User token expired mid-session. The automatic refresh failed due to a network hiccup.',
+  },
+  {
+    id: 'err_003',
+    timestamp: 'Hôm qua 23:30',
+    type: 'Gián đoạn mạng',
+    message: 'Network Error: Timeout after 10000ms',
+    severity: 'Thấp',
+    location: 'AdminDashboard.tsx - fetchAnalytics',
+    details: 'Firestore query took too long to respond. Could be a temporary outage or the query needs indexing.',
+  }
+];
+
 export default function AdminDashboard() {
   const { user, isAdmin, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'reports' | 'storage' | 'retention' | 'errors' | 'users' | 'ui' | 'admins'>('overview');
+  const [selectedErrorLog, setSelectedErrorLog] = useState<ErrorLog | null>(null);
   
   // Analytics state
   const [totalVisits, setTotalVisits] = useState(0);
@@ -551,24 +595,28 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                    <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                      <td className="px-4 py-3 font-mono text-xs text-slate-500">Hôm nay 10:45</td>
-                      <td className="px-4 py-3 font-medium">Lỗi Tải lên Fỉe</td>
-                      <td className="px-4 py-3 font-mono text-xs text-red-500">Firebase Storage: Quota exceeded (403)</td>
-                      <td className="px-4 py-3"><span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">Nghiêm trọng</span></td>
-                    </tr>
-                    <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                      <td className="px-4 py-3 font-mono text-xs text-slate-500">Hôm nay 09:12</td>
-                      <td className="px-4 py-3 font-medium">Xác thực người dùng</td>
-                      <td className="px-4 py-3 font-mono text-xs text-orange-500">Auth: ID Token expired</td>
-                      <td className="px-4 py-3"><span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">Cảnh báo</span></td>
-                    </tr>
-                    <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                      <td className="px-4 py-3 font-mono text-xs text-slate-500">Hôm qua 23:30</td>
-                      <td className="px-4 py-3 font-medium">Gián đoạn mạng</td>
-                      <td className="px-4 py-3 font-mono text-xs text-yellow-600 dark:text-yellow-500">Network Error: Timeout after 10000ms</td>
-                      <td className="px-4 py-3"><span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">Thấp</span></td>
-                    </tr>
+                    {MOCK_ERROR_LOGS.map((log) => (
+                      <tr 
+                        key={log.id} 
+                        onClick={() => setSelectedErrorLog(log)}
+                        className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                      >
+                        <td className="px-4 py-3 font-mono text-xs text-slate-500">{log.timestamp}</td>
+                        <td className="px-4 py-3 font-medium">{log.type}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-red-500">{log.message}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                            log.severity === 'Nghiêm trọng' 
+                              ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                              : log.severity === 'Cảnh báo'
+                              ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                          }`}>
+                            {log.severity}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -595,6 +643,87 @@ export default function AdminDashboard() {
 
         </div>
       </div>
+      
+      {/* Error Log Detail Modal */}
+      {selectedErrorLog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <AlertOctagon className={`w-6 h-6 ${
+                  selectedErrorLog.severity === 'Nghiêm trọng' ? 'text-red-500' :
+                  selectedErrorLog.severity === 'Cảnh báo' ? 'text-orange-500' : 'text-yellow-500'
+                }`} />
+                Chi tiết lỗi
+              </h3>
+              <button 
+                onClick={() => setSelectedErrorLog(null)}
+                className="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
+              <div>
+                <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${
+                  selectedErrorLog.severity === 'Nghiêm trọng' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-900/50' : 
+                  selectedErrorLog.severity === 'Cảnh báo' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-900/50' : 
+                  'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-900/50'
+                }`}>
+                  Mức độ: {selectedErrorLog.severity}
+                </span>
+                <h4 className="text-lg font-bold mt-3 mb-1">{selectedErrorLog.type}</h4>
+                <p className="font-mono text-sm text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/10 p-3 rounded-lg border border-red-100 dark:border-red-900/30">
+                  {selectedErrorLog.message}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <div className="flex bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                  <Clock className="w-5 h-5 text-slate-400 mr-3 mt-0.5 shrink-0" />
+                  <div>
+                    <h5 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Thời gian ghi nhận</h5>
+                    <p className="text-slate-700 dark:text-slate-300 font-medium">{selectedErrorLog.timestamp}</p>
+                  </div>
+                </div>
+
+                {selectedErrorLog.user && (
+                    <div className="flex bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                      <UserIcon className="w-5 h-5 text-slate-400 mr-3 mt-0.5 shrink-0" />
+                      <div>
+                        <h5 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Người dùng ảnh hưởng</h5>
+                        <p className="text-slate-700 dark:text-slate-300 font-medium">{selectedErrorLog.user}</p>
+                      </div>
+                    </div>
+                )}
+                
+                {selectedErrorLog.location && (
+                    <div className="flex bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                      <MapPin className="w-5 h-5 text-slate-400 mr-3 mt-0.5 shrink-0" />
+                      <div>
+                        <h5 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Vị trí phát sinh</h5>
+                        <p className="text-slate-700 dark:text-slate-300 font-mono text-sm">{selectedErrorLog.location}</p>
+                      </div>
+                    </div>
+                )}
+              </div>
+
+              {selectedErrorLog.details && (
+                <div>
+                    <h5 className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                        <FileText className="w-4 h-4" />
+                        Mô tả chi tiết & Phân tích
+                    </h5>
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                        {selectedErrorLog.details}
+                    </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
