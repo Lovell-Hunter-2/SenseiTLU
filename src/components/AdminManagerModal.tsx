@@ -104,7 +104,7 @@ export default function AdminManagerModal({ isOpen, onClose, inline }: AdminMana
   if (!isOpen && !inline) return null;
 
   const content = (
-    <div className={inline ? "w-full p-6 flex flex-col h-[600px]" : "bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]"}>
+    <div className={inline ? "w-full p-6 flex flex-col" : "bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]"}>
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-bold flex items-center gap-2">
           <Shield className="w-6 h-6 text-blue-500" /> Quản lý Admin
