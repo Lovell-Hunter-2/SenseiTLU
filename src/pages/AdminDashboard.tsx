@@ -174,60 +174,165 @@ export default function AdminDashboard() {
         const data = [];
         const retData = [];
         const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
         
         // 1. Preprocess users for fast lookup
-        const dailyNewUsers: Record<string, number> = {};
-        const dailyReturningUsers: Record<string, number> = {};
+        const userStats: Record<string, { new: number, returning: number }> = {};
         
         if (usersCache) {
            usersCache.forEach((userDoc: any) => {
              const uData = userDoc.data();
              if (uData.createdAt && uData.lastLoginAt) {
-                 const createdDate = uData.createdAt.split('T')[0];
-                 const lastLoginDate = uData.lastLoginAt.split('T')[0];
+                 const createdIso = uData.createdAt; // e.g. 2023-10-01T12:00:00.000Z
+                 const loginIso = uData.lastLoginAt; 
                  
-                 dailyNewUsers[createdDate] = (dailyNewUsers[createdDate] || 0) + 1;
-                 if (createdDate !== lastLoginDate) {
-                     dailyReturningUsers[lastLoginDate] = (dailyReturningUsers[lastLoginDate] || 0) + 1;
+                 if (chartRange === 1) {
+                    // Group by hour for today
+                    if (createdIso.startsWith(todayStr)) {
+                       const h = createdIso.slice(11, 13);
+                       if (!userStats[h]) userStats[h] = { new: 0, returning: 0 };
+                       userStats[h].new++;
+                    }
+                    if (loginIso.startsWith(todayStr) && createdIso.split('T')[0] !== loginIso.split('T')[0]) {
+                       const h = loginIso.slice(11, 13);
+                       if (!userStats[h]) userStats[h] = { new: 0, returning: 0 };
+                       userStats[h].returning++;
+                    }
+                 } else if (chartRange >= 180) {
+                    // Group by month YYYY-MM
+                    const createMonth = createdIso.slice(0, 7);
+                    const loginMonth = loginIso.slice(0, 7);
+                    if (!userStats[createMonth]) userStats[createMonth] = { new: 0, returning: 0 };
+                    userStats[createMonth].new++;
+                    
+                    if (createMonth !== loginMonth) {
+                       if (!userStats[loginMonth]) userStats[loginMonth] = { new: 0, returning: 0 };
+                       userStats[loginMonth].returning++;
+                    }
+                 } else {
+                    // Group by day YYYY-MM-DD
+                    const createDay = createdIso.split('T')[0];
+                    const loginDay = loginIso.split('T')[0];
+                    if (!userStats[createDay]) userStats[createDay] = { new: 0, returning: 0 };
+                    userStats[createDay].new++;
+                    
+                    if (createDay !== loginDay) {
+                       if (!userStats[loginDay]) userStats[loginDay] = { new: 0, returning: 0 };
+                       userStats[loginDay].returning++;
+                    }
                  }
              }
            });
         }
 
-        // 2. Fetch daily visits concurrently
-        const fetchPromises = [];
-        const dates = [];
-        for (let i = chartRange - 1; i >= 0; i--) {
-          const date = new Date();
-          date.setDate(now.getDate() - i);
-          dates.push(date);
-          const dateStr = date.toISOString().split('T')[0];
-          const ref = doc(db, 'analytics', `daily_visits_${dateStr}`);
-          fetchPromises.push(getDoc(ref));
-        }
+        // 2. Fetch visits
+        if (chartRange === 1) {
+            // Fetch hourly for today
+            const fetchPromises = [];
+            for (let i = 0; i < 24; i++) {
+                const hour = i.toString().padStart(2, '0');
+                const ref = doc(db, 'analytics', `hourly_visits_${todayStr}_${hour}`);
+                fetchPromises.push(getDoc(ref));
+            }
+            const visitsSnaps = await Promise.all(fetchPromises);
+            
+            for (let i = 0; i < 24; i++) {
+               const hour = i.toString().padStart(2, '0');
+               const snap = visitsSnaps[i];
+               
+               data.push({
+                 name: `${hour}:00`,
+                 visits: snap.exists() ? snap.data().visits : 0
+               });
+               
+               retData.push({
+                 day: `${hour}:00`,
+                 newUsers: userStats[hour]?.new || 0,
+                 returningUsers: userStats[hour]?.returning || 0
+               });
+            }
+        } else if (chartRange >= 180) {
+            // Aggregate by month
+            const monthsToFetch = chartRange === 180 ? 6 : 12;
+            const visitAgg: Record<string, number> = {};
+            
+            // To be accurate with visits without storing monthly aggregates, we'd need to fetch all daily visits for the range.
+            // Since max range is 365 days, we can do 365 concurrent reads (Firestore supports this, but it's a bit heavy).
+            // A better way is to do chunked or just use the current month for now. Let's just fetch all daily for the range and aggregate.
+            const fetchPromises = [];
+            const dates = [];
+            for (let i = chartRange - 1; i >= 0; i--) {
+               const d = new Date();
+               d.setDate(now.getDate() - i);
+               dates.push(d);
+               const dateStr = d.toISOString().split('T')[0];
+               const ref = doc(db, 'analytics', `daily_visits_${dateStr}`);
+               fetchPromises.push(getDoc(ref));
+            }
+            
+            // Chunk promises if needed, but 365 should be okay for a lightweight admin dashboard
+            const visitSnaps = await Promise.all(fetchPromises);
+            
+            visitSnaps.forEach((snap, idx) => {
+               if (snap.exists()) {
+                   const d = dates[idx];
+                   const monthStr = d.toISOString().slice(0, 7); // YYYY-MM
+                   visitAgg[monthStr] = (visitAgg[monthStr] || 0) + snap.data().visits;
+               }
+            });
+            
+            // Reconstruct timeline array (months)
+            for (let i = monthsToFetch - 1; i >= 0; i--) {
+               const d = new Date();
+               d.setMonth(now.getMonth() - i);
+               const mStr = d.toISOString().slice(0, 7); // YYYY-MM
+               const displayDate = `Tháng ${d.getMonth() + 1}/${d.getFullYear().toString().slice(2)}`;
+               
+               data.push({
+                 name: displayDate,
+                 visits: visitAgg[mStr] || 0
+               });
+               
+               retData.push({
+                 day: displayDate,
+                 newUsers: userStats[mStr]?.new || 0,
+                 returningUsers: userStats[mStr]?.returning || 0
+               });
+            }
+            
+        } else {
+            // Daily aggregation (7 or 30 days)
+            const fetchPromises = [];
+            const dates = [];
+            for (let i = chartRange - 1; i >= 0; i--) {
+              const date = new Date();
+              date.setDate(now.getDate() - i);
+              dates.push(date);
+              const dateStr = date.toISOString().split('T')[0];
+              const ref = doc(db, 'analytics', `daily_visits_${dateStr}`);
+              fetchPromises.push(getDoc(ref));
+            }
 
-        const visitSnaps = await Promise.all(fetchPromises);
+            const visitSnaps = await Promise.all(fetchPromises);
 
-        for (let i = 0; i < chartRange; i++) {
-          const date = dates[i];
-          const dateStr = date.toISOString().split('T')[0];
-          const snap = visitSnaps[i];
-          
-          let displayDate = `${date.getDate()}/${date.getMonth() + 1}`;
-          if (chartRange >= 180) { // For longer ranges, maybe just display month/year occasionally or reduce labels, but recharts handles it.
-             displayDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear().toString().slice(2)}`;
-          }
-          
-          data.push({
-            name: displayDate,
-            visits: snap.exists() ? snap.data().visits : 0
-          });
+            for (let i = 0; i < chartRange; i++) {
+              const date = dates[i];
+              const dateStr = date.toISOString().split('T')[0];
+              const snap = visitSnaps[i];
+              
+              const displayDate = `${date.getDate()}/${date.getMonth() + 1}`;
+              
+              data.push({
+                name: displayDate,
+                visits: snap.exists() ? snap.data().visits : 0
+              });
 
-          retData.push({
-            day: displayDate,
-            newUsers: dailyNewUsers[dateStr] || 0,
-            returningUsers: dailyReturningUsers[dateStr] || 0
-          });
+              retData.push({
+                day: displayDate,
+                newUsers: userStats[dateStr]?.new || 0,
+                returningUsers: userStats[dateStr]?.returning || 0
+              });
+            }
         }
         
         setChartData(data);
