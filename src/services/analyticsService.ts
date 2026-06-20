@@ -3,7 +3,11 @@ import { db } from '../firebase';
 
 export async function logGlobalPageView() {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const hour = now.getHours().toString().padStart(2, '0');
+    
+    // Log daily
     const dailyRef = doc(db, 'analytics', `daily_visits_${today}`);
     await setDoc(dailyRef, {
       visits: increment(1),
@@ -11,6 +15,16 @@ export async function logGlobalPageView() {
       lastUpdated: serverTimestamp()
     }, { merge: true });
 
+    // Log hourly
+    const hourlyRef = doc(db, 'analytics', `hourly_visits_${today}_${hour}`);
+    await setDoc(hourlyRef, {
+      visits: increment(1),
+      date: today,
+      hour: hour,
+      lastUpdated: serverTimestamp()
+    }, { merge: true });
+
+    // Total
     const totalRef = doc(db, 'analytics', 'total_visits');
     await setDoc(totalRef, {
       visits: increment(1),
