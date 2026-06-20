@@ -36,6 +36,11 @@ export default function AdminDashboard() {
   const [retentionData, setRetentionData] = useState<any[]>([]);
   const [systemResources, setSystemResources] = useState({ documents: 0, quizzes: 0 });
   const [systemActivities, setSystemActivities] = useState<any[]>([]);
+  
+  // Dashboard states
+  const [chartRange, setChartRange] = useState<number>(7);
+  const [usersCache, setUsersCache] = useState<any>(null);
+  const [isChartLoading, setIsChartLoading] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -113,10 +118,11 @@ export default function AdminDashboard() {
       }
 
       // Users Data
-      let usersSnap: any = null;
+      let currentUsersSnap: any = null;
       try {
-        usersSnap = await getDocs(collection(db, 'users'));
-        setTotalUsers(usersSnap.size);
+        currentUsersSnap = await getDocs(collection(db, 'users'));
+        setTotalUsers(currentUsersSnap.size);
+        setUsersCache(currentUsersSnap);
       } catch (err) {
          console.error("Error fetching users:", err);
       }
@@ -152,64 +158,89 @@ export default function AdminDashboard() {
          console.error("Error fetching error logs:", err);
       }
 
-      // Chart Data & Retention Data
-      try {
-        const generateChartData = async () => {
-          const data = [];
-          const retData = [];
-          const now = new Date();
-          
-          for (let i = 6; i >= 0; i--) {
-            const date = new Date();
-            date.setDate(now.getDate() - i);
-            const dateStr = date.toISOString().split('T')[0];
-            const ref = doc(db, 'analytics', `daily_visits_${dateStr}`);
-            const snap = await getDoc(ref);
-            
-            const displayDate = `${date.getDate()}/${date.getMonth() + 1}`;
-            
-            data.push({
-              name: displayDate,
-              visits: snap.exists() ? snap.data().visits : 0
-            });
-
-            // Calculate retention logically based on users array
-            let newUsers = 0;
-            let returningUsers = 0;
-            
-            if (usersSnap) {
-               usersSnap.forEach((userDoc: any) => {
-                 const uData = userDoc.data();
-                 if (uData.createdAt && uData.lastLoginAt) {
-                    const createdDate = uData.createdAt.split('T')[0];
-                    const lastLoginDate = uData.lastLoginAt.split('T')[0];
-                    
-                    if (createdDate === dateStr) {
-                      newUsers++;
-                    } else if (lastLoginDate === dateStr && createdDate !== dateStr) {
-                      returningUsers++;
-                    }
-                 }
-               });
-            }
-
-            retData.push({
-              day: displayDate,
-              newUsers,
-              returningUsers
-            });
-          }
-          setChartData(data);
-          setRetentionData(retData);
-        };
-        await generateChartData();
-      } catch (err) {
-         console.error("Error fetching chart data:", err);
-      }
+      // Note: Chart Data & Retention Data generation moved to a separate useEffect
     };
 
     fetchAnalytics();
   }, [isAdmin]);
+
+  // Chart Generation Effect
+  useEffect(() => {
+    if (!isAdmin) return;
+    
+    const generateChartData = async () => {
+      setIsChartLoading(true);
+      try {
+        const data = [];
+        const retData = [];
+        const now = new Date();
+        
+        // 1. Preprocess users for fast lookup
+        const dailyNewUsers: Record<string, number> = {};
+        const dailyReturningUsers: Record<string, number> = {};
+        
+        if (usersCache) {
+           usersCache.forEach((userDoc: any) => {
+             const uData = userDoc.data();
+             if (uData.createdAt && uData.lastLoginAt) {
+                 const createdDate = uData.createdAt.split('T')[0];
+                 const lastLoginDate = uData.lastLoginAt.split('T')[0];
+                 
+                 dailyNewUsers[createdDate] = (dailyNewUsers[createdDate] || 0) + 1;
+                 if (createdDate !== lastLoginDate) {
+                     dailyReturningUsers[lastLoginDate] = (dailyReturningUsers[lastLoginDate] || 0) + 1;
+                 }
+             }
+           });
+        }
+
+        // 2. Fetch daily visits concurrently
+        const fetchPromises = [];
+        const dates = [];
+        for (let i = chartRange - 1; i >= 0; i--) {
+          const date = new Date();
+          date.setDate(now.getDate() - i);
+          dates.push(date);
+          const dateStr = date.toISOString().split('T')[0];
+          const ref = doc(db, 'analytics', `daily_visits_${dateStr}`);
+          fetchPromises.push(getDoc(ref));
+        }
+
+        const visitSnaps = await Promise.all(fetchPromises);
+
+        for (let i = 0; i < chartRange; i++) {
+          const date = dates[i];
+          const dateStr = date.toISOString().split('T')[0];
+          const snap = visitSnaps[i];
+          
+          let displayDate = `${date.getDate()}/${date.getMonth() + 1}`;
+          if (chartRange >= 180) { // For longer ranges, maybe just display month/year occasionally or reduce labels, but recharts handles it.
+             displayDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear().toString().slice(2)}`;
+          }
+          
+          data.push({
+            name: displayDate,
+            visits: snap.exists() ? snap.data().visits : 0
+          });
+
+          retData.push({
+            day: displayDate,
+            newUsers: dailyNewUsers[dateStr] || 0,
+            returningUsers: dailyReturningUsers[dateStr] || 0
+          });
+        }
+        
+        setChartData(data);
+        setRetentionData(retData);
+      } catch (err) {
+         console.error("Error fetching chart data:", err);
+      } finally {
+         setIsChartLoading(false);
+      }
+    };
+
+    generateChartData();
+  }, [isAdmin, chartRange, usersCache]);
 
   if (loading) return <div className="flex justify-center py-20">Đang tải...</div>;
   if (!user || !isAdmin) return <Navigate to="/" replace />;
@@ -381,11 +412,30 @@ export default function AdminDashboard() {
               </div>
 
               {/* Chart */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
-                 <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-blue-500" /> Thống kê truy cập (7 ngày qua)
-                 </h3>
-                 <div className="h-72">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative">
+                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                   <h3 className="text-lg font-bold flex items-center gap-2">
+                      <Activity className="w-5 h-5 text-blue-500" /> Thống kê truy cập
+                   </h3>
+                   <select 
+                      value={chartRange}
+                      onChange={(e) => setChartRange(Number(e.target.value))}
+                      disabled={isChartLoading}
+                      className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer disabled:opacity-50"
+                   >
+                     <option value={1}>1 ngày qua</option>
+                     <option value={7}>7 ngày qua</option>
+                     <option value={30}>1 tháng qua</option>
+                     <option value={180}>6 tháng qua</option>
+                     <option value={365}>1 năm qua</option>
+                   </select>
+                 </div>
+                 <div className="h-72 relative">
+                    {isChartLoading && (
+                      <div className="absolute inset-0 z-10 bg-white/50 dark:bg-slate-900/50 flex items-center justify-center backdrop-blur-sm">
+                        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    )}
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                         <defs>
@@ -394,9 +444,16 @@ export default function AdminDashboard() {
                             <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                           </linearGradient>
                         </defs>
-                        <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                        <XAxis 
+                           dataKey="name" 
+                           stroke="#888888" 
+                           fontSize={12} 
+                           tickLine={false} 
+                           axisLine={false} 
+                           minTickGap={20}
+                        />
                         <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" strokeOpacity={0.5} />
                         <Tooltip 
                           contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                           labelStyle={{ fontWeight: 'bold', color: '#1e293b' }}
@@ -550,12 +607,31 @@ export default function AdminDashboard() {
                   <LineChartIcon className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">Tỷ lệ Người dùng quay lại (Retention)</h2>
-                  <p className="text-sm text-slate-500">So sánh số lượng người dùng mới (đăng ký mới) và người dùng cũ quay lại theo tuần.</p>
+                  <h2 className="text-xl font-bold flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                     Tỷ lệ Người dùng quay lại (Retention)
+                     <select 
+                      value={chartRange}
+                      onChange={(e) => setChartRange(Number(e.target.value))}
+                      disabled={isChartLoading}
+                      className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer disabled:opacity-50"
+                     >
+                       <option value={1}>1 ngày qua</option>
+                       <option value={7}>7 ngày qua</option>
+                       <option value={30}>1 tháng qua</option>
+                       <option value={180}>6 tháng qua</option>
+                       <option value={365}>1 năm qua</option>
+                     </select>
+                  </h2>
+                  <p className="text-sm text-slate-500 mt-1">So sánh số lượng người dùng mới (đăng ký mới) và người dùng cũ quay lại theo thời gian thực.</p>
                 </div>
               </div>
               
-              <div className="h-80 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+              <div className="h-80 border border-slate-200 dark:border-slate-800 rounded-xl p-4 relative">
+                 {isChartLoading && (
+                   <div className="absolute inset-0 z-10 bg-white/50 dark:bg-slate-900/50 flex items-center justify-center backdrop-blur-sm">
+                     <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                   </div>
+                 )}
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={retentionData}
