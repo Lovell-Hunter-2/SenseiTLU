@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# Chặn các trang quản trị và khu vực cá nhân (Bắt buộc)
+Disallow: /admin/
+Disallow: /workspace/
+
+# Chặn index các phiên thi thử cụ thể để tránh tạo ra hàng ngàn URL rác nội dung (Vẫn cho phép trang giới thiệu môn học)
+Disallow: /subject/*/mock-exam/*
+
+# Chặn các trang tìm kiếm nội bộ / kết quả lọc (tránh trùng lặp nội dung và lãng phí Crawl Budget)
+Disallow: /*?search=
+Disallow: /*?q=
+Disallow: /*?filter=
+
+Sitemap: https://senseitlu.vercel.app/sitemap.xml
