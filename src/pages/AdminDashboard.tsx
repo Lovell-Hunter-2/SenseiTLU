@@ -41,8 +41,8 @@ export default function AdminDashboard() {
     if (!isAdmin) return;
 
     const fetchAnalytics = async () => {
+      // System Activities
       try {
-        // System Activities
         const activitiesQuery = query(collectionGroup(db, 'activities'), orderBy('timestamp', 'desc'), limit(15));
         const activitiesSnap = await getDocs(activitiesQuery);
         const fetchedActivities = await Promise.all(activitiesSnap.docs.map(async (d) => {
@@ -57,7 +57,6 @@ export default function AdminDashboard() {
           
           let userName = 'Người dùng ẩn danh';
           try {
-             // Extract user ID from ref path: users/{userId}/activities/{activityId}
              const parts = d.ref.path.split('/');
              if (parts.length >= 4 && parts[parts.length - 3] === 'users') {
                  const userId = parts[parts.length - 2];
@@ -73,45 +72,69 @@ export default function AdminDashboard() {
           return { id: d.id, ...data, timestampStr: tsString, userName };
         }));
         setSystemActivities(fetchedActivities);
+      } catch (err) {
+        console.error("Error fetching system activities (needs index):", err);
+      }
 
-        // Total visits
+      // Total visits
+      try {
         const totalRef = doc(db, 'analytics', 'total_visits');
         const totalSnap = await getDoc(totalRef);
         if (totalSnap.exists()) {
           setTotalVisits(totalSnap.data().visits || 0);
         }
+      } catch (err) {
+         console.error("Error fetching total visits:", err);
+      }
 
-        // Daily visits (today)
+      // Daily visits (today)
+      try {
         const todayStr = new Date().toISOString().split('T')[0];
         const dailyRef = doc(db, 'analytics', `daily_visits_${todayStr}`);
         const dailySnap = await getDoc(dailyRef);
         if (dailySnap.exists()) {
           setDailyVisits(dailySnap.data().visits || 0);
         }
+      } catch (err) {
+         console.error("Error fetching daily visits:", err);
+      }
 
-        // Top Subjects
+      // Top Subjects & Docs
+      try {
         const subjectsQuery = query(collection(db, 'analytics_subjects'), orderBy('views', 'desc'), limit(6));
         const subjectsSnap = await getDocs(subjectsQuery);
         setTopSubjects(subjectsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-
-        // Top Docs
+        
         const docsQuery = query(collection(db, 'analytics_documents'), orderBy('views', 'desc'), limit(6));
         const docsSnap = await getDocs(docsQuery);
         setTopDocs(docsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-        
-        // Total Users & Retention tracking
-        const usersSnap = await getDocs(collection(db, 'users'));
-        setTotalUsers(usersSnap.size);
+      } catch (err) {
+         console.error("Error fetching top subjects/docs:", err);
+      }
 
-        // System resources (Documents & Quizzes)
+      // Users Data
+      let usersSnap: any = null;
+      try {
+        usersSnap = await getDocs(collection(db, 'users'));
+        setTotalUsers(usersSnap.size);
+      } catch (err) {
+         console.error("Error fetching users:", err);
+      }
+
+      // System resources (Documents & Quizzes)
+      try {
         const docSnapshots = await getDocs(collection(db, 'documents'));
         const quizSnapshots = await getDocs(collection(db, 'quizzes'));
         setSystemResources({
           documents: docSnapshots.size,
           quizzes: quizSnapshots.size
         });
+      } catch (err) {
+         console.error("Error fetching system resources:", err);
+      }
 
-        // Error Logs
+      // Error Logs
+      try {
         const errorLogsQuery = query(collection(db, 'error_logs'), orderBy('timestamp', 'desc'), limit(15));
         const errorLogsSnap = await getDocs(errorLogsQuery);
         const fetchedLogs = errorLogsSnap.docs.map(d => {
@@ -125,8 +148,12 @@ export default function AdminDashboard() {
           return { id: d.id, ...data, timestamp: tsString } as ErrorLog;
         });
         setErrorLogs(fetchedLogs);
+      } catch (err) {
+         console.error("Error fetching error logs:", err);
+      }
 
-        // Chart Data & Retention Data (Last 7 days)
+      // Chart Data & Retention Data
+      try {
         const generateChartData = async () => {
           const data = [];
           const retData = [];
@@ -139,7 +166,6 @@ export default function AdminDashboard() {
             const ref = doc(db, 'analytics', `daily_visits_${dateStr}`);
             const snap = await getDoc(ref);
             
-            // Format nice title for x-axis
             const displayDate = `${date.getDate()}/${date.getMonth() + 1}`;
             
             data.push({
@@ -151,24 +177,21 @@ export default function AdminDashboard() {
             let newUsers = 0;
             let returningUsers = 0;
             
-            usersSnap.forEach(userDoc => {
-              const uData = userDoc.data();
-              if (uData.createdAt && uData.lastLoginAt) {
-                 const createdDate = uData.createdAt.split('T')[0];
-                 const lastLoginDate = uData.lastLoginAt.split('T')[0];
-                 
-                 // If created on this iteration's date
-                 if (createdDate === dateStr) {
-                   newUsers++;
-                 } 
-                 // If logged in on this iteration's date, but created earlier
-                 else if (lastLoginDate === dateStr && createdDate !== dateStr) {
-                   returningUsers++;
+            if (usersSnap) {
+               usersSnap.forEach((userDoc: any) => {
+                 const uData = userDoc.data();
+                 if (uData.createdAt && uData.lastLoginAt) {
+                    const createdDate = uData.createdAt.split('T')[0];
+                    const lastLoginDate = uData.lastLoginAt.split('T')[0];
+                    
+                    if (createdDate === dateStr) {
+                      newUsers++;
+                    } else if (lastLoginDate === dateStr && createdDate !== dateStr) {
+                      returningUsers++;
+                    }
                  }
-                 // In a more robust system, we would log logins per day. 
-                 // Here we approximate currently active returning users using lastLoginAt.
-              }
-            });
+               });
+            }
 
             retData.push({
               day: displayDate,
@@ -180,9 +203,8 @@ export default function AdminDashboard() {
           setRetentionData(retData);
         };
         await generateChartData();
-
-      } catch (error) {
-        console.error("Error fetching analytics:", error);
+      } catch (err) {
+         console.error("Error fetching chart data:", err);
       }
     };
 
@@ -215,7 +237,35 @@ export default function AdminDashboard() {
               </button>
               
               <div className="pt-4 pb-2">
-                <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Hoạt động</p>
+                <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Người dùng</p>
+              </div>
+
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
+                  activeTab === 'users' 
+                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Users className="w-5 h-5" />
+                Quản lý User
+              </button>
+
+              <button
+                onClick={() => setActiveTab('admins')}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
+                  activeTab === 'admins' 
+                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Shield className="w-5 h-5" />
+                Phân quyền Admin
+              </button>
+              
+              <div className="pt-4 pb-2">
+                <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Hoạt động & Dữ liệu</p>
               </div>
               
               <button
@@ -240,6 +290,18 @@ export default function AdminDashboard() {
               >
                 <AlertTriangle className="w-5 h-5" />
                 Quản lý Báo cáo
+              </button>
+
+              <button
+                onClick={() => setActiveTab('storage')}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
+                  activeTab === 'storage' 
+                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Database className="w-5 h-5" />
+                Giám sát Lưu trữ
               </button>
 
               <div className="pt-4 pb-2">
@@ -269,41 +331,7 @@ export default function AdminDashboard() {
                 <AlertOctagon className="w-5 h-5" />
                 Tình trạng Lỗi
               </button>
-
-              <button
-                onClick={() => setActiveTab('storage')}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
-                  activeTab === 'storage' 
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <Database className="w-5 h-5" />
-                Giám sát Lưu trữ
-              </button>
               
-              <button
-                onClick={() => setActiveTab('users')}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
-                  activeTab === 'users' 
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <Users className="w-5 h-5" />
-                Quản lý User
-              </button>
-              <button
-                onClick={() => setActiveTab('admins')}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
-                  activeTab === 'admins' 
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <Shield className="w-5 h-5" />
-                Phân quyền Admin
-              </button>
               <button
                 onClick={() => setActiveTab('ui')}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
