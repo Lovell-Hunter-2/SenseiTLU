@@ -385,7 +385,7 @@ export default function AdminDashboard() {
                 }`}
               >
                 <Users className="w-5 h-5" />
-                Quản lý User
+                Quản lý Users
               </button>
 
               <button
@@ -397,7 +397,7 @@ export default function AdminDashboard() {
                 }`}
               >
                 <Shield className="w-5 h-5" />
-                Phân quyền Admin
+                Danh sách Admin
               </button>
               
               <div className="pt-4 pb-2">
@@ -413,7 +413,7 @@ export default function AdminDashboard() {
                 }`}
               >
                 <Activity className="w-5 h-5" />
-                Lịch sử hoạt động
+                Lịch sử hệ thống
               </button>
               
               <button
@@ -425,7 +425,7 @@ export default function AdminDashboard() {
                 }`}
               >
                 <AlertTriangle className="w-5 h-5" />
-                Quản lý Báo cáo
+                Reports
               </button>
 
               <button
@@ -437,7 +437,7 @@ export default function AdminDashboard() {
                 }`}
               >
                 <Database className="w-5 h-5" />
-                Giám sát Lưu trữ
+                Tài nguyên hệ thống
               </button>
 
               <div className="pt-4 pb-2">
@@ -453,7 +453,7 @@ export default function AdminDashboard() {
                 }`}
               >
                 <LineChartIcon className="w-5 h-5" />
-                Tỷ lệ quay lại
+                Tỷ lệ người dùng
               </button>
 
               <button
