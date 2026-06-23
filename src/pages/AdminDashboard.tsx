@@ -18,7 +18,57 @@ interface ErrorLog {
   user?: string;
   location?: string;
   details?: string;
+  actionContext?: string;
 }
+
+const getFriendlyErrorContext = (log: ErrorLog) => {
+    let context = 'Không rõ hành động';
+    let module = 'Hệ thống chung';
+
+    const locationStr = (log.location || '').toLowerCase();
+    const typeStr = (log.type || '').toLowerCase();
+    const msgStr = (log.message || '').toLowerCase();
+    const detailsStr = (log.details || '').toLowerCase();
+    
+    if (locationStr.includes('quiz') || typeStr.includes('quiz') || detailsStr.includes('quiz')) {
+        module = 'Đề thi (Quiz)';
+        if (locationStr.includes('create') || msgStr.includes('create')) context = 'Lỗi khi tạo đề thi';
+        else if (locationStr.includes('attempt') || msgStr.includes('submit')) context = 'Lỗi khi đang làm/nộp bài thi';
+        else context = 'Lỗi khi duyệt đề thi';
+    } else if (locationStr.includes('studyspace') || typeStr.includes('studyspace') || detailsStr.includes('room')) {
+        module = 'Study Space';
+        if (msgStr.includes('join')) context = 'Lỗi tham gia phòng học';
+        else if (msgStr.includes('create')) context = 'Lỗi tạo phòng học';
+        else context = 'Lỗi trong phiên học trực tuyến';
+    } else if (locationStr.includes('blog') || locationStr.includes('post')) {
+        module = 'Blog (Bài viết)';
+        context = 'Lỗi xem hoặc tương tác bài viết';
+    } else if (locationStr.includes('document') || typeStr.includes('doc')) {
+        module = 'Tài liệu (Documents)';
+        context = 'Lỗi tải hoặc xem tài liệu';
+    } else if (locationStr.includes('mock-exam') || typeStr.includes('mockexam') || detailsStr.includes('mock-exam')) {
+        module = 'Thi thử (Mock Exam)';
+        context = 'Lỗi trong kỳ thi thử';
+    } else if (typeStr.includes('auth') || msgStr.includes('auth') || msgStr.includes('login') || msgStr.includes('user')) {
+        module = 'Tài khoản & Xác thực';
+        context = 'Lỗi đăng nhập hoặc phiên làm việc';
+    }
+
+    // Default fallbacks for specific React errors
+    if (msgStr.includes("failed to execute 'insertbefore'") || msgStr.includes("failed to execute 'removechild'") || msgStr.includes("not a child of this node")) {
+        context = context !== 'Không rõ hành động' ? `${context} (Lỗi hiển thị UI)` : 'Lỗi đụng độ giao diện (React DOM)';
+    } else if (msgStr.includes('timeout') || msgStr.includes('network')) {
+        context = context !== 'Không rõ hành động' ? `${context} (Mất kết nối)` : 'Lỗi đường truyền hoặc Time-out';
+    } else if (msgStr.includes('permission') || msgStr.includes('denied')) {
+        context = context !== 'Không rõ hành động' ? `${context} (Bị từ chối quyền)` : 'Lỗi thiếu quyền truy cập (Permission)';
+    }
+
+    if (log.actionContext) {
+         context = log.actionContext;
+    }
+
+    return { module, context };
+};
 
 export default function AdminDashboard() {
   const { user, isAdmin, loading } = useAuth();
@@ -358,7 +408,7 @@ export default function AdminDashboard() {
         {/* Sidebar */}
         <div className="w-full md:w-64 flex-shrink-0">
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 sticky top-24">
-            <h2 className="text-xl font-bold mb-6 px-2">Dashboard Quản trị</h2>
+            <h2 className="text-xl font-bold mb-6 px-2">Dashboard Quản lý</h2>
             <nav className="space-y-1">
               <button
                 onClick={() => setActiveTab('overview')}
@@ -413,7 +463,7 @@ export default function AdminDashboard() {
                 }`}
               >
                 <Activity className="w-5 h-5" />
-                Lịch sử hệ thống
+                Lịch sử hoạt động
               </button>
               
               <button
@@ -787,24 +837,28 @@ export default function AdminDashboard() {
                   <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-medium">
                     <tr>
                       <th className="px-4 py-3">Thời gian</th>
-                      <th className="px-4 py-3">Loại lỗi</th>
-                      <th className="px-4 py-3">Thông điệp cốt lõi</th>
+                      <th className="px-4 py-3">Phân hệ</th>
+                      <th className="px-4 py-3">Ngữ cảnh lỗi</th>
                       <th className="px-4 py-3">Mức độ</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                     {errorLogs.length === 0 ? (
                       <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500 italic">Chưa ghi nhận lỗi hệ thống nào.</td></tr>
-                    ) : errorLogs.map((log) => (
+                    ) : errorLogs.map((log) => {
+                      const { module, context } = getFriendlyErrorContext(log);
+                      return (
                       <tr 
                         key={log.id} 
                         onClick={() => setSelectedErrorLog(log)}
                         className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                       >
-                        <td className="px-4 py-3 font-mono text-xs text-slate-500">{log.timestamp}</td>
-                        <td className="px-4 py-3 font-medium">{log.type}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-red-500">{log.message}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 font-mono text-xs text-slate-500 whitespace-nowrap">{log.timestamp}</td>
+                        <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-300">
+                           <span className="bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md text-xs">{module}</span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-900 dark:text-white font-medium">{context}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                             log.severity === 'Nghiêm trọng' 
                               ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
@@ -816,7 +870,8 @@ export default function AdminDashboard() {
                           </span>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -866,14 +921,22 @@ export default function AdminDashboard() {
             
             <div className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
               <div>
-                <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${
-                  selectedErrorLog.severity === 'Nghiêm trọng' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-900/50' : 
-                  selectedErrorLog.severity === 'Cảnh báo' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-900/50' : 
-                  'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-900/50'
-                }`}>
-                  Mức độ: {selectedErrorLog.severity}
-                </span>
-                <h4 className="text-lg font-bold mt-3 mb-1">{selectedErrorLog.type}</h4>
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${
+                    selectedErrorLog.severity === 'Nghiêm trọng' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-900/50' : 
+                    selectedErrorLog.severity === 'Cảnh báo' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-900/50' : 
+                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-900/50'
+                  }`}>
+                    Mức độ: {selectedErrorLog.severity}
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                    Phân hệ: {getFriendlyErrorContext(selectedErrorLog).module}
+                  </span>
+                </div>
+                
+                <h4 className="text-lg font-bold mb-1">{getFriendlyErrorContext(selectedErrorLog).context}</h4>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3">{selectedErrorLog.type}</p>
+                
                 <p className="font-mono text-sm text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/10 p-3 rounded-lg border border-red-100 dark:border-red-900/30">
                   {selectedErrorLog.message}
                 </p>
