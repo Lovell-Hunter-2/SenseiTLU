@@ -94,7 +94,6 @@ export function PomodoroWidget({ variant = 'floating', position = 'bottom-left' 
           }`}
           title="Mở Góc Pomodoro"
         >
-          {isRunning && <div className="absolute inset-0 rounded-full border-2 border-white/30 border-t-white animate-spin" />}
           <div className="flex items-center justify-center gap-2">
             {mode === 'work' ? <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" /> : <Coffee className="w-5 h-5 sm:w-6 sm:h-6" />}
             <span className="font-mono font-bold hidden sm:inline">{formatTime(timeLeft)}</span>
