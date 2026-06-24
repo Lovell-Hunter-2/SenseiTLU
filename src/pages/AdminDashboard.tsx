@@ -156,7 +156,7 @@ export default function AdminDashboard() {
 
       // Top Subjects & Docs
       try {
-        const subjectsQuery = query(collection(db, 'analytics_subjects'), orderBy('views', 'desc'), limit(6));
+        const subjectsQuery = query(collection(db, 'analytics_subjects'), orderBy('views', 'desc'), limit(10));
         const subjectsSnap = await getDocs(subjectsQuery);
         setTopSubjects(subjectsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
         
@@ -408,7 +408,7 @@ export default function AdminDashboard() {
         {/* Sidebar */}
         <div className="w-full md:w-64 flex-shrink-0">
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 sticky top-24">
-            <h2 className="text-xl font-bold mb-6 px-2">Dashboard Quản lý</h2>
+            <h2 className="text-xl font-bold mb-6 px-2">Dashboard Quản trị</h2>
             <nav className="space-y-1">
               <button
                 onClick={() => setActiveTab('overview')}
@@ -435,7 +435,7 @@ export default function AdminDashboard() {
                 }`}
               >
                 <Users className="w-5 h-5" />
-                Quản lý Users
+                Quản lý User
               </button>
 
               <button
@@ -447,7 +447,7 @@ export default function AdminDashboard() {
                 }`}
               >
                 <Shield className="w-5 h-5" />
-                Danh sách Admin
+                Phân quyền Admin
               </button>
               
               <div className="pt-4 pb-2">
@@ -475,7 +475,7 @@ export default function AdminDashboard() {
                 }`}
               >
                 <AlertTriangle className="w-5 h-5" />
-                Reports
+                Quản lý Báo cáo
               </button>
 
               <button
@@ -487,7 +487,7 @@ export default function AdminDashboard() {
                 }`}
               >
                 <Database className="w-5 h-5" />
-                Tài nguyên hệ thống
+                Giám sát Lưu trữ
               </button>
 
               <div className="pt-4 pb-2">
@@ -503,7 +503,7 @@ export default function AdminDashboard() {
                 }`}
               >
                 <LineChartIcon className="w-5 h-5" />
-                Tỷ lệ người dùng
+                Tỷ lệ quay lại
               </button>
 
               <button
