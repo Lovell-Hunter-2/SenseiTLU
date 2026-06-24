@@ -35,9 +35,9 @@ export default function Layout() {
   ];
 
   return (
-    <div className="min-h-screen bg-transparent flex flex-col font-sans transition-colors duration-300 overflow-x-hidden">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-50 via-slate-100/50 to-slate-100 dark:bg-none dark:bg-slate-950 text-slate-900 dark:text-slate-50 flex flex-col font-sans transition-colors duration-300 overflow-x-hidden">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-950/70 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] dark:shadow-none">
+      <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-950/80 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] dark:shadow-none">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
             {location.pathname !== '/' && (
@@ -137,7 +137,7 @@ export default function Layout() {
                         className="fixed inset-0 z-40"
                         onClick={() => setIsProfileOpen(false)}
                       ></div>
-                      <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-800 transition-all duration-200 z-50">
+                      <div className="absolute right-0 mt-2 w-48 bg-white/95 dark:bg-slate-900 backdrop-blur-xl rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] dark:shadow-lg border border-slate-200/60 dark:border-slate-800 transition-all duration-200 z-50">
                         <div className="p-3 border-b border-slate-200 dark:border-slate-800">
                           <p className="text-sm font-medium truncate">{user.displayName}</p>
                           <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
@@ -192,7 +192,7 @@ export default function Layout() {
 
         {/* Mobile Nav */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-4 shadow-inner">
+          <div className="md:hidden border-t border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-950 backdrop-blur-xl px-4 py-4 space-y-4 shadow-inner">
             <div className="flex flex-col space-y-3">
               {navLinks.map((link) => (
                 <Link
