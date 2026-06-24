@@ -4,19 +4,26 @@
 
 @theme {
   --animate-wobble: wobble 3s ease-in-out infinite;
-  
+
   @keyframes wobble {
-    0%, 100% { transform: rotate(-3deg); }
-    50% { transform: rotate(3deg); }
+    0%,
+    100% {
+      transform: rotate(-3deg);
+    }
+    50% {
+      transform: rotate(3deg);
+    }
   }
 }
 
 @layer base {
-  html, body, #root {
+  html,
+  body,
+  #root {
     min-height: 100%;
     height: 100%;
   }
   body {
-    @apply bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-50 via-slate-100/50 to-slate-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-950 text-slate-900 dark:text-slate-50 bg-fixed min-h-screen;
+    @apply bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 min-h-screen;
   }
 }
