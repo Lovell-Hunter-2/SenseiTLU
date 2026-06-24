@@ -35,9 +35,9 @@ export default function Layout() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 flex flex-col font-sans transition-colors duration-300 overflow-x-hidden">
+    <div className="min-h-screen bg-transparent flex flex-col font-sans transition-colors duration-300 overflow-x-hidden">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
+      <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-950/70 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] dark:shadow-none">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
             {location.pathname !== '/' && (
@@ -316,7 +316,7 @@ export default function Layout() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-8 text-center text-sm text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 mt-auto bg-slate-50 dark:bg-slate-900 border-b">
+      <footer className="w-full py-8 text-center text-sm text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 mt-auto bg-transparent border-b">
         <div className="container mx-auto px-4 flex flex-col items-center justify-center gap-2">
           <div className="flex gap-6 mb-2">
             <Link to="/privacy" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
