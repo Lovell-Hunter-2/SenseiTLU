@@ -1009,15 +1009,15 @@ ${questionsSummary}`;
       </div>
       {status === 'active' && (
         <div className="p-4 border-t border-slate-200 dark:border-slate-800 hidden lg:block">
-          <button onClick={submitQuiz} className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold transition-colors">
-            Nộp bài
+          <button onClick={submitQuiz} className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-bold transition-all shadow-md shadow-orange-500/20 flex items-center justify-center gap-2">
+            <CheckCircle2 className="w-5 h-5" /> Nộp bài
           </button>
         </div>
       )}
       {status === 'retake_wrong' && (
         <div className="p-4 border-t border-slate-200 dark:border-slate-800 hidden lg:block">
-          <button onClick={() => setStatus('finished')} className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold transition-colors">
-            Kết thúc điền lại
+          <button onClick={() => setStatus('finished')} className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-bold transition-all shadow-md shadow-orange-500/20 flex items-center justify-center gap-2">
+            <CheckCircle2 className="w-5 h-5" /> Kết thúc làm lại
           </button>
         </div>
       )}
@@ -1520,6 +1520,44 @@ ${questionsSummary}`;
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
+  const handlePrevQuestion = () => {
+    if (status === 'retake_wrong') {
+       let prevIdx = currentIndex - 1;
+       while(prevIdx >= 0) {
+          if (userAnswers[prevIdx] !== questions[prevIdx].correctIndex) break;
+          prevIdx--;
+       }
+       if (prevIdx >= 0) setCurrentIndex(prevIdx);
+    } else {
+      setCurrentIndex(prev => Math.max(0, prev - 1));
+    }
+  };
+
+  const handleNextQuestion = () => {
+    if (status === 'retake_wrong') {
+       let nextIdx = currentIndex + 1;
+       while(nextIdx < questions.length) {
+          if (userAnswers[nextIdx] !== questions[nextIdx].correctIndex) break;
+          nextIdx++;
+       }
+       if (nextIdx < questions.length) setCurrentIndex(nextIdx);
+    } else {
+      setCurrentIndex(prev => Math.min(questions.length - 1, prev + 1));
+    }
+  };
+
+  const isPrevDisabled = currentIndex === 0 || (status === 'retake_wrong' && questions.findIndex((q, i) => userAnswers[i] !== q.correctIndex) === currentIndex);
+  const isNextDisabled = currentIndex === questions.length - 1 || (status === 'retake_wrong' && (() => {
+    let idx = -1;
+    for (let i = questions.length - 1; i >= 0; i--) {
+      if (userAnswers[i] !== questions[i].correctIndex) {
+        idx = i;
+        break;
+      }
+    }
+    return idx;
+  })() === currentIndex);
+
   return (
     <div className={`flex flex-col lg:flex-row -mx-4 sm:-mx-6 lg:-mx-8 lg:px-8 sm:px-6 px-4 min-h-screen ${themeClasses.wrapper}`}>
       {/* Main Content */}
@@ -1540,19 +1578,37 @@ ${questionsSummary}`;
               </div>
             )}
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <button onClick={() => setIsNavOpen(!isNavOpen)} className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300">
                 <Menu className="w-6 h-6" />
               </button>
-              <span className={`text-sm font-bold uppercase tracking-wider ${themeClasses.accentText}`}>
-                Câu {currentIndex + 1} / {questions.length}
-                {status === 'retake_wrong' && " (Làm lại câu sai)"}
-              </span>
+              <div className="flex flex-col">
+                <span className={`text-sm font-bold uppercase tracking-wider ${themeClasses.accentText}`}>
+                  Câu {currentIndex + 1} / {questions.length}
+                  {status === 'retake_wrong' && " (Làm lại câu sai)"}
+                </span>
+                <span className={`text-xs mt-1 truncate max-w-[200px] sm:max-w-xs ${themeClasses.accentText} opacity-80 lg:hidden`}>
+                  {subject.name}
+                </span>
+              </div>
             </div>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium truncate max-w-[150px] sm:max-w-xs hidden sm:inline-block ${themeClasses.accentBg}`}>
-              {subject.name}
-            </span>
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              <button 
+                onClick={handlePrevQuestion}
+                disabled={isPrevDisabled}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium disabled:opacity-50 transition-colors flex items-center gap-1 text-sm"
+              >
+                ← Trước
+              </button>
+              <button 
+                onClick={handleNextQuestion}
+                disabled={isNextDisabled}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium disabled:opacity-50 transition-colors flex items-center gap-1 text-sm"
+              >
+                Sau →
+              </button>
+            </div>
           </div>
 
           <div className={`${themeClasses.card} rounded-2xl p-6 md:p-8 shadow-sm border`}>
@@ -1642,48 +1698,16 @@ ${questionsSummary}`;
           <div className="space-y-4">
             <div className="flex justify-between items-center pt-2">
               <button 
-                onClick={() => {
-                  if (status === 'retake_wrong') {
-                     // Find previous wrong
-                     let prevIdx = currentIndex - 1;
-                     while(prevIdx >= 0) {
-                        if (userAnswers[prevIdx] !== questions[prevIdx].correctIndex) break;
-                        prevIdx--;
-                     }
-                     if (prevIdx >= 0) setCurrentIndex(prevIdx);
-                  } else {
-                    setCurrentIndex(prev => Math.max(0, prev - 1));
-                  }
-                }} 
-                disabled={currentIndex === 0 || (status === 'retake_wrong' && questions.findIndex((q, i) => userAnswers[i] !== q.correctIndex) === currentIndex)}
-                className="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-medium disabled:opacity-50 transition-colors"
+                onClick={handlePrevQuestion}
+                disabled={isPrevDisabled}
+                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium disabled:opacity-50 transition-colors"
               >
                 ← Trước
               </button>
               <button 
-                onClick={() => {
-                  if (status === 'retake_wrong') {
-                     let nextIdx = currentIndex + 1;
-                     while(nextIdx < questions.length) {
-                        if (userAnswers[nextIdx] !== questions[nextIdx].correctIndex) break;
-                        nextIdx++;
-                     }
-                     if (nextIdx < questions.length) setCurrentIndex(nextIdx);
-                  } else {
-                    setCurrentIndex(prev => Math.min(questions.length - 1, prev + 1))
-                  }
-                }} 
-                disabled={currentIndex === questions.length - 1 || (status === 'retake_wrong' && (() => {
-                  let idx = -1;
-                  for (let i = questions.length - 1; i >= 0; i--) {
-                    if (userAnswers[i] !== questions[i].correctIndex) {
-                      idx = i;
-                      break;
-                    }
-                  }
-                  return idx;
-                })() === currentIndex)}
-                className="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-medium disabled:opacity-50 transition-colors"
+                onClick={handleNextQuestion}
+                disabled={isNextDisabled}
+                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium disabled:opacity-50 transition-colors"
               >
                 Sau →
               </button>
@@ -1691,20 +1715,24 @@ ${questionsSummary}`;
             
             {/* ONLY ON MOBILE: Show submit button here at bottom */}
             {status === 'active' && (
-              <button 
-                onClick={submitQuiz} 
-                className="lg:hidden w-full py-4 mt-8 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-bold shadow-lg transition-colors text-lg"
-              >
-                Nộp bài ngay
-              </button>
+              <div className="lg:hidden mt-12 pt-8 border-t border-slate-200 dark:border-slate-800">
+                <button 
+                  onClick={submitQuiz} 
+                  className="w-full py-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-2xl font-bold shadow-lg shadow-orange-500/20 transition-all flex items-center justify-center gap-2 text-lg"
+                >
+                  <CheckCircle2 className="w-6 h-6" /> Nộp bài thi
+                </button>
+              </div>
             )}
             {status === 'retake_wrong' && (
-              <button 
-                onClick={() => setStatus('finished')} 
-                className="lg:hidden w-full py-4 mt-8 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-bold shadow-lg transition-colors text-lg"
-              >
-                Kết thúc điền lại
-              </button>
+              <div className="lg:hidden mt-12 pt-8 border-t border-slate-200 dark:border-slate-800">
+                <button 
+                  onClick={() => setStatus('finished')} 
+                  className="w-full py-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-2xl font-bold shadow-lg shadow-orange-500/20 transition-all flex items-center justify-center gap-2 text-lg"
+                >
+                  <CheckCircle2 className="w-6 h-6" /> Kết thúc làm lại
+                </button>
+              </div>
             )}
           </div>
         </div>
