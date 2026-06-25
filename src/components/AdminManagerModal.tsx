@@ -39,7 +39,7 @@ export default function AdminManagerModal({
 
   const fetchSettings = async () => {
     try {
-      const docRef = doc(db, "system_settings", "admin_controls");
+      const docRef = doc(db, "settings", "admin_controls");
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         setCanOthersManage(docSnap.data().canManageAdmins ?? true);
@@ -79,9 +79,13 @@ export default function AdminManagerModal({
     try {
       const newValue = !canOthersManage;
       setCanOthersManage(newValue);
-      await updateDoc(doc(db, "system_settings", "admin_controls"), {
-        canManageAdmins: newValue,
-      });
+      await setDoc(
+        doc(db, "settings", "admin_controls"),
+        {
+          canManageAdmins: newValue,
+        },
+        { merge: true },
+      );
     } catch (e) {
       console.error("Error toggling admin management:", e);
       // Revert optimistic update
