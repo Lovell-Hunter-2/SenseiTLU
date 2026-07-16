@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { X, Image as ImageIcon, UploadCloud } from "lucide-react";
+import { X, Image as ImageIcon, UploadCloud, Cloud } from "lucide-react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
+
+const CLIENT_ID = import.meta.env.VITE_OAUTH_CLIENT_ID || "";
 
 interface Props {
   isOpen?: boolean;
@@ -9,7 +12,77 @@ interface Props {
   inline?: boolean;
 }
 
-export default function HeroImageManagerModal({
+const DrivePicker = ({ onPick }: { onPick: (url: string) => void }) => {
+  const login = useGoogleLogin({
+    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.metadata.readonly',
+    onSuccess: (tokenResponse) => {
+      const loadPicker = async () => {
+         await new Promise((resolve) => {
+            if ((window as any).google?.picker) {
+                resolve(true);
+            } else {
+                const script = document.createElement('script');
+                script.src = 'https://apis.google.com/js/api.js';
+                script.onload = () => {
+                    (window as any).gapi.load('picker', () => resolve(true));
+                }
+                document.body.appendChild(script);
+            }
+         });
+         
+         const pickerOrigin =
+          window.location.ancestorOrigins &&
+          window.location.ancestorOrigins.length > 0
+            ?
+              window.location.ancestorOrigins[
+                window.location.ancestorOrigins.length - 1
+              ]
+            :  window.location.origin;
+
+        const view = new (window as any).google.picker.DocsView((window as any).google.picker.ViewId.DOCS)
+          .setMimeTypes('image/png,image/jpeg,image/jpg,image/webp,image/gif');
+
+        const picker = new (window as any).google.picker.PickerBuilder()
+          .addView(view)
+          .setOAuthToken(tokenResponse.access_token)
+          .setCallback((data: any) => {
+            if (data.action === (window as any).google.picker.Action.PICKED) {
+              const file = data.docs[0];
+              onPick(`https://drive.google.com/uc?export=view&id=${file.id}`);
+            }
+          })
+          .setOrigin(pickerOrigin)
+          .build();
+        picker.setVisible(true);
+      };
+      loadPicker();
+    }
+  });
+
+  return (
+    <button
+      type="button"
+      onClick={() => login()}
+      className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-lg cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors text-sm font-medium"
+    >
+      <Cloud className="w-4 h-4" /> Drive
+    </button>
+  );
+};
+
+export default function HeroImageManagerModal(props: Props) {
+  if (!CLIENT_ID) {
+    return <HeroImageManagerModalContent {...props} />;
+  }
+  
+  return (
+    <GoogleOAuthProvider clientId={CLIENT_ID}>
+      <HeroImageManagerModalContent {...props} />
+    </GoogleOAuthProvider>
+  );
+}
+
+function HeroImageManagerModalContent({
   isOpen,
   onClose,
   inline,
@@ -17,6 +90,7 @@ export default function HeroImageManagerModal({
   const [leftUrl, setLeftUrl] = useState("");
   const [rightUrl, setRightUrl] = useState("");
   const [saving, setSaving] = useState(false);
+
 
   useEffect(() => {
     if (isOpen || inline) {
@@ -154,10 +228,10 @@ export default function HeroImageManagerModal({
               onChange={(e) => setLeftUrl(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-slate-500">Hoặc tải lên</span>
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            <span className="text-xs text-slate-500 mr-2">Hoặc tải lên:</span>
             <label className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors text-sm font-medium">
-              <UploadCloud className="w-4 h-4" /> Kéo thả/Tải ảnh
+              <UploadCloud className="w-4 h-4" /> Từ thiết bị
               <input
                 type="file"
                 accept="image/*"
@@ -165,7 +239,13 @@ export default function HeroImageManagerModal({
                 onChange={handleFileUpload("left")}
               />
             </label>
+            {CLIENT_ID && (
+              <DrivePicker onPick={(url) => setLeftUrl(url)} />
+            )}
           </div>
+          <p className="text-[10px] text-slate-400 mt-1 italic">
+            *Lưu ý: Nếu chọn từ Google Drive, hãy đảm bảo ảnh đã được bật quyền chia sẻ công khai "Anyone with the link can view".
+          </p>
           {leftUrl && (
             <div className="mt-2 text-center bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 p-2 rounded-lg relative group">
               <img
@@ -201,10 +281,10 @@ export default function HeroImageManagerModal({
               onChange={(e) => setRightUrl(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-slate-500">Hoặc tải lên</span>
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            <span className="text-xs text-slate-500 mr-2">Hoặc tải lên:</span>
             <label className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors text-sm font-medium">
-              <UploadCloud className="w-4 h-4" /> Kéo thả/Tải ảnh
+              <UploadCloud className="w-4 h-4" /> Từ thiết bị
               <input
                 type="file"
                 accept="image/*"
@@ -212,7 +292,13 @@ export default function HeroImageManagerModal({
                 onChange={handleFileUpload("right")}
               />
             </label>
+            {CLIENT_ID && (
+              <DrivePicker onPick={(url) => setRightUrl(url)} />
+            )}
           </div>
+          <p className="text-[10px] text-slate-400 mt-1 italic">
+            *Lưu ý: Nếu chọn từ Google Drive, hãy đảm bảo ảnh đã được bật quyền chia sẻ công khai "Anyone with the link can view".
+          </p>
           {rightUrl && (
             <div className="mt-2 text-center bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 p-2 rounded-lg relative group">
               <img
