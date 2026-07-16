@@ -48,7 +48,7 @@ const DrivePicker = ({ onPick }: { onPick: (url: string) => void }) => {
           .setCallback((data: any) => {
             if (data.action === (window as any).google.picker.Action.PICKED) {
               const file = data.docs[0];
-              onPick(`https://drive.google.com/uc?export=view&id=${file.id}`);
+              onPick(`https://drive.google.com/thumbnail?id=${file.id}&sz=w1000`);
             }
           })
           .setOrigin(pickerOrigin)
@@ -251,6 +251,7 @@ function HeroImageManagerModalContent({
               <img
                 src={leftUrl}
                 alt="Trái"
+                referrerPolicy="no-referrer"
                 className="h-20 object-contain mx-auto rounded"
               />
               <button
@@ -304,6 +305,7 @@ function HeroImageManagerModalContent({
               <img
                 src={rightUrl}
                 alt="Phải"
+                referrerPolicy="no-referrer"
                 className="h-20 object-contain mx-auto rounded"
               />
               <button
