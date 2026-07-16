@@ -462,6 +462,7 @@ export default function Home() {
             <img
               src={heroImages.leftUrl}
               alt="Trái"
+              referrerPolicy="no-referrer"
               className="w-full h-auto object-contain rounded-2xl drop-shadow-2xl pointer-events-none select-none"
               draggable="false"
               onContextMenu={(e) => e.preventDefault()}
@@ -531,6 +532,7 @@ export default function Home() {
             <img
               src={heroImages.rightUrl}
               alt="Phải"
+              referrerPolicy="no-referrer"
               className="w-full h-auto object-contain rounded-2xl drop-shadow-2xl pointer-events-none select-none"
               draggable="false"
               onContextMenu={(e) => e.preventDefault()}
