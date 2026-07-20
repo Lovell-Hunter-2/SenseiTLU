@@ -1,0 +1,21 @@
+{
+  "name": "SenseiTLU",
+  "short_name": "SenseiTLU",
+  "description": "Nền tảng chia sẻ tài liệu học tập dành cho sinh viên Trường Đại học Thủy lợi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/avt_tlu.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/avt_tlu.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
