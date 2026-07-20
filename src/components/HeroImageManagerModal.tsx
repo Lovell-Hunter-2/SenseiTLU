@@ -48,7 +48,7 @@ const DrivePicker = ({ onPick }: { onPick: (url: string) => void }) => {
           .setCallback((data: any) => {
             if (data.action === (window as any).google.picker.Action.PICKED) {
               const file = data.docs[0];
-              onPick(`https://drive.google.com/thumbnail?id=${file.id}&sz=w1000`);
+              onPick(`https://drive.google.com/uc?id=${file.id}`);
             }
           })
           .setOrigin(pickerOrigin)
