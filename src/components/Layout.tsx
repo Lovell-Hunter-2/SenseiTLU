@@ -55,19 +55,27 @@ export default function Layout() {
       e.preventDefault();
       setDeferredPrompt(e);
       (window as any).deferredPrompt = e;
+      console.log("beforeinstallprompt fired and captured");
     };
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
   const handleInstallClick = async () => {
-    const promptEvent = deferredPrompt || (window as any).deferredPrompt;
+    const promptEvent = (window as any).deferredPrompt || deferredPrompt;
+    console.log("Install clicked. promptEvent:", promptEvent);
     if (promptEvent) {
-      promptEvent.prompt();
-      const { outcome } = await promptEvent.userChoice;
-      if (outcome === "accepted") {
-        setDeferredPrompt(null);
-        (window as any).deferredPrompt = null;
+      try {
+        promptEvent.prompt();
+        const { outcome } = await promptEvent.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+        if (outcome === "accepted") {
+          setDeferredPrompt(null);
+          (window as any).deferredPrompt = null;
+        }
+      } catch (error) {
+        console.error("Error prompting install:", error);
+        setIsInstallModalOpen(true);
       }
     } else {
       setIsInstallModalOpen(true);
