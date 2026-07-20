@@ -1,8 +1,16 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      window.deferredPrompt = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.deferredPrompt = e;
+      });
+    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/jpg" href="/avt_tlu.jpg" />
+    <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/avt_tlu.jpg" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -14,6 +22,13 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js');
+        });
+      }
+    </script>
   </body>
 </html>
 
