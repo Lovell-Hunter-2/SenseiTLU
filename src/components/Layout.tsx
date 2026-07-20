@@ -30,6 +30,7 @@ import ClockWidget from "./ClockWidget";
 import { PomodoroWidget } from "./PomodoroWidget";
 import { NotificationBell } from "./NotificationBell";
 import avtTlu from "../assets/avt_tlu.jpg";
+import { InstallAppModal } from "./InstallAppModal";
 
 export default function Layout() {
   const { theme, setTheme } = useTheme();
@@ -40,6 +41,7 @@ export default function Layout() {
   const [showSupportPopover, setShowSupportPopover] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   // Handle PWA installation
@@ -68,9 +70,7 @@ export default function Layout() {
         (window as any).deferredPrompt = null;
       }
     } else {
-      alert(
-        "Trình duyệt của bạn hiện chưa sẵn sàng cài đặt tự động.\n\n- Android: Chọn '3 chấm' => 'Cài đặt ứng dụng'\n- iOS (Safari): Chọn 'Chia sẻ' => 'Thêm vào màn hình chính'"
-      );
+      setIsInstallModalOpen(true);
     }
   };
 
@@ -447,6 +447,10 @@ export default function Layout() {
       <DonateModal
         isOpen={isDonateModalOpen}
         onClose={() => setIsDonateModalOpen(false)}
+      />
+      <InstallAppModal
+        isOpen={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
       />
 
       {/* Floating Mascot & Support Button */}
