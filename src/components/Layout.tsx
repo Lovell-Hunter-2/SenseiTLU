@@ -1,15 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Moon, Sun, LogIn, LogOut, MessageCircle, Menu, X, Minus, Shield, ArrowLeft, Image as ImageIcon, Users, Sparkles, Heart } from 'lucide-react';
-import { useTheme } from '../contexts/ThemeContext';
-import { useAuth } from '../contexts/AuthContext';
-import DonateModal from './DonateModal';
-import { AIAssistantWidget, toggleAIAssistant, pingAIAssistant } from './AIAssistantWidget';
-import { TextSelectionHelper } from './TextSelectionHelper';
-import ClockWidget from './ClockWidget';
-import { PomodoroWidget } from './PomodoroWidget';
-import { NotificationBell } from './NotificationBell';
-import avtTlu from '../assets/avt_tlu.jpg';
+import React, { useState, useEffect } from "react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import {
+  Moon,
+  Sun,
+  LogIn,
+  LogOut,
+  MessageCircle,
+  Menu,
+  X,
+  Minus,
+  Shield,
+  ArrowLeft,
+  Image as ImageIcon,
+  Users,
+  Sparkles,
+  Heart,
+  Download,
+} from "lucide-react";
+import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
+import DonateModal from "./DonateModal";
+import {
+  AIAssistantWidget,
+  toggleAIAssistant,
+  pingAIAssistant,
+} from "./AIAssistantWidget";
+import { TextSelectionHelper } from "./TextSelectionHelper";
+import ClockWidget from "./ClockWidget";
+import { PomodoroWidget } from "./PomodoroWidget";
+import { NotificationBell } from "./NotificationBell";
+import avtTlu from "../assets/avt_tlu.jpg";
 
 export default function Layout() {
   const { theme, setTheme } = useTheme();
@@ -20,18 +40,43 @@ export default function Layout() {
   const [showSupportPopover, setShowSupportPopover] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  // Handle PWA installation
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        setDeferredPrompt(null);
+      }
+    } else {
+      alert(
+        "Trình duyệt của bạn hiện chưa sẵn sàng cài đặt tự động.\n\n- Android: Chọn '3 chấm' => 'Cài đặt ứng dụng'\n- iOS (Safari): Chọn 'Chia sẻ' => 'Thêm vào màn hình chính'"
+      );
+    }
+  };
 
   // Reset popover state when returning to home
   useEffect(() => {
-    // We intentionally removed the popover reset here so once dismissed by '-', 
+    // We intentionally removed the popover reset here so once dismissed by '-',
     // it stays dismissed unless hard refresh.
   }, [location.pathname]);
 
   const navLinks = [
-    { name: 'Trang chủ', path: '/' },
-    { name: 'Blog', path: '/blog' },
-    { name: 'About', path: '/about' },
-    { name: 'Đóng góp tài liệu', path: '/contribute' },
+    { name: "Trang chủ", path: "/" },
+    { name: "Blog", path: "/blog" },
+    { name: "About", path: "/about" },
+    { name: "Đóng góp tài liệu", path: "/contribute" },
   ];
 
   return (
@@ -40,16 +85,19 @@ export default function Layout() {
       <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-slate-950/80 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] dark:shadow-none">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            {location.pathname !== '/' && (
-              <button 
-                onClick={() => navigate(-1)} 
+            {location.pathname !== "/" && (
+              <button
+                onClick={() => navigate(-1)}
                 className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors -ml-2 p-1"
                 title="Quay lại"
               >
                 <ArrowLeft className="w-6 h-6" />
               </button>
             )}
-            <Link to="/" className="text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
+            <Link
+              to="/"
+              className="text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2"
+            >
               <span className="text-3xl">🎓</span> SenseiTLU
             </Link>
 
@@ -61,8 +109,8 @@ export default function Layout() {
                   to={link.path}
                   className={`text-sm font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 ${
                     location.pathname === link.path
-                      ? 'text-blue-600 dark:text-blue-400'
-                      : 'text-slate-600 dark:text-slate-300'
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-slate-600 dark:text-slate-300"
                   }`}
                 >
                   {link.name}
@@ -82,12 +130,12 @@ export default function Layout() {
             <div className="hidden md:block">
               <ClockWidget />
             </div>
-            
+
             <NotificationBell />
-            
+
             <div className="hidden md:flex items-center gap-2 sm:gap-4">
               {/* Support icon next to theme toggle (only on subpages) */}
-              {location.pathname !== '/' && (
+              {location.pathname !== "/" && (
                 <a
                   href="https://www.facebook.com/lovelltitussof1910"
                   target="_blank"
@@ -111,44 +159,67 @@ export default function Layout() {
                 <Sparkles className="w-5 h-5" />
               </button>
 
+              {/* Install App */}
+              <button
+                onClick={handleInstallClick}
+                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-blue-600 dark:text-blue-400"
+                title="Cài đặt ứng dụng"
+              >
+                <Download className="w-5 h-5" />
+              </button>
               {/* Theme Toggle */}
               <button
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 aria-label="Toggle theme"
               >
-                {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                {theme === "dark" ? (
+                  <Sun className="w-5 h-5" />
+                ) : (
+                  <Moon className="w-5 h-5" />
+                )}
               </button>
 
               {/* Auth */}
               {user ? (
                 <div className="relative">
-                  <button 
+                  <button
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
                     className="flex items-center gap-2 p-1 pr-3 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                   >
-                    <img src={user.photoURL || ''} alt="Avatar" className="w-8 h-8 rounded-full" referrerPolicy="no-referrer" />
-                    <span className="text-sm font-medium hidden sm:block max-w-[120px] truncate">{user.displayName}</span>
+                    <img
+                      src={user.photoURL || ""}
+                      alt="Avatar"
+                      className="w-8 h-8 rounded-full"
+                      referrerPolicy="no-referrer"
+                    />
+                    <span className="text-sm font-medium hidden sm:block max-w-[120px] truncate">
+                      {user.displayName}
+                    </span>
                   </button>
-                  
+
                   {isProfileOpen && (
                     <>
-                      <div 
+                      <div
                         className="fixed inset-0 z-40"
                         onClick={() => setIsProfileOpen(false)}
                       ></div>
                       <div className="absolute right-0 mt-2 w-48 bg-white/95 dark:bg-slate-900 backdrop-blur-xl rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] dark:shadow-lg border border-slate-200/60 dark:border-slate-800 transition-all duration-200 z-50">
                         <div className="p-3 border-b border-slate-200 dark:border-slate-800">
-                          <p className="text-sm font-medium truncate">{user.displayName}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+                          <p className="text-sm font-medium truncate">
+                            {user.displayName}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                            {user.email}
+                          </p>
                         </div>
-                        
+
                         {isAdmin && (
                           <>
                             <button
                               onClick={() => {
                                 setIsProfileOpen(false);
-                                navigate('/admin');
+                                navigate("/admin");
                               }}
                               className="w-full text-left px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800"
                             >
@@ -185,7 +256,11 @@ export default function Layout() {
               className="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {mobileMenuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
             </button>
           </div>
         </div>
@@ -201,8 +276,8 @@ export default function Layout() {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`block text-sm font-medium py-2 ${
                     location.pathname === link.path
-                      ? 'text-blue-600 dark:text-blue-400'
-                      : 'text-slate-600 dark:text-slate-300'
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-slate-600 dark:text-slate-300"
                   }`}
                 >
                   {link.name}
@@ -224,13 +299,27 @@ export default function Layout() {
             <div className="flex items-center gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
               <button
                 onClick={() => {
-                  setTheme(theme === 'dark' ? 'light' : 'dark');
+                  handleInstallClick();
+                  setMobileMenuOpen(false);
+                }}
+                className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-blue-600 dark:text-blue-400"
+                title="Cài đặt ứng dụng"
+              >
+                <Download className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => {
+                  setTheme(theme === "dark" ? "light" : "dark");
                   setMobileMenuOpen(false);
                 }}
                 className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                 aria-label="Toggle theme"
               >
-                {theme === 'dark' ? <Sun className="w-5 h-5 text-slate-800 dark:text-slate-200" /> : <Moon className="w-5 h-5 text-slate-800 dark:text-slate-200" />}
+                {theme === "dark" ? (
+                  <Sun className="w-5 h-5 text-slate-800 dark:text-slate-200" />
+                ) : (
+                  <Moon className="w-5 h-5 text-slate-800 dark:text-slate-200" />
+                )}
               </button>
 
               <button
@@ -245,7 +334,7 @@ export default function Layout() {
                 <Sparkles className="w-5 h-5" />
               </button>
 
-              {location.pathname !== '/' && (
+              {location.pathname !== "/" && (
                 <a
                   href="https://www.facebook.com/lovelltitussof1910"
                   target="_blank"
@@ -263,19 +352,28 @@ export default function Layout() {
               {user ? (
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-3 mb-2 px-1">
-                    <img src={user.photoURL || ''} alt="Avatar" className="w-10 h-10 rounded-full" referrerPolicy="no-referrer" />
+                    <img
+                      src={user.photoURL || ""}
+                      alt="Avatar"
+                      className="w-10 h-10 rounded-full"
+                      referrerPolicy="no-referrer"
+                    />
                     <div className="overflow-hidden">
-                      <p className="text-sm font-medium truncate text-slate-900 dark:text-white">{user.displayName}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+                      <p className="text-sm font-medium truncate text-slate-900 dark:text-white">
+                        {user.displayName}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                        {user.email}
+                      </p>
                     </div>
                   </div>
-                  
+
                   {isAdmin && (
                     <>
                       <button
                         onClick={() => {
                           setMobileMenuOpen(false);
-                          navigate('/admin');
+                          navigate("/admin");
                         }}
                         className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-blue-600 dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
                       >
@@ -319,14 +417,22 @@ export default function Layout() {
       <footer className="w-full py-8 text-center text-sm text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 mt-auto bg-transparent border-b">
         <div className="container mx-auto px-4 flex flex-col items-center justify-center gap-2">
           <div className="flex gap-6 mb-2">
-            <Link to="/privacy" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            <Link
+              to="/privacy"
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            >
               Chính sách bảo mật
             </Link>
-            <Link to="/terms" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            <Link
+              to="/terms"
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            >
               Điều khoản dịch vụ
             </Link>
           </div>
-          <p>© {new Date().getFullYear()} LovellTituss161. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()} LovellTituss161. All rights reserved.
+          </p>
         </div>
       </footer>
 
@@ -336,20 +442,20 @@ export default function Layout() {
       />
 
       {/* Floating Mascot & Support Button */}
-      {location.pathname === '/' && (
+      {location.pathname === "/" && (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
           {/* Mascot Popover */}
           {showSupportPopover && (
             <div className="relative group animate-in fade-in slide-in-from-bottom-4 duration-300">
               {/* Close button */}
-              <button 
+              <button
                 onClick={() => setShowSupportPopover(false)}
                 className="absolute -top-2 -right-2 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 p-1 rounded-full z-10 shadow-md transition-all duration-200"
                 aria-label="Đóng"
               >
                 <Minus className="w-4 h-4" />
               </button>
-              
+
               {/* Mascot Link */}
               <a
                 href="https://www.facebook.com/lovelltitussof1910"
@@ -359,9 +465,9 @@ export default function Layout() {
                 title="Cần hỗ trợ? Nhấn vào đây!"
               >
                 <div className="animate-wobble origin-bottom hover:scale-105 transition-transform duration-300">
-                  <img 
-                    src={avtTlu} 
-                    alt="Hỗ trợ viên Capybara" 
+                  <img
+                    src={avtTlu}
+                    alt="Hỗ trợ viên Capybara"
                     className="w-18 h-18 sm:w-20 sm:h-20 object-contain drop-shadow-xl mix-blend-multiply dark:mix-blend-normal rounded-full dark:bg-white"
                   />
                 </div>
@@ -381,7 +487,7 @@ export default function Layout() {
           </a>
         </div>
       )}
-      
+
       <TextSelectionHelper />
       <AIAssistantWidget />
     </div>
