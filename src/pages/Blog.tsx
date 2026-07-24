@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Trash2, Calendar, Image as ImageIcon, ShieldCheck, User as UserIcon, ToggleLeft, ToggleRight, X } from 'lucide-react';
+import { Plus, Trash2, Edit2, Calendar, Image as ImageIcon, ShieldCheck, User as UserIcon, ToggleLeft, ToggleRight, X } from 'lucide-react';
 import BlogInteractions from '../components/BlogInteractions';
 
 const isImageUrl = (url: string) => {
@@ -18,6 +18,7 @@ export default function Blog() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newPost, setNewPost] = useState({ title: '', content: '', imageUrl: '' });
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [editingPost, setEditingPost] = useState<any>(null);
 
   useEffect(() => {
     document.title = "Blog | SenseiTLU";
@@ -98,6 +99,23 @@ export default function Blog() {
     }
   };
 
+  const handleUpdatePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPost || !editingPost.title.trim() || !editingPost.content.trim()) return;
+
+    try {
+      await updateDoc(doc(db, 'blog', editingPost.id), {
+        title: editingPost.title,
+        content: editingPost.content,
+        imageUrl: editingPost.imageUrl,
+        updatedAt: serverTimestamp()
+      });
+      setEditingPost(null);
+    } catch (error) {
+      console.error("Error updating post:", error);
+    }
+  };
+
   const formatDate = (timestamp: any) => {
     if (!timestamp) return '';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -166,9 +184,14 @@ export default function Blog() {
                   </div>
                 </div>
                 {(isAdmin || post.authorId === user?.uid) && (
-                  <button onClick={() => setDeleteConfirmId(post.id)} className="text-red-500 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setEditingPost(post)} className="text-blue-500 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setDeleteConfirmId(post.id)} className="text-red-500 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 )}
               </div>
               <h2 className="text-2xl font-bold mb-4">{post.title}</h2>
@@ -338,6 +361,70 @@ export default function Blog() {
                   className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium"
                 >
                   Đăng bài
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Post Modal */}
+      {editingPost && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-xl font-bold">Chỉnh sửa bài viết</h3>
+              <button 
+                onClick={() => setEditingPost(null)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdatePost} className="p-6 space-y-4 overflow-y-auto">
+              <div>
+                <label className="block text-sm font-medium mb-1">Tiêu đề</label>
+                <input
+                  type="text"
+                  value={editingPost.title}
+                  onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Link ảnh bìa (không bắt buộc)</label>
+                <input
+                  type="url"
+                  value={editingPost.imageUrl}
+                  onChange={(e) => setEditingPost({ ...editingPost, imageUrl: e.target.value })}
+                  placeholder="https://..."
+                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Nội dung (hỗ trợ Markdown)</label>
+                <textarea
+                  value={editingPost.content}
+                  onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 h-64 focus:ring-2 focus:ring-blue-500 outline-none resize-none font-mono text-sm"
+                  required
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setEditingPost(null)}
+                  className="px-6 py-2 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={!editingPost.title.trim() || !editingPost.content.trim()}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
+                >
+                  Cập nhật
                 </button>
               </div>
             </form>
