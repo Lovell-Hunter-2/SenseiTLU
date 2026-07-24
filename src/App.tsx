@@ -29,6 +29,11 @@ function ErrorTracker() {
   const { user } = useAuth();
   useEffect(() => {
     const handleGlobalError = (event: ErrorEvent) => {
+      // Ignore noisy errors from third-party scripts like Adsense
+      if (event.filename && (event.filename.includes('pagead2.googlesyndication.com') || event.filename.includes('doubleclick') || event.filename.includes('googleads'))) {
+        return;
+      }
+      
       logErrorToFirestore(
         'Lỗi Javascript Client',
         event.message,
@@ -40,6 +45,12 @@ function ErrorTracker() {
     };
 
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      // Ignore some common unhandled rejections if necessary
+      const reasonStr = String(event.reason);
+      if (reasonStr.includes('googleads') || reasonStr.includes('ad is not allowed')) {
+        return;
+      }
+
       logErrorToFirestore(
         'Lỗi Promise Chưa Xử Lý',
         event.reason?.message || 'Không xác định',
