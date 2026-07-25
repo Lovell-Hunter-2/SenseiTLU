@@ -37,6 +37,14 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
   const [activities, setActivities] = useState<ActivityData[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [activitiesError, setActivitiesError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredUsers = users.filter(user => {
+    const query = searchQuery.toLowerCase();
+    const nameMatch = user.displayName?.toLowerCase().includes(query);
+    const emailMatch = user.email?.toLowerCase().includes(query);
+    return nameMatch || emailMatch;
+  });
 
   useEffect(() => {
     if (!isAdmin) {
@@ -206,13 +214,22 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
              </div>
           ) : (
             <>
-              <div className="flex justify-between items-center mb-4">
-                <div className="text-sm text-slate-500 dark:text-slate-400">
-                  Tổng số: <span className="font-bold text-slate-700 dark:text-slate-200">{users.length}</span> người dùng
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    Tổng số: <span className="font-bold text-slate-700 dark:text-slate-200">{filteredUsers.length}</span> người dùng
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Tìm theo tên hoặc email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
                 <button
                   onClick={toggleSort}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700"
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 whitespace-nowrap"
                 >
                   <Filter className="w-4 h-4" />
                   Sắp xếp theo thời gian đăng nhập {sortOrder === 'desc' ? <ArrowDown className="w-4 h-4"/> : <ArrowUp className="w-4 h-4"/>}
@@ -236,7 +253,7 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                        {users.map((u) => (
+                        {filteredUsers.map((u) => (
                           <tr 
                             key={u.id} 
                             onClick={() => setSelectedUser(u)}
