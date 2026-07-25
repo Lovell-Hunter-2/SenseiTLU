@@ -37,6 +37,7 @@ export default function BlogInteractions({ postId }: Props) {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const [showReactors, setShowReactors] = useState(false);
   const [attachmentUrl, setAttachmentUrl] = useState('');
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   
@@ -220,11 +221,14 @@ export default function BlogInteractions({ postId }: Props) {
       <div className="flex items-center justify-between text-sm text-slate-500 mb-4 px-2">
         <div className="flex items-center gap-2">
           {Object.entries(reactionCounts).length > 0 ? (
-            <div className="flex items-center gap-1">
+            <div 
+              className={`flex items-center gap-1 ${isAdmin ? 'cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 px-2 py-1 rounded-lg transition-colors' : ''}`}
+              onClick={() => isAdmin && setShowReactors(true)}
+            >
               {Object.keys(reactionCounts).slice(0, 3).map(type => (
                 <span key={type} className="text-lg">{REACTION_EMOJIS[type as keyof typeof REACTION_EMOJIS]}</span>
               ))}
-              <span className="ml-1">{reactions.length}</span>
+              <span className="ml-1 font-medium">{reactions.length}</span>
             </div>
           ) : (
             <span>Chưa có lượt thích</span>
@@ -417,6 +421,48 @@ export default function BlogInteractions({ postId }: Props) {
               </div>
             </div>
           </form>
+        </div>
+      )}
+      {/* Reactors Modal for Admin */}
+      {isAdmin && showReactors && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-sm max-h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <ThumbsUp className="w-5 h-5 text-blue-500" /> Người đã bày tỏ cảm xúc
+              </h3>
+              <button
+                onClick={() => setShowReactors(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-4 space-y-3">
+              {reactions.length === 0 ? (
+                <div className="text-center text-slate-500 py-4">Chưa có ai bày tỏ cảm xúc</div>
+              ) : (
+                reactions.map((reaction, idx) => (
+                  <div key={idx} className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm shrink-0">
+                      {(reaction.userEmail?.toString() || 'A').charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm text-slate-900 dark:text-white truncate">
+                        {reaction.userEmail || 'Anonymous'}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {formatDate(reaction.updatedAt)}
+                      </p>
+                    </div>
+                    <div className="text-2xl shrink-0">
+                      {REACTION_EMOJIS[reaction.type as keyof typeof REACTION_EMOJIS]}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
