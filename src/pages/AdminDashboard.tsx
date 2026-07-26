@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon, X, FileText, User as UserIcon, MapPin, Clock } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, doc, getDoc, getDocs, query, orderBy, limit, startAt, endAt, collectionGroup } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, orderBy, limit, startAt, endAt, collectionGroup, getCountFromServer } from 'firebase/firestore';
 import UserManagerModal from '../components/UserManagerModal';
 import HeroImageManagerModal from '../components/HeroImageManagerModal';
 import AdminManagerModal from '../components/AdminManagerModal';
@@ -179,11 +179,11 @@ export default function AdminDashboard() {
 
       // System resources (Documents & Quizzes)
       try {
-        const docSnapshots = await getDocs(collection(db, 'documents'));
-        const quizSnapshots = await getDocs(collection(db, 'quizzes'));
+        const docCount = await getCountFromServer(collection(db, 'documents'));
+        const quizCount = await getCountFromServer(collection(db, 'quizzes'));
         setSystemResources({
-          documents: docSnapshots.size,
-          quizzes: quizSnapshots.size
+          documents: docCount.data().count,
+          quizzes: quizCount.data().count
         });
       } catch (err) {
          console.error("Error fetching system resources:", err);
