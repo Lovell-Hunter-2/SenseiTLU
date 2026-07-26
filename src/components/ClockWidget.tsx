@@ -56,12 +56,15 @@ export default function ClockWidget() {
        {isHome && (
          <>
            <div className="hidden lg:flex items-center gap-2 bg-gradient-to-r from-cyan-100 to-blue-100 dark:from-cyan-900/40 dark:to-blue-900/40 px-3 py-1.5 rounded-2xl border border-cyan-200 dark:border-cyan-800/50 shadow-sm text-cyan-700 dark:text-cyan-300 font-bold transition-transform hover:scale-105 cursor-default group">
-              <span className="text-base group-hover:scale-110 transition-transform">☁️</span>
+              <span className="text-base group-hover:animate-sway origin-bottom">☁️</span>
               <span>{formatDate(now)}</span>
            </div>
            
            <div className="flex items-center gap-2 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40 px-3 py-1.5 rounded-2xl border border-amber-200 dark:border-amber-800/50 shadow-sm text-amber-700 dark:text-amber-300 font-bold transition-transform hover:scale-105 cursor-default group" title="Thời gian học hôm nay">
-              <span className="text-base group-hover:animate-spin origin-bottom">🌱</span>
+              <span className="relative flex items-center justify-center w-5 h-5 overflow-visible">
+                <span className="absolute transition-all duration-700 ease-in-out transform group-hover:scale-0 group-hover:opacity-0 group-hover:-translate-y-2">🌱</span>
+                <span className="absolute transition-all duration-700 ease-in-out transform scale-0 opacity-0 translate-y-2 group-hover:scale-125 group-hover:opacity-100 group-hover:translate-y-0">🌳</span>
+              </span>
               <span className="tracking-wider">{formatSpent(timeSpent)}</span>
            </div>
          </>
