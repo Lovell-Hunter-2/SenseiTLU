@@ -3,8 +3,34 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from '@google/genai';
 import * as dotenv from 'dotenv';
+import admin from 'firebase-admin';
 
 dotenv.config();
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+    projectId: 'gen-lang-client-0664343819'
+  });
+}
+
+// In-memory rate limiting
+const rateLimitCache = new Map<string, { count: number, resetTime: number }>();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const MAX_REQUESTS = 10;
+
+function checkRateLimit(uid: string): boolean {
+  const now = Date.now();
+  const record = rateLimitCache.get(uid);
+  if (!record || record.resetTime < now) {
+    rateLimitCache.set(uid, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return true;
+  }
+  if (record.count >= MAX_REQUESTS) {
+    return false;
+  }
+  record.count++;
+  return true;
+}
 
 function getEnv(key: string): string {
   return (process.env[key] || process.env[`VITE_${key}`] || '').trim();
@@ -19,6 +45,23 @@ async function startServer() {
 
   app.post("/api/ai-generate", async (req, res) => {
     try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized: Missing or invalid token' });
+      }
+
+      const token = authHeader.split('Bearer ')[1];
+      let decodedToken;
+      try {
+        decodedToken = await admin.auth().verifyIdToken(token);
+      } catch (err) {
+        return res.status(401).json({ error: 'Unauthorized: Token verification failed' });
+      }
+
+      if (!checkRateLimit(decodedToken.uid)) {
+        return res.status(429).json({ error: 'Too Many Requests. Please try again later.' });
+      }
+
       const options = req.body;
       const result = await generateWithFallback(options);
       res.json({ text: result });
