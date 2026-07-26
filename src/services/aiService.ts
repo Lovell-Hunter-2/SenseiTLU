@@ -1,3 +1,5 @@
+import { auth } from '../firebase';
+
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
@@ -18,10 +20,16 @@ export interface AIGenerateOptions {
  */
 export const generateWithFallback = async (options: AIGenerateOptions): Promise<string> => {
   try {
+    let idToken = '';
+    if (auth.currentUser) {
+      idToken = await auth.currentUser.getIdToken();
+    }
+
     const response = await fetch('/api/ai-generate', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
       },
       body: JSON.stringify(options)
     });
