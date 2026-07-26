@@ -82,17 +82,25 @@ service cloud.firestore {
 
     match /analytics/{docId} {
       allow read, delete: if isAdmin();
-      allow create, update: if true;
+      allow create, update: if request.resource.data.keys().hasOnly(['visits', 'date', 'hour', 'lastUpdated']) &&
+                            (!request.resource.data.keys().hasAny(['visits']) || request.resource.data.visits is number) &&
+                            (!request.resource.data.keys().hasAny(['date']) || request.resource.data.date is string) &&
+                            (!request.resource.data.keys().hasAny(['hour']) || request.resource.data.hour is string);
     }
 
     match /analytics_subjects/{docId} {
       allow read, delete: if isAdmin();
-      allow create, update: if true;
+      allow create, update: if request.resource.data.keys().hasOnly(['name', 'views', 'lastUpdated']) &&
+                            (!request.resource.data.keys().hasAny(['views']) || request.resource.data.views is number) &&
+                            (!request.resource.data.keys().hasAny(['name']) || request.resource.data.name is string);
     }
 
     match /analytics_documents/{docId} {
       allow read, delete: if isAdmin();
-      allow create, update: if true;
+      allow create, update: if request.resource.data.keys().hasOnly(['title', 'subjectName', 'views', 'lastUpdated']) &&
+                            (!request.resource.data.keys().hasAny(['views']) || request.resource.data.views is number) &&
+                            (!request.resource.data.keys().hasAny(['title']) || request.resource.data.title is string) &&
+                            (!request.resource.data.keys().hasAny(['subjectName']) || request.resource.data.subjectName is string);
     }
 
     match /notifications/{notificationId} {
