@@ -52,7 +52,7 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
       return;
     }
 
-    const q = query(collection(db, 'users'), limit(100));
+    const q = query(collection(db, 'users'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       let fetchedUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserData));
       
