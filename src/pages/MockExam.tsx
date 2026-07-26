@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { generateWithFallback, AIMessage } from '../services/aiService';
-import { ArrowLeft, Settings, Play, CheckCircle2, XCircle, RefreshCcw, Lightbulb, Book, Menu, X, User, Quote, Home as HomeIcon, RotateCcw, Eye, Minus, Plus, UploadCloud, FileText, Trash2, Share2, ClipboardCheck, Lock, LogIn, Sparkles } from 'lucide-react';
+import { ArrowLeft, Settings, Play, CheckCircle2, XCircle, RefreshCcw, Lightbulb, Book, Menu, X, User, Quote, Home as HomeIcon, RotateCcw, Eye, Minus, Plus, UploadCloud, FileText, Trash2, Share2, ClipboardCheck, Lock, LogIn, Sparkles, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import ReactMarkdown from 'react-markdown';
@@ -54,6 +54,7 @@ interface Question {
   options: string[];
   correctIndex: number;
   explanation: string;
+  rating?: 'up' | 'down';
 }
 
 const lowScoreQuotes = [
@@ -205,6 +206,7 @@ export default function MockExam() {
   // Quiz State
   const [status, setStatus] = useState<'setup' | 'generating' | 'active' | 'finished' | 'review' | 'retake_wrong'>(initialState?.status || 'setup');
   const [questions, setQuestions] = useState<Question[]>(initialState?.questions || []);
+  const [quizDocId, setQuizDocId] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(initialState?.currentIndex || 0);
   const [userAnswers, setUserAnswers] = useState<Record<number, number>>(initialState?.userAnswers || {});
   
@@ -309,6 +311,24 @@ Lưu ý: Không giải thích quá dài. Không chọn đáp án. Chỉ gợi ý
       setTutorQId(currentIndex);
     } finally {
       setIsAskingTutor(false);
+    }
+  };
+
+  const handleRateQuestion = async (idx: number, rating: 'up' | 'down') => {
+    if (!quizDocId) return;
+    const newQuestions = [...questions];
+    if (newQuestions[idx].rating === rating) {
+      newQuestions[idx].rating = undefined; // toggle off
+    } else {
+      newQuestions[idx].rating = rating;
+    }
+    setQuestions(newQuestions);
+    try {
+      await updateDoc(doc(db, 'quizzes', quizDocId), {
+        questions: newQuestions
+      });
+    } catch (e) {
+      console.error("Lỗi cập nhật đánh giá câu hỏi", e);
     }
   };
 
@@ -506,7 +526,9 @@ ${questionsSummary}`;
           const q = query(collection(db, 'quizzes'), where('cacheKey', '==', cacheKey));
           const querySnapshot = await getDocs(q);
           if (!querySnapshot.empty) {
-            const cachedQuiz = querySnapshot.docs[0].data();
+            const quizDoc = querySnapshot.docs[0];
+            const cachedQuiz = quizDoc.data();
+            setQuizDocId(quizDoc.id);
             setQuestions(cachedQuiz.questions);
             setStatus('active');
             setCurrentIndex(0);
@@ -707,12 +729,13 @@ ${questionsSummary}`;
         if (parsedQuestions && parsedQuestions.length > 0) {
           if (cacheKey) {
             try {
-               await addDoc(collection(db, 'quizzes'), {
+               const docRef = await addDoc(collection(db, 'quizzes'), {
                  cacheKey,
                  questions: parsedQuestions,
                  subjectId: subject.id,
                  createdAt: serverTimestamp()
                });
+               setQuizDocId(docRef.id);
             } catch (e) {
                console.error("Lỗi khi lưu câu hỏi vào cache", e);
             }
@@ -1660,9 +1683,30 @@ ${questionsSummary}`;
 
             {(isReview || showInstantFeedback) && (
               <div className="mt-8 p-5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
-                <h4 className="font-bold text-blue-800 dark:text-blue-300 mb-2 flex items-center gap-2">
-                  <Lightbulb className="w-5 h-5" /> Giải thích
-                </h4>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                  <h4 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2">
+                    <Lightbulb className="w-5 h-5" /> Giải thích
+                  </h4>
+                  {quizDocId && (
+                    <div className="flex items-center gap-2 bg-white/50 dark:bg-black/20 px-3 py-1.5 rounded-full border border-blue-200 dark:border-blue-800">
+                      <span className="text-xs text-blue-700 dark:text-blue-300 font-medium mr-1 hidden sm:inline">Đánh giá câu hỏi:</span>
+                      <button 
+                        onClick={() => handleRateQuestion(currentIndex, 'up')}
+                        className={`p-1.5 rounded-md transition-colors ${currentQ.rating === 'up' ? 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400' : 'text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'}`}
+                        title="Câu hỏi hay, chính xác"
+                      >
+                        <ThumbsUp className={`w-4 h-4 ${currentQ.rating === 'up' ? 'fill-current' : ''}`} />
+                      </button>
+                      <button 
+                        onClick={() => handleRateQuestion(currentIndex, 'down')}
+                        className={`p-1.5 rounded-md transition-colors ${currentQ.rating === 'down' ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400' : 'text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'}`}
+                        title="Câu hỏi sai sót, không liên quan"
+                      >
+                        <ThumbsDown className={`w-4 h-4 ${currentQ.rating === 'down' ? 'fill-current' : ''}`} />
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div className="text-blue-900 dark:text-blue-200 text-sm md:text-base leading-relaxed prose prose-blue dark:prose-invert max-w-none">
                   <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{currentQ.explanation}</ReactMarkdown>
                 </div>
