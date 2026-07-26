@@ -2,6 +2,13 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from '@google/genai';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
+
+function getEnv(key: string): string {
+  return (process.env[key] || process.env[`VITE_${key}`] || '').trim();
+}
 
 async function startServer() {
   const app = express();
@@ -41,9 +48,6 @@ async function startServer() {
   });
 }
 
-// Keep the logic from aiService.ts
-const gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : '' });
-
 async function generateWithFallback(options: any): Promise<string> {
   const errors: Error[] = [];
 
@@ -70,14 +74,15 @@ async function generateWithFallback(options: any): Promise<string> {
     });
   };
 
-  if (process.env.OPENROUTER_API_KEY) {
+  const openRouterKey = getEnv('OPENROUTER_API_KEY');
+  if (openRouterKey) {
     try {
         console.log("Đang thử OpenRouter API...");
         const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY.trim()}`,
+            "Authorization": `Bearer ${openRouterKey}`,
             "HTTP-Referer": "https://senseitlu.vercel.app",
             "X-Title": "SenseiTLU"
         },
@@ -101,14 +106,15 @@ async function generateWithFallback(options: any): Promise<string> {
     }
   }
 
-  if (process.env.GROQ_API_KEY) {
+  const groqKey = getEnv('GROQ_API_KEY');
+  if (groqKey) {
     try {
         console.log("Đang thử Groq API...");
         const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.GROQ_API_KEY.trim()}`
+            "Authorization": `Bearer ${groqKey}`
         },
         body: JSON.stringify({
             model: "llama-3.3-70b-versatile",
@@ -130,9 +136,11 @@ async function generateWithFallback(options: any): Promise<string> {
     }
   }
 
-  if (process.env.GEMINI_API_KEY) {
+  const geminiKey = getEnv('GEMINI_API_KEY');
+  if (geminiKey) {
     try {
         console.log("Đang thử Gemini API...");
+        const gemini = new GoogleGenAI({ apiKey: geminiKey });
         const systemMsg = options.messages.filter((m: any) => m.role === 'system').map((m: any) => m.content).join("\n");
         let geminiContents: any[] = [];
         
@@ -202,14 +210,15 @@ async function generateWithFallback(options: any): Promise<string> {
     }
   }
 
-  if (process.env.DEEPSEEK_API_KEY) {
+  const deepseekKey = getEnv('DEEPSEEK_API_KEY');
+  if (deepseekKey) {
     try {
         console.log("Đang thử DeepSeek API...");
         const res = await fetch("https://api.deepseek.com/chat/completions", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY.trim()}`
+            "Authorization": `Bearer ${deepseekKey}`
         },
         body: JSON.stringify({
             model: "deepseek-chat",
@@ -231,14 +240,15 @@ async function generateWithFallback(options: any): Promise<string> {
     }
   }
 
-  if (process.env.OPENAI_API_KEY) {
+  const openaiKey = getEnv('OPENAI_API_KEY');
+  if (openaiKey) {
     try {
         console.log("Đang thử OpenAI API...");
         const res = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.OPENAI_API_KEY.trim()}`
+            "Authorization": `Bearer ${openaiKey}`
         },
         body: JSON.stringify({
             model: "gpt-4o-mini",
@@ -260,14 +270,15 @@ async function generateWithFallback(options: any): Promise<string> {
     }
   }
 
-  if (process.env.GROK_API_KEY) {
+  const grokKey = getEnv('GROK_API_KEY');
+  if (grokKey) {
     try {
         console.log("Đang thử Grok API...");
         const res = await fetch("https://api.x.ai/v1/chat/completions", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.GROK_API_KEY.trim()}`
+            "Authorization": `Bearer ${grokKey}`
         },
         body: JSON.stringify({
             model: "grok-latest",
@@ -289,7 +300,8 @@ async function generateWithFallback(options: any): Promise<string> {
     }
   }
 
-  if (process.env.COHERE_API_KEY) {
+  const cohereKey = getEnv('COHERE_API_KEY');
+  if (cohereKey) {
     try {
         console.log("Đang thử Cohere API...");
         const chatHistory = options.messages.filter((m: any) => m.role !== 'system').map((m: any) => ({
@@ -303,7 +315,7 @@ async function generateWithFallback(options: any): Promise<string> {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.COHERE_API_KEY.trim()}`
+            "Authorization": `Bearer ${cohereKey}`
         },
         body: JSON.stringify({
             model: "command-r-plus-08-2024",
