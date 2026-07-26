@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, serverTimestamp, deleteDoc, limit } from 'firebase/firestore';
 import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon, ClipboardList, ScrollText, Lightbulb, Sigma, X, LayoutTemplate, Lock, LogIn, Bot, Sparkles } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
@@ -23,6 +23,7 @@ export default function SubjectDetail() {
   const { id } = useParams<{ id: string }>();
   const [subject, setSubject] = useState<any>(null);
   const [documents, setDocuments] = useState<any[]>([]);
+  const [docLimit, setDocLimit] = useState(50);
   const { isAdmin, user, login, loading } = useAuth();
   
   // Modal state
@@ -174,14 +175,14 @@ export default function SubjectDetail() {
     fetchSubject();
 
     // Fetch documents
-    const q = query(collection(db, 'documents'), where('subjectId', '==', id));
+    const q = query(collection(db, 'documents'), where('subjectId', '==', id), limit(docLimit));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setDocuments(docs);
     });
 
     return unsubscribe;
-  }, [id]);
+  }, [id, docLimit]);
 
   const handleSaveDocument = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -482,6 +483,17 @@ export default function SubjectDetail() {
           );
         })}
         
+        {documents.length > 0 && documents.length >= docLimit && (
+          <div className="flex justify-center pt-4">
+            <button
+              onClick={() => setDocLimit(prev => prev + 50)}
+              className="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-colors font-medium text-sm border border-slate-200 dark:border-slate-700"
+            >
+              Tải thêm tài liệu
+            </button>
+          </div>
+        )}
+
         {documents.length === 0 && (
           <div className="text-center py-12 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
             Chưa có tài liệu nào cho môn học này.
