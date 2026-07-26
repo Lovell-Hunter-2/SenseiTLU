@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc, setDoc, updateDoc, limit } from 'firebase/firestore';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { db } from '../firebase';
@@ -13,6 +13,7 @@ const isImageUrl = (url: string) => {
 
 export default function Blog() {
   const [posts, setPosts] = useState<any[]>([]);
+  const [postLimit, setPostLimit] = useState(10);
   const [allowPublicPosting, setAllowPublicPosting] = useState(false);
   const { user, isAdmin } = useAuth();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -22,7 +23,7 @@ export default function Blog() {
 
   useEffect(() => {
     document.title = "Blog | SenseiTLU";
-    const q = query(collection(db, 'blog'), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'blog'), orderBy('createdAt', 'desc'), limit(postLimit));
     const unsubscribePosts = onSnapshot(q, (snapshot) => {
       const fetchedPosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setPosts(fetchedPosts);
@@ -217,6 +218,17 @@ export default function Blog() {
             </div>
           </article>
         ))}
+        
+        {posts.length > 0 && posts.length >= postLimit && (
+          <div className="flex justify-center pt-4">
+            <button
+              onClick={() => setPostLimit(prev => prev + 10)}
+              className="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-colors font-medium text-sm border border-slate-200 dark:border-slate-700"
+            >
+              Tải thêm bài viết
+            </button>
+          </div>
+        )}
 
         {posts.length === 0 && (
           <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
