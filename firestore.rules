@@ -24,11 +24,11 @@ service cloud.firestore {
 
     match /error_logs/{logId} {
       allow read: if isAdmin();
-      allow create: if true;
+      allow create: if isAuthenticated();
     }
 
     match /users/{userId} {
-      allow read: if isAuthenticated();
+      allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId) && request.resource.data.keys().hasAll(['email', 'role']) &&
                     (request.resource.data.role == 'user' || isAdmin());
       allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role);
@@ -70,7 +70,8 @@ service cloud.firestore {
     }
 
     match /quizzes/{quizId} {
-      allow read, create: if true;
+      allow read: if true;
+      allow create: if isAuthenticated();
       allow update, delete: if isAdmin();
     }
 
@@ -80,20 +81,23 @@ service cloud.firestore {
     }
 
     match /analytics/{docId} {
-      allow read, write: if true;
+      allow read, delete: if isAdmin();
+      allow create, update: if true;
     }
 
     match /analytics_subjects/{docId} {
-      allow read, write: if true;
+      allow read, delete: if isAdmin();
+      allow create, update: if true;
     }
 
     match /analytics_documents/{docId} {
-      allow read, write: if true;
+      allow read, delete: if isAdmin();
+      allow create, update: if true;
     }
 
     match /notifications/{notificationId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.keys().hasAll(['title', 'message', 'type', 'createdAt']) && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAdmin();
     }
   }
