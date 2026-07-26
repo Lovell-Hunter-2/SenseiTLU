@@ -43,7 +43,7 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [subjectsList, setSubjectsList] = useState<{ id: string, name: string }[]>([]);
+  const [subjectsList, setSubjectsList] = useState<{ id: string, name: string, documents: any[] }[]>([]);
   const [subjectsStr, setSubjectsStr] = useState("");
   const [smartPrompts, setSmartPrompts] = useState<string[]>([]);
   const [attachedFile, setAttachedFile] = useState<{name: string, type: string, data: string} | null>(null);
@@ -116,22 +116,50 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
   }, [user, isVisible]);
 
   useEffect(() => {
-    const fetchSubjects = async () => {
+    const fetchSubjectsAndDocs = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, 'subjects'));
-        const list = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          name: doc.data().name
+        const subjectsSnapshot = await getDocs(collection(db, 'subjects'));
+        const docsSnapshot = await getDocs(collection(db, 'documents'));
+        
+        const docsBySubject: Record<string, any[]> = {};
+        docsSnapshot.docs.forEach(docSnap => {
+          const data = docSnap.data();
+          if (data.subjectId) {
+            if (!docsBySubject[data.subjectId]) {
+              docsBySubject[data.subjectId] = [];
+            }
+            docsBySubject[data.subjectId].push(data);
+          }
+        });
+
+        const list = subjectsSnapshot.docs.map(docSnap => ({
+          id: docSnap.id,
+          name: docSnap.data().name,
+          documents: docsBySubject[docSnap.id] || []
         }));
+        
         setSubjectsList(list);
         
-        const listStr = list.map(item => `- ${item.name} (Link: /subject/${item.id})`);
-        setSubjectsStr(listStr.join('\n'));
+        let listStr = "";
+        list.forEach(item => {
+          listStr += `- ${item.name} (Link: /subject/${item.id})\n`;
+          if (item.documents.length > 0) {
+            listStr += `  Các tài liệu trong môn này:\n`;
+            item.documents.forEach(doc => {
+              // Dùng link dẫn tới môn học như user mong muốn
+              listStr += `  + [${doc.type || 'Khác'}] ${doc.title} (Link: /subject/${item.id})\n`;
+            });
+          } else {
+            listStr += `  (Chưa có tài liệu)\n`;
+          }
+        });
+        
+        setSubjectsStr(listStr);
       } catch (error) {
-        console.error("Lỗi khi fetch subject cho AI", error);
+        console.error("Lỗi khi fetch subject và docs cho AI", error);
       }
     };
-    fetchSubjects();
+    fetchSubjectsAndDocs();
   }, []);
 
   const handleSend = async (textOverride?: string) => {
