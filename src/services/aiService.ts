@@ -1,4 +1,5 @@
-import { auth } from '../firebase';
+import { auth, appCheck } from '../firebase';
+import { getToken } from 'firebase/app-check';
 
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant';
@@ -25,11 +26,22 @@ export const generateWithFallback = async (options: AIGenerateOptions): Promise<
       idToken = await auth.currentUser.getIdToken();
     }
 
+    let appCheckToken = '';
+    if (appCheck) {
+      try {
+        const appCheckResponse = await getToken(appCheck, false);
+        appCheckToken = appCheckResponse.token;
+      } catch (err) {
+        console.warn('App Check failed to generate token:', err);
+      }
+    }
+
     const response = await fetch('/api/ai-generate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+        ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {}),
+        ...(appCheckToken ? { 'X-Firebase-AppCheck': appCheckToken } : {})
       },
       body: JSON.stringify(options)
     });
