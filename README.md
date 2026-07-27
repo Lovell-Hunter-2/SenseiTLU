@@ -1,4 +1,7 @@
-# SenseiTLU - Nền Tảng Học Tập Trực Tuyến Tích Hợp AI 🎓
+<div align="center">
+  <img src="public/pwa-192x192.png" alt="SenseiTLU Logo" width="120" />
+  <h1>📚 SenseiTLU - Nền Tảng Học Tập Trực Tuyến Tích Hợp AI 🎓</h1>
+</div>
 
 SenseiTLU là một nền tảng học tập trực tuyến thông minh, được thiết kế để cung cấp cho sinh viên môi trường học tập, lưu trữ tài liệu, và ôn thi hiệu quả. Với sự hỗ trợ mạnh mẽ từ Trí tuệ Nhân tạo (AI), hệ thống có khả năng tự động sinh đề thi trắc nghiệm, làm gia sư ảo giải đáp thắc mắc, và đánh giá năng lực học tập của người dùng.
 
