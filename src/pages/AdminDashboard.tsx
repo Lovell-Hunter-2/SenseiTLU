@@ -93,7 +93,24 @@ export default function AdminDashboard() {
   const [usersCache, setUsersCache] = useState<any>(null);
   const [isChartLoading, setIsChartLoading] = useState(false);
 
-  useEffect(() => {
+  
+        // Helper to get VN time date strings for chart
+        const getVnDateStringWithOffset = (offsetDays: number) => {
+           const d = new Date();
+           const vnTime = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+           vnTime.setUTCDate(vnTime.getUTCDate() - offsetDays);
+           const y = vnTime.getUTCFullYear();
+           const m = String(vnTime.getUTCMonth() + 1).padStart(2, '0');
+           const dt = String(vnTime.getUTCDate()).padStart(2, '0');
+           return {
+             dateStr: `${y}-${m}-${dt}`,
+             monthStr: `${y}-${m}`,
+             displayDate: `${vnTime.getUTCDate()}/${vnTime.getUTCMonth() + 1}`,
+             displayMonth: `Tháng ${vnTime.getUTCMonth() + 1}/${String(y).slice(2)}`,
+             vnTime
+           };
+        };
+useEffect(() => {
     if (!isAdmin) return;
 
     const fetchAnalytics = async () => {
@@ -225,7 +242,7 @@ export default function AdminDashboard() {
         const data = [];
         const retData = [];
         const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
+        const todayStr = getVietnamDateString();
         
         // 1. Preprocess users for fast lookup
         const userStats: Record<string, { new: number, returning: number }> = {};
@@ -313,11 +330,9 @@ export default function AdminDashboard() {
             const fetchPromises = [];
             const dates = [];
             for (let i = chartRange - 1; i >= 0; i--) {
-               const d = new Date();
-               d.setDate(now.getDate() - i);
-               dates.push(d);
-               const dateStr = d.toISOString().split('T')[0];
-               const ref = doc(db, 'analytics', `daily_visits_${dateStr}`);
+               const vnDate = getVnDateStringWithOffset(i);
+               dates.push(vnDate);
+               const ref = doc(db, 'analytics', `daily_visits_${vnDate.dateStr}`);
                fetchPromises.push(getDoc(ref));
             }
             
@@ -327,7 +342,7 @@ export default function AdminDashboard() {
             visitSnaps.forEach((snap, idx) => {
                if (snap.exists()) {
                    const d = dates[idx];
-                   const monthStr = d.toISOString().slice(0, 7); // YYYY-MM
+                   const monthStr = d.monthStr;
                    visitAgg[monthStr] = (visitAgg[monthStr] || 0) + snap.data().visits;
                }
             });
@@ -335,9 +350,11 @@ export default function AdminDashboard() {
             // Reconstruct timeline array (months)
             for (let i = monthsToFetch - 1; i >= 0; i--) {
                const d = new Date();
-               d.setMonth(now.getMonth() - i);
-               const mStr = d.toISOString().slice(0, 7); // YYYY-MM
-               const displayDate = `Tháng ${d.getMonth() + 1}/${d.getFullYear().toString().slice(2)}`;
+               const vnTime = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+               vnTime.setUTCMonth(vnTime.getUTCMonth() - i);
+               const y = vnTime.getUTCFullYear();
+               const mStr = `${y}-${String(vnTime.getUTCMonth() + 1).padStart(2, '0')}`;
+               const displayDate = `Tháng ${vnTime.getUTCMonth() + 1}/${String(y).slice(2)}`;
                
                data.push({
                  name: displayDate,
@@ -356,11 +373,9 @@ export default function AdminDashboard() {
             const fetchPromises = [];
             const dates = [];
             for (let i = chartRange - 1; i >= 0; i--) {
-              const date = new Date();
-              date.setDate(now.getDate() - i);
-              dates.push(date);
-              const dateStr = date.toISOString().split('T')[0];
-              const ref = doc(db, 'analytics', `daily_visits_${dateStr}`);
+              const vnDate = getVnDateStringWithOffset(i);
+              dates.push(vnDate);
+              const ref = doc(db, 'analytics', `daily_visits_${vnDate.dateStr}`);
               fetchPromises.push(getDoc(ref));
             }
 
@@ -368,10 +383,10 @@ export default function AdminDashboard() {
 
             for (let i = 0; i < chartRange; i++) {
               const date = dates[i];
-              const dateStr = date.toISOString().split('T')[0];
+              const dateStr = date.dateStr;
               const snap = visitSnaps[i];
               
-              const displayDate = `${date.getDate()}/${date.getMonth() + 1}`;
+              const displayDate = date.displayDate;
               
               data.push({
                 name: displayDate,
