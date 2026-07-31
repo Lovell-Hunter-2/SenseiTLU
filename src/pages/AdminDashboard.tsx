@@ -8,6 +8,7 @@ import UserManagerModal from '../components/UserManagerModal';
 import HeroImageManagerModal from '../components/HeroImageManagerModal';
 import AdminManagerModal from '../components/AdminManagerModal';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
+import { getVietnamDateString } from '../services/analyticsService';
 
 interface ErrorLog {
   id: string;
@@ -144,7 +145,7 @@ export default function AdminDashboard() {
 
       // Daily visits (today)
       try {
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getVietnamDateString();
         const dailyRef = doc(db, 'analytics', `daily_visits_${todayStr}`);
         const dailySnap = await getDoc(dailyRef);
         if (dailySnap.exists()) {
