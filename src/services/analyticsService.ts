@@ -1,11 +1,22 @@
 import { doc, setDoc, increment, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 
+export function getVietnamDateString() {
+  const date = new Date();
+  const vnTime = new Date(date.getTime() + (7 * 60 * 60 * 1000));
+  return vnTime.getUTCFullYear() + '-' + 
+         String(vnTime.getUTCMonth() + 1).padStart(2, '0') + '-' + 
+         String(vnTime.getUTCDate()).padStart(2, '0');
+}
+
 export async function logGlobalPageView() {
   try {
     const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    const hour = now.getHours().toString().padStart(2, '0');
+    const today = getVietnamDateString();
+    
+    // Convert to VN time for hourly tracking too
+    const vnTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+    const hour = vnTime.getUTCHours().toString().padStart(2, '0');
     
     // Log daily
     const dailyRef = doc(db, 'analytics', `daily_visits_${today}`);
