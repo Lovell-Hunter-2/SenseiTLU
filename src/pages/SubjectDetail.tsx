@@ -776,7 +776,7 @@ export default function SubjectDetail() {
                 }}
                 className="flex items-center justify-center gap-2 w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors shadow-md shadow-blue-500/20"
               >
-                Mở tại SenseiTLU (Hỗ trợ AI)
+                Xem ngay tại SenseiTLU
               </button>
               
               <a
@@ -786,7 +786,7 @@ export default function SubjectDetail() {
                 onClick={() => setShowChoiceModal(false)}
                 className="flex items-center justify-center gap-2 w-full py-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl font-medium transition-colors border border-slate-200 dark:border-slate-700"
               >
-                Tiếp tục tới Google Drive <ExternalLink className="w-4 h-4 ml-1" />
+                Mở bằng Google Drive <ExternalLink className="w-4 h-4 ml-1" />
               </a>
             </div>
             <button 
