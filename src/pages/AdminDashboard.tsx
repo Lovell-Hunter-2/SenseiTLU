@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon, X, FileText, User as UserIcon, MapPin, Clock } from 'lucide-react';
+import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon, X, FileText, User as UserIcon, MapPin, Clock, EyeOff } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, doc, getDoc, getDocs, query, orderBy, limit, startAt, endAt, collectionGroup, getCountFromServer } from 'firebase/firestore';
 import UserManagerModal from '../components/UserManagerModal';
 import HeroImageManagerModal from '../components/HeroImageManagerModal';
 import AdminManagerModal from '../components/AdminManagerModal';
+import HiddenDocsManager from '../components/HiddenDocsManager';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
 import { getVietnamDateString } from '../services/analyticsService';
 
@@ -73,7 +74,7 @@ const getFriendlyErrorContext = (log: ErrorLog) => {
 
 export default function AdminDashboard() {
   const { user, isAdmin, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'reports' | 'storage' | 'retention' | 'errors' | 'users' | 'ui' | 'admins'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'reports' | 'storage' | 'retention' | 'errors' | 'users' | 'ui' | 'admins' | 'hidden_docs'>('overview');
   const [selectedErrorLog, setSelectedErrorLog] = useState<ErrorLog | null>(null);
   
   // Analytics state
@@ -506,6 +507,19 @@ useEffect(() => {
                 Tài nguyên hệ thống
               </button>
 
+              <button
+                onClick={() => setActiveTab('hidden_docs')}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
+                  activeTab === 'hidden_docs' 
+                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <EyeOff className="w-5 h-5" />
+                Tài liệu ẩn
+              </button>
+
+
               <div className="pt-4 pb-2">
                 <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Hệ thống</p>
               </div>
@@ -898,6 +912,11 @@ useEffect(() => {
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden relative">
               <UserManagerModal inline />
             </div>
+          )}
+
+          
+          {activeTab === 'hidden_docs' && (
+            <HiddenDocsManager />
           )}
 
           {activeTab === 'admins' && (
