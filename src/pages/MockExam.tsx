@@ -9,6 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { logActivityEvent } from '../useActivityLogger';
+import ThemeEffects from '../components/ThemeEffects';
 
 const loadPdfJs = async (): Promise<any> => {
   if ((window as any).pdfjsLib) {
@@ -1093,10 +1094,12 @@ ${questionsSummary}`;
 
   if (status === 'setup') {
     return (
-      <div className="max-w-3xl mx-auto space-y-6">
-        <button onClick={() => navigate(`/subject/${id}`)} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Quay lại môn học
-        </button>
+      <>
+        <ThemeEffects theme={examTheme} />
+        <div className="max-w-3xl mx-auto space-y-6 relative z-10">
+          <button onClick={() => navigate(`/subject/${id}`)} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Quay lại môn học
+          </button>
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-200 dark:border-slate-800">
             <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-xl flex items-center justify-center">
@@ -1397,6 +1400,7 @@ ${questionsSummary}`;
           </div>
         </div>
       </div>
+      </>
     );
   }
 
@@ -1438,10 +1442,17 @@ ${questionsSummary}`;
     const randomQuote = quoteList[Math.floor(Math.random() * quoteList.length)];
 
     return (
-      <div className={`min-h-screen ${themeClasses.wrapper} -mx-4 sm:mx-0 p-4 sm:p-8 flex items-center justify-center`}>
-        <div className="max-w-3xl w-full mx-auto">
-          <div className={`${themeClasses.card} rounded-3xl p-8 shadow-xl text-slate-800 dark:text-white border`}>
-            <div className="text-center space-y-2 mb-8">
+      <div className={`min-h-screen relative overflow-hidden ${themeClasses.wrapper} -mx-4 sm:mx-0 p-4 sm:p-8 flex items-center justify-center`}>
+        <ThemeEffects theme={examTheme} />
+        
+        <div className="max-w-3xl w-full mx-auto relative z-10">
+          <div className={`${themeClasses.card} rounded-3xl p-8 shadow-xl text-slate-800 dark:text-white border relative overflow-hidden`}>
+            {themeClasses.icon !== '🌱' && (
+              <div className="absolute top-0 right-0 p-8 opacity-5 dark:opacity-10 pointer-events-none text-9xl transform translate-x-4 -translate-y-4 rotate-12">
+                {themeClasses.icon}
+              </div>
+            )}
+            <div className="text-center space-y-2 mb-8 relative z-10">
               <div className="text-6xl mb-4">{themeClasses.icon !== '🌱' ? themeClasses.icon : emoji}</div>
               <h2 className="text-3xl font-bold">{message}</h2>
               <p className={`font-medium ${themeClasses.accentText}`}>Bạn đúng {correct}/{questions.length} câu</p>
@@ -1582,9 +1593,11 @@ ${questionsSummary}`;
   })() === currentIndex);
 
   return (
-    <div className={`flex flex-col lg:flex-row -mx-4 sm:-mx-6 lg:-mx-8 lg:px-8 sm:px-6 px-4 min-h-screen ${themeClasses.wrapper}`}>
+    <div className={`flex flex-col lg:flex-row -mx-4 sm:-mx-6 lg:-mx-8 lg:px-8 sm:px-6 px-4 min-h-screen relative overflow-hidden ${themeClasses.wrapper}`}>
+      <ThemeEffects theme={examTheme} />
+      
       {/* Main Content */}
-      <div className="flex-1 min-w-0 py-6">
+      <div className="flex-1 min-w-0 py-6 relative z-10">
         <div className="max-w-3xl w-full mx-auto space-y-6">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -1634,15 +1647,20 @@ ${questionsSummary}`;
             </div>
           </div>
 
-          <div className={`${themeClasses.card} rounded-2xl p-6 md:p-8 shadow-sm border`}>
-            <h2 className="text-xl md:text-2xl font-medium mb-8 leading-relaxed">
+          <div className={`${themeClasses.card} rounded-2xl p-6 md:p-8 shadow-sm border relative overflow-hidden`}>
+            {themeClasses.icon !== '🌱' && (
+              <div className="absolute top-0 right-0 p-8 opacity-[0.03] dark:opacity-10 pointer-events-none text-9xl transform translate-x-4 -translate-y-4 rotate-12">
+                {themeClasses.icon}
+              </div>
+            )}
+            <h2 className="text-xl md:text-2xl font-medium mb-8 leading-relaxed relative z-10">
               {themeClasses.icon !== '🌱' && <span className="mr-2 text-2xl">{themeClasses.icon}</span>}
               {currentQ.question}
             </h2>
 
-            <div className="space-y-3">
+            <div className="space-y-3 relative z-10">
               {currentQ.options.map((option, idx) => {
-                let btnClass = "w-full text-left p-4 rounded-xl border transition-all ";
+                let btnClass = "w-full text-left p-4 rounded-xl border transition-all relative overflow-hidden group ";
                 
                 if (showInstantFeedback) {
                   if (idx === currentQ.correctIndex) {
@@ -1670,7 +1688,12 @@ ${questionsSummary}`;
 
                 return (
                   <button key={idx} onClick={() => handleAnswer(idx)} disabled={isReview || showInstantFeedback} className={btnClass}>
-                    <div className="flex items-start gap-3">
+                    {themeClasses.icon !== '🌱' && (
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-10 transition-opacity text-4xl pointer-events-none">
+                        {themeClasses.icon}
+                      </div>
+                    )}
+                    <div className="flex items-start gap-3 relative z-10">
                       <span className="font-bold shrink-0 w-6">{String.fromCharCode(65 + idx)}.</span>
                       <span>{option}</span>
                       {(isReview || showInstantFeedback) && idx === currentQ.correctIndex && <CheckCircle2 className="w-5 h-5 text-green-500 ml-auto shrink-0" />}
