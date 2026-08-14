@@ -48,7 +48,16 @@ export default function ClockWidget() {
   return (
     <div className={`hidden md:flex items-center gap-2 mr-2 font-mono`}>
        <div className="flex items-center gap-1.5 bg-gradient-to-r from-pink-100 to-rose-100 dark:from-pink-900/40 dark:to-rose-900/40 px-3 py-1.5 rounded-2xl border border-pink-200 dark:border-pink-800/50 shadow-sm text-pink-700 dark:text-pink-300 font-bold transition-transform hover:scale-105 cursor-default relative overflow-hidden group">
-          <span className="text-base group-hover:animate-bounce">🌸</span>
+                    <span className="relative flex items-center justify-center w-5 h-5 overflow-visible">
+            <span className="text-base group-hover:animate-bounce z-10 relative">🌸</span>
+            <div className="absolute inset-0 pointer-events-none -inset-4 overflow-hidden z-0 hidden group-hover:block">
+              <span className="absolute text-[8px] top-[-5px] left-[20%] animate-petal-fall" style={{ animationDelay: '0.1s', animationDuration: '2.2s' }}>🌸</span>
+              <span className="absolute text-[10px] top-[-10px] left-[50%] animate-petal-fall" style={{ animationDelay: '0.4s', animationDuration: '1.8s' }}>🌸</span>
+              <span className="absolute text-[8px] top-[0px] left-[80%] animate-petal-fall" style={{ animationDelay: '0.7s', animationDuration: '2.5s' }}>🌸</span>
+              <span className="absolute text-[12px] top-[-15px] left-[35%] animate-petal-fall" style={{ animationDelay: '1.2s', animationDuration: '2s' }}>🌸</span>
+              <span className="absolute text-[9px] top-[-5px] left-[70%] animate-petal-fall" style={{ animationDelay: '0.5s', animationDuration: '2.1s' }}>🌸</span>
+            </div>
+          </span>
           <span className="ml-1">{formatTime(now)}</span>
           <span className="text-xs opacity-60 animate-pulse">{getSeconds(now)}</span>
        </div>
@@ -56,7 +65,10 @@ export default function ClockWidget() {
        {isHome && (
          <>
            <div className="hidden lg:flex items-center gap-2 bg-gradient-to-r from-cyan-100 to-blue-100 dark:from-cyan-900/40 dark:to-blue-900/40 px-3 py-1.5 rounded-2xl border border-cyan-200 dark:border-cyan-800/50 shadow-sm text-cyan-700 dark:text-cyan-300 font-bold transition-transform hover:scale-105 cursor-default group">
-              <span className="text-base group-hover:animate-sway origin-bottom">☁️</span>
+                            <span className="relative flex items-center justify-center w-5 h-5 overflow-visible">
+                <span className="absolute transition-all duration-700 ease-in-out z-10 text-base group-hover:animate-sway origin-bottom group-hover:-translate-x-1">☁️</span>
+                <span className="absolute transition-all duration-700 ease-in-out transform scale-50 opacity-0 group-hover:scale-100 group-hover:opacity-100 group-hover:translate-x-2 group-hover:-translate-y-1 text-sm z-0">☀️</span>
+              </span>
               <span>{formatDate(now)}</span>
            </div>
            
