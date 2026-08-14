@@ -49,7 +49,7 @@ export default function HiddenDocsManager() {
           // With search -> fetch all docs and filter
           // In a real large app, this is bad, but for a simple admin dashboard it's okay.
           const snapshot = await getDocs(collection(db, 'documents'));
-          const allDocs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          const allDocs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
           
           const queryLower = searchQuery.toLowerCase();
           const filtered = allDocs.filter(doc => {
