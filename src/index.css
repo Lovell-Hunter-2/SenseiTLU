@@ -33,3 +33,13 @@
     @apply bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 min-h-screen;
   }
 }
+
+@theme {
+  --animate-petal-fall: petalFall 2s linear infinite;
+  @keyframes petalFall {
+    0% { transform: translateY(-10px) rotate(0deg) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(40px) rotate(360deg) translateX(20px); opacity: 0; }
+  }
+}
