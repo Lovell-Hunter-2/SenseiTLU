@@ -47,19 +47,20 @@ export default function ClockWidget() {
 
   return (
     <div className={`hidden md:flex items-center gap-2 mr-2 font-mono`}>
-       <div className="flex items-center gap-1.5 bg-gradient-to-r from-pink-100 to-rose-100 dark:from-pink-900/40 dark:to-rose-900/40 px-3 py-1.5 rounded-2xl border border-pink-200 dark:border-pink-800/50 shadow-sm text-pink-700 dark:text-pink-300 font-bold transition-transform hover:scale-105 cursor-default relative group">
-                    <span className="relative flex items-center justify-center w-5 h-5 overflow-visible">
+       <div className="flex items-center gap-1.5 bg-gradient-to-r from-pink-100 to-rose-100 dark:from-pink-900/40 dark:to-rose-900/40 px-3 py-1.5 rounded-2xl border border-pink-200 dark:border-pink-800/50 shadow-sm text-pink-700 dark:text-pink-300 font-bold transition-transform hover:scale-105 cursor-default relative group overflow-hidden">
+          <span className="relative flex items-center justify-center w-5 h-5 overflow-visible z-10">
             <span className="text-base group-hover:animate-bounce z-10 relative">🌸</span>
-            <div className="absolute pointer-events-none -inset-10 z-0 hidden group-hover:block">
-              <span className="absolute text-[8px] top-[-5px] left-[20%] animate-petal-fall" style={{ animationDelay: '0.1s', animationDuration: '2.2s' }}>🌸</span>
-              <span className="absolute text-[10px] top-[-10px] left-[50%] animate-petal-fall" style={{ animationDelay: '0.4s', animationDuration: '1.8s' }}>🌸</span>
-              <span className="absolute text-[8px] top-[0px] left-[80%] animate-petal-fall" style={{ animationDelay: '0.7s', animationDuration: '2.5s' }}>🌸</span>
-              <span className="absolute text-[12px] top-[-15px] left-[35%] animate-petal-fall" style={{ animationDelay: '1.2s', animationDuration: '2s' }}>🌸</span>
-              <span className="absolute text-[9px] top-[-5px] left-[70%] animate-petal-fall" style={{ animationDelay: '0.5s', animationDuration: '2.1s' }}>🌸</span>
-            </div>
           </span>
-          <span className="ml-1">{formatTime(now)}</span>
-          <span className="text-xs opacity-60 animate-pulse">{getSeconds(now)}</span>
+          <div className="absolute inset-0 pointer-events-none z-0 hidden group-hover:block opacity-60">
+            <span className="absolute text-[10px] top-[-15px] left-[10%] animate-petal-fall" style={{ animationDelay: '0s', animationDuration: '1.5s' }}>🌸</span>
+            <span className="absolute text-[8px] top-[-15px] left-[40%] animate-petal-fall" style={{ animationDelay: '0.1s', animationDuration: '2s' }}>🌸</span>
+            <span className="absolute text-[12px] top-[-15px] left-[70%] animate-petal-fall" style={{ animationDelay: '0.2s', animationDuration: '1.7s' }}>🌸</span>
+            <span className="absolute text-[10px] top-[-15px] left-[25%] animate-petal-fall" style={{ animationDelay: '0.3s', animationDuration: '1.4s' }}>🌸</span>
+            <span className="absolute text-[9px] top-[-15px] left-[85%] animate-petal-fall" style={{ animationDelay: '0.1s', animationDuration: '1.9s' }}>🌸</span>
+            <span className="absolute text-[11px] top-[-15px] left-[55%] animate-petal-fall" style={{ animationDelay: '0.4s', animationDuration: '1.6s' }}>🌸</span>
+          </div>
+          <span className="ml-1 z-10 relative">{formatTime(now)}</span>
+          <span className="text-xs opacity-60 animate-pulse z-10 relative">{getSeconds(now)}</span>
        </div>
        
        {isHome && (
