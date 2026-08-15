@@ -459,7 +459,7 @@ ${subjectsStr}
       >
         <div className="flex items-center gap-2 pointer-events-none">
           <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
-            <Sparkles className="w-4 h-4" />
+            <img src="/avt_tlu (remove).png" alt="AI" className="w-[26px] h-[26px] object-contain rounded-b-lg drop-shadow-sm scale-110" />
           </div>
           <span className="font-bold text-sm">Sensei AI</span>
         </div>
