@@ -172,7 +172,7 @@ export default function Layout() {
                 className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-blue-600 dark:text-blue-400"
                 title="Trợ lý AI"
               >
-                <Sparkles className="w-5 h-5" />
+                <img src="/avt_tlu (remove).png" alt="AI" className="w-[26px] h-[26px] object-contain rounded-b-[4px] drop-shadow-sm scale-110" />
               </button>
 
               {/* Install App */}
@@ -347,7 +347,7 @@ export default function Layout() {
                 className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-blue-600 dark:text-blue-400"
                 title="Trợ lý AI"
               >
-                <Sparkles className="w-5 h-5" />
+                <img src="/avt_tlu (remove).png" alt="AI" className="w-[26px] h-[26px] object-contain rounded-b-[4px] drop-shadow-sm scale-110" />
               </button>
 
               {location.pathname !== "/" && (
