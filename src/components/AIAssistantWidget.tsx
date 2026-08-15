@@ -149,9 +149,9 @@ export function AIAssistantWidget() {
               y: position.y
             }}
             exit={{ scale: 0, opacity: 0 }}
-            transition={{ type: 'tween', duration: 0.2 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             className="fixed z-50 top-0 left-0 cursor-grab active:cursor-grabbing flex flex-col items-center gap-1 group"
-            style={{ touchAction: 'none', willChange: 'transform' }}
+            style={{ touchAction: 'none' }}
           >
             {/* Nút đóng mascot - chỉ hiện khi hover */}
             <button 
@@ -164,9 +164,9 @@ export function AIAssistantWidget() {
 
             <button
               onClick={handleClick}
-              className="w-12 h-12 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg flex items-center justify-center relative shadow-blue-500/30 ring-4 ring-white dark:ring-slate-900 transition-transform hover:scale-105"
+              className="w-12 h-12 bg-white dark:bg-slate-800 border-2 border-blue-500 text-white rounded-full shadow-lg flex items-center justify-center relative shadow-blue-500/30 ring-4 ring-white dark:ring-slate-900 transition-transform hover:scale-105"
             >
-              <Sparkles className="w-6 h-6" />
+              <img src="/avt_tlu (remove).png" alt="AI" className="w-[38px] h-[38px] object-contain rounded-b-xl drop-shadow-sm scale-110" />
             </button>
             <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-full opacity-90 shadow-sm pointer-events-none">
               AI
