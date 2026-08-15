@@ -431,24 +431,22 @@ export default function Layout() {
 
       {/* Footer */}
       <footer className="w-full py-8 text-center text-sm text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 mt-auto bg-transparent border-b">
-        <div className="container mx-auto px-4 flex flex-col items-center justify-center gap-2">
-          <div className="flex gap-6 mb-2">
-            <Link
-              to="/privacy"
-              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            >
-              Chính sách bảo mật
-            </Link>
-            <Link
-              to="/terms"
-              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            >
-              Điều khoản dịch vụ
-            </Link>
-          </div>
-          <p>
+        <div className="container mx-auto px-8 sm:px-24 max-w-5xl flex flex-col md:flex-row items-center justify-between gap-4">
+          <Link
+            to="/privacy"
+            className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors order-2 md:order-1"
+          >
+            Chính sách bảo mật
+          </Link>
+          <p className="order-1 md:order-2">
             © {new Date().getFullYear()} LovellTituss161. All rights reserved.
           </p>
+          <Link
+            to="/terms"
+            className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors order-3"
+          >
+            Điều khoản dịch vụ
+          </Link>
         </div>
       </footer>
 
