@@ -484,9 +484,9 @@ export default function Layout() {
               >
                 <div className="animate-wobble origin-bottom hover:scale-105 transition-transform duration-300">
                   <img
-                    src={avtTlu}
+                    src="/avt_tlu (remove).png"
                     alt="Hỗ trợ viên Capybara"
-                    className="w-18 h-18 sm:w-20 sm:h-20 object-contain drop-shadow-xl mix-blend-multiply dark:mix-blend-normal rounded-full dark:bg-white"
+                    className="w-20 h-20 sm:w-24 sm:h-24 object-contain drop-shadow-2xl"
                   />
                 </div>
               </a>
