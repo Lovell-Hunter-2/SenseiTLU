@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import ClockWidget from "../components/ClockWidget";
 import { Link } from "react-router-dom";
 import {
   collection,
@@ -455,7 +456,7 @@ export default function Home() {
   return (
     <div className="space-y-8 relative min-h-screen">
       {/* Background Capybara Watermark */}
-      <div className="fixed inset-x-0 bottom-0 pointer-events-none flex justify-center items-end z-0 opacity-[0.06] dark:opacity-[0.1]">
+      <div className="fixed inset-0 pointer-events-none flex justify-center items-center z-0 opacity-[0.04] dark:opacity-[0.08] mt-20">
         <img src="/avt_tlu (remove).png" alt="" className="w-[80vw] max-w-[600px] object-contain object-bottom" />
       </div>
 
@@ -477,6 +478,7 @@ export default function Home() {
 
         {/* Main Center Content */}
         <div className="flex flex-col items-center justify-center space-y-6 text-center z-10 w-full max-w-xl">
+          <ClockWidget isMobileView={true} />
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
             📚 Tài liệu{" "}
             <span className="text-blue-600 dark:text-blue-400">SenseiTLU</span>
