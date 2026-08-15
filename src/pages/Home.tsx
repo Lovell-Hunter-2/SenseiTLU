@@ -453,9 +453,14 @@ export default function Home() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative min-h-screen">
+      {/* Background Capybara Watermark */}
+      <div className="fixed inset-x-0 bottom-0 pointer-events-none flex justify-center items-end z-0 opacity-[0.06] dark:opacity-[0.1]">
+        <img src="/avt_tlu (remove).png" alt="" className="w-[80vw] max-w-[600px] object-contain object-bottom" />
+      </div>
+
       {/* Hero / Search Section */}
-      <div className="relative flex items-center justify-center py-12 px-4">
+      <div className="relative flex items-center justify-center py-12 px-4 z-10">
         {/* Left Image */}
         {heroImages.leftUrl && (
           <div className="hidden lg:block absolute left-8 xl:left-16 w-48 xl:w-64 z-0 animate-in fade-in zoom-in duration-700">
@@ -542,7 +547,7 @@ export default function Home() {
       </div>
 
       {/* Subjects Section */}
-      <div className="space-y-4">
+      <div className="space-y-4 relative z-10">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
             <div className="w-2 h-4 bg-blue-500 rounded-sm"></div>
