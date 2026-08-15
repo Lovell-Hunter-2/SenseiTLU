@@ -54,26 +54,26 @@ export default function ClockWidget({ isMobileView = false }: { isMobileView?: b
           {`
             .mobile-widget-1 .flower-icon { animation: bounce 3s infinite; }
             .mobile-widget-1 .petals-container { display: block !important; }
-            .mobile-widget-2 .cloud-icon { animation: slow-sway 4s ease-in-out infinite alternate; }
+            .mobile-widget-2 .cloud-icon-inner { animation: slow-cloud-move 4s ease-in-out infinite alternate; }
             .mobile-widget-2 .sun-icon { animation: slow-sun-rise 4s ease-in-out infinite alternate; }
             .mobile-widget-3 .seed-icon { animation: slow-shrink 4s ease-in-out infinite alternate; }
             .mobile-widget-3 .tree-icon { animation: slow-grow 4s ease-in-out infinite alternate; }
 
-            @keyframes slow-sway {
-              0%, 10% { transform: translateX(0); }
-              90%, 100% { transform: translateX(-6px); }
+            @keyframes slow-cloud-move {
+              0%, 15% { transform: translateX(0); }
+              85%, 100% { transform: translateX(-6px); }
             }
             @keyframes slow-sun-rise {
-              0%, 10% { opacity: 0; transform: scale(0.5) translate(-8px, 4px) rotate(0deg); }
-              90%, 100% { opacity: 1; transform: scale(1) translate(8px, -4px) rotate(12deg); }
+              0%, 15% { opacity: 0; transform: scale(0.5) translate(-8px, 4px) rotate(0deg); }
+              85%, 100% { opacity: 1; transform: scale(1) translate(8px, -4px) rotate(12deg); }
             }
             @keyframes slow-grow {
-              0%, 10% { transform: scale(0) translateY(8px); opacity: 0; }
-              90%, 100% { transform: scale(1.25) translateY(0); opacity: 1; }
+              0%, 15% { transform: scale(0) translateY(8px); opacity: 0; }
+              85%, 100% { transform: scale(1.25) translateY(0); opacity: 1; }
             }
             @keyframes slow-shrink {
-              0%, 10% { transform: scale(1) translateY(0); opacity: 1; }
-              90%, 100% { transform: scale(0) translateY(-8px); opacity: 0; }
+              0%, 15% { transform: scale(1) translateY(0); opacity: 1; }
+              85%, 100% { transform: scale(0) translateY(-8px); opacity: 0; }
             }
           `}
         </style>
@@ -98,8 +98,8 @@ export default function ClockWidget({ isMobileView = false }: { isMobileView?: b
          {isHome && (
            <>
              <div className={`flex flex-1 items-center justify-center gap-1 min-[375px]:gap-1.5 bg-gradient-to-r from-cyan-100 to-blue-100 dark:from-cyan-900/40 dark:to-blue-900/40 py-1.5 rounded-xl min-[375px]:rounded-2xl border border-cyan-200 dark:border-cyan-800/50 shadow-sm text-cyan-700 dark:text-cyan-300 font-bold transition-transform cursor-default ${isMobileView ? 'mobile-widget-2 flex' : 'hidden lg:flex group hover:scale-105'}`}>
-                <span className={`relative flex items-center justify-center w-5 h-5 min-[375px]:w-6 min-[375px]:h-6 overflow-visible origin-bottom ${isMobileView ? 'cloud-icon' : 'group-hover:animate-sway'}`}>
-                  <span className={`absolute z-10 text-sm min-[375px]:text-base transition-transform duration-500 ${isMobileView ? '' : 'group-hover:-translate-x-1.5'}`}>☁️</span>
+                <span className={`relative flex items-center justify-center w-5 h-5 min-[375px]:w-6 min-[375px]:h-6 overflow-visible origin-bottom ${isMobileView ? '' : 'group-hover:animate-sway'}`}>
+                  <span className={`absolute z-10 text-sm min-[375px]:text-base transition-transform duration-500 ${isMobileView ? 'cloud-icon-inner' : 'group-hover:-translate-x-1.5'}`}>☁️</span>
                   <span className={`absolute text-xs min-[375px]:text-sm z-0 opacity-0 scale-50 -translate-x-2 translate-y-1 transition-all duration-500 ease-out ${isMobileView ? 'sun-icon' : 'group-hover:opacity-100 group-hover:scale-100 group-hover:translate-x-2 group-hover:-translate-y-1 group-hover:rotate-12'}`}>☀️</span>
                 </span>
                 <span className="whitespace-nowrap tracking-tighter min-[375px]:tracking-normal">{formatDate(now)}</span>
