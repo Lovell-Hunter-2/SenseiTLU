@@ -164,9 +164,9 @@ export function AIAssistantWidget() {
 
             <button
               onClick={handleClick}
-              className="w-12 h-12 bg-white dark:bg-slate-800 border-2 border-blue-500 text-white rounded-full shadow-lg flex items-center justify-center relative shadow-blue-500/30 ring-4 ring-white dark:ring-slate-900 transition-transform hover:scale-105"
+              className="w-16 h-16 bg-white dark:bg-slate-800 text-white rounded-full shadow-lg flex items-center justify-center relative shadow-blue-500/30 transition-transform hover:scale-105"
             >
-              <img src="/avt_tlu (remove).png" alt="AI" className="w-[38px] h-[38px] object-contain rounded-b-xl drop-shadow-sm scale-110" />
+              <img src="/avt_tlu (remove).png" alt="AI" className="w-[50px] h-[50px] object-contain rounded-b-2xl drop-shadow-sm scale-110" />
             </button>
             <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-full opacity-90 shadow-sm pointer-events-none">
               AI
