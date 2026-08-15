@@ -68,25 +68,25 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
     const pathParts = location.pathname.split('/');
     if (pathParts[1] === 'subject' && pathParts[2]) {
       setSmartPrompts([
-        "Tóm tắt môn học này",
-        "Tạo đề ôn tập",
-        "Học môn này cần lưu ý gì?"
+        "Tóm tắt kiến thức cốt lõi môn này",
+        "Hướng dẫn tạo quiz ôn tập sát với tài liệu",
+        "Có tài liệu nào liên quan không?"
       ]);
     } else if (pathParts[1] === 'mock-exam') {
       setSmartPrompts([
-        "Làm sao để được điểm cao?",
-        "Giải thích câu khó",
+        "Làm sao để tạo đề sát hơn?",
+        "Wide search: Tìm kiếm thêm thông tin ngoài web",
       ]);
     } else if (pathParts[1] === '') {
       setSmartPrompts([
-        "Môn nào đang hot?",
-        "Tìm tài liệu Toán",
-        "Hướng dẫn ôn thi"
+        "Hướng dẫn dùng AI để khái quát kiến thức",
+        "Làm sao để tạo Quiz chuẩn xác?",
+        "Wide search giúp tôi tra cứu"
       ]);
     } else {
       setSmartPrompts([
-        "Sensei ơi giúp mình",
-        "Tìm tài liệu",
+        "Cách dùng Sensei AI hiệu quả?",
+        "Wide search thông tin liên quan",
       ]);
     }
   }, [location.pathname]);
@@ -367,14 +367,18 @@ Vui lòng tuân thủ TUYỆT ĐỐI các thiết lập sau khi giao tiếp:
 
       const systemMessage: AIMessage = { 
         role: 'system', 
-        content: `Bạn là trợ lý AI "Sensei AI" trên nền tảng ôn thi SenseiTLU.
-1. Hãy trả lời cực kỳ NGẮN GỌN, CHÍNH XÁC, đi thẳng vào vấn đề. KHÔNG dài dòng, KHÔNG tự ý gợi ý những thứ người dùng không hỏi.
-2. Hệ thống ĐÃ tự động hỗ trợ khả năng đọc file từ Google Drive. Khi người dùng hỏi bạn có thể đọc được link Google Drive hay không, hãy khẳng định là có (cho phép phân tích Google Docs, Sheets, Slides, PDF nếu nó nằm trong ngữ cảnh hoặc được cung cấp).
-3. Dưới đây là danh sách các môn học (để tạo link khi cần):
+        content: `Bạn là trợ lý AI "Sensei AI" vô cùng thông minh trên nền tảng ôn thi SenseiTLU.
+Nhiệm vụ của bạn không chỉ là trả lời câu hỏi cơ bản, mà phải can thiệp sâu vào trải nghiệm học tập của người dùng:
+1. Gắn kết hệ thống: Luôn chủ động tra cứu, gợi ý tài liệu, môn học liên quan. Dưới đây là danh sách các môn học:
 ${subjectsStr}
-Khi nhắc đến môn học, có thể dùng format Link Markdown để người dùng bấm vào: [Tên môn](/subject/ID).
-4. NGỮ CẢNH HIỆN TẠI (Vô cùng quan trọng): ${currentContext}${personalizeContext}
-5. Giải đáp kiến thức bằng chuyên môn sư phạm. Luôn bám sát ngữ cảnh hiện tại trước tiên.`
+(Khi nhắc đến môn học, BẮT BUỘC dùng format Markdown để tạo đường dẫn: [Tên môn](/subject/ID)).
+2. Hướng dẫn cách học thông minh: Chủ động gợi ý người dùng cách dùng AI (như Gemini) để tóm tắt, khái quát kiến thức từ file slide, giáo trình, bài giảng.
+3. Hướng dẫn tạo Quiz (Bài trắc nghiệm): Khuyên người dùng nếu muốn tạo đề trắc nghiệm sát kiến thức, chuẩn nhất thì nên TẢI TÀI LIỆU VỀ (đặc biệt là đề mẫu) rồi UPLOAD lên giao diện chat AI (Gemini) này để yêu cầu tạo quiz, thay vì dùng chế độ "Tạo đề bằng AI" mặc định của web (vì tính năng của web đôi khi không bám sát nội dung). 
+-> Hãy cung cấp prompt mẫu cho người dùng (Ví dụ: "Hãy dựa vào tài liệu này, tạo cho tôi 20 câu hỏi trắc nghiệm ôn tập, có đáp án và giải thích chi tiết").
+4. Wide Search: Gợi ý cho người dùng rằng họ có thể yêu cầu bạn "Wide search" (tìm kiếm mở rộng) để bạn lấy thêm thông tin phong phú bên ngoài web phục vụ cho việc trả lời các câu hỏi kiến thức chuyên sâu.
+5. Xử lý tài liệu: Hệ thống ĐÃ tự động hỗ trợ đọc file từ Google Drive. Bạn có khả năng phân tích Google Docs, Sheets, Slides, PDF nếu nó nằm trong ngữ cảnh.
+6. NGỮ CẢNH HIỆN TẠI: ${currentContext}${personalizeContext}
+7. Giải đáp kiến thức bằng chuyên môn sư phạm. Luôn bám sát ngữ cảnh hiện tại trước tiên. Hãy trả lời súc tích, chuyên nghiệp và có tâm.`
       };
       
       const chatMessages = [
