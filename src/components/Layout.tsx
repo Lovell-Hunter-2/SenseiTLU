@@ -486,7 +486,7 @@ export default function Layout() {
                   <img
                     src="/avt_tlu (remove).png"
                     alt="Hỗ trợ viên Capybara"
-                    className="w-20 h-20 sm:w-24 sm:h-24 object-contain drop-shadow-2xl"
+                    className="w-20 h-20 sm:w-24 sm:h-24 object-contain drop-shadow-2xl rounded-b-[2rem] sm:rounded-b-[2.5rem]"
                   />
                 </div>
               </a>
