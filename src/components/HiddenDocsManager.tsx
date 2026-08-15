@@ -148,7 +148,7 @@ export default function HiddenDocsManager() {
           </div>
         ) : (
           <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-50 dark:bg-slate-800/50 sticky top-0 z-10">
+            <thead className="bg-slate-50 dark:bg-slate-800 sticky top-0 z-10 shadow-[0_1px_0_0_theme(colors.slate.200)] dark:shadow-[0_1px_0_0_theme(colors.slate.700)]">
               <tr>
                 <th className="px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Tên tài liệu</th>
                 <th className="px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Môn học</th>
