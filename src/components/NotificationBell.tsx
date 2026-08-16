@@ -12,6 +12,7 @@ interface AppNotification {
   message: string;
   link?: string;
   createdAt: any;
+  forAdminOnly?: boolean;
 }
 
 export function NotificationBell() {
