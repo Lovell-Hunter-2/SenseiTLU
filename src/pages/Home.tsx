@@ -464,7 +464,7 @@ export default function Home() {
       </div>
 
       {/* Hero / Search Section */}
-      <div className="relative flex items-center justify-center py-12 px-4 z-10">
+      <div className="relative flex items-center justify-center py-12 px-4 z-30">
         {/* Left Image */}
         {heroImages.leftUrl && (
           <div className="hidden lg:block absolute left-8 xl:left-16 w-48 xl:w-64 z-0 animate-in fade-in zoom-in duration-700">
