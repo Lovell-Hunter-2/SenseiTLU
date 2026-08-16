@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon, X, FileText, User as UserIcon, MapPin, Clock, EyeOff } from 'lucide-react';
+import { Navigate, Link } from 'react-router-dom';
+import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon, CheckCircle2, X, FileText, User as UserIcon, MapPin, Clock, EyeOff } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, doc, getDoc, getDocs, query, orderBy, limit, startAt, endAt, collectionGroup, getCountFromServer } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, orderBy, limit, startAt, endAt, collectionGroup, getCountFromServer, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import UserManagerModal from '../components/UserManagerModal';
 import HeroImageManagerModal from '../components/HeroImageManagerModal';
 import AdminManagerModal from '../components/AdminManagerModal';
@@ -72,6 +72,19 @@ const getFriendlyErrorContext = (log: ErrorLog) => {
     return { module, context };
 };
 
+interface Report {
+  id: string;
+  documentId: string;
+  documentTitle: string;
+  subjectId: string;
+  subjectName: string;
+  reason: string;
+  userId: string;
+  userEmail: string;
+  status: string;
+  createdAt: any;
+}
+
 export default function AdminDashboard() {
   const { user, isAdmin, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'reports' | 'storage' | 'retention' | 'errors' | 'users' | 'ui' | 'admins' | 'hidden_docs'>('overview');
@@ -85,6 +98,7 @@ export default function AdminDashboard() {
   const [totalUsers, setTotalUsers] = useState(0);
   const [chartData, setChartData] = useState<any[]>([]);
   const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [retentionData, setRetentionData] = useState<any[]>([]);
   const [systemResources, setSystemResources] = useState({ documents: 0, quizzes: 0 });
   const [systemActivities, setSystemActivities] = useState<any[]>([]);
@@ -234,6 +248,27 @@ useEffect(() => {
   }, [isAdmin]);
 
   // Chart Generation Effect
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const qReports = query(
+      collection(db, 'reports'),
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    );
+    const unsubscribeReports = onSnapshot(qReports, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Report[];
+      setReports(docs);
+    });
+
+    return () => {
+      unsubscribeReports();
+    };
+  }, [isAdmin]);
+
   useEffect(() => {
     if (!isAdmin) return;
     
@@ -417,6 +452,15 @@ useEffect(() => {
   if (loading) return <div className="flex justify-center py-20">Đang tải...</div>;
   if (!user || !isAdmin) return <Navigate to="/" replace />;
 
+  const handleResolveReport = async (reportId: string) => {
+    if (!window.confirm("Đánh dấu báo cáo này là đã xử lý và xóa khỏi danh sách?")) return;
+    try {
+      await deleteDoc(doc(db, 'reports', reportId));
+    } catch (error) {
+      console.error("Error resolving report:", error);
+      alert('Có lỗi xảy ra khi xử lý báo cáo.');
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -747,13 +791,56 @@ useEffect(() => {
                 </div>
               </div>
               
-              <div className="rounded-xl border border-orange-200 dark:border-orange-900/50 bg-orange-50 dark:bg-orange-900/10 p-8 text-center">
-                <AlertTriangle className="w-12 h-12 text-orange-400 mx-auto mb-3 opacity-50" />
-                <h3 className="font-bold text-lg mb-2">Chưa có báo cáo nào</h3>
-                <p className="text-slate-500 max-w-sm mx-auto">
-                  Tính năng kiểm duyệt nội dung đang trong giai đoạn phát triển. Khi hệ thống bình luận hoặc tải tài liệu của người dùng được mở, các báo cáo sẽ xuất hiện tại đây.
-                </p>
-              </div>
+              {reports.length === 0 ? (
+                <div className="rounded-xl border border-orange-200 dark:border-orange-900/50 bg-orange-50 dark:bg-orange-900/10 p-8 text-center">
+                  <AlertTriangle className="w-12 h-12 text-orange-400 mx-auto mb-3 opacity-50" />
+                  <h3 className="font-bold text-lg mb-2">Chưa có báo cáo nào</h3>
+                  <p className="text-slate-500 max-w-sm mx-auto">
+                    Hiện tại không có báo cáo lỗi tài liệu nào cần xử lý.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {reports.map(report => (
+                    <div key={report.id} className="border border-slate-200 dark:border-slate-800 rounded-xl p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div className="space-y-2">
+                          <h4 className="font-bold text-lg text-red-600 dark:text-red-400 flex items-center gap-2">
+                            <AlertTriangle className="w-5 h-5" /> Báo cáo lỗi tài liệu
+                          </h4>
+                          <p className="text-sm font-medium">
+                            <span className="text-slate-500 dark:text-slate-400">Tài liệu:</span>{' '}
+                            <Link to={`/subject/${report.subjectId}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                              {report.documentTitle}
+                            </Link>
+                          </p>
+                          <p className="text-sm font-medium">
+                            <span className="text-slate-500 dark:text-slate-400">Môn học:</span> {report.subjectName}
+                          </p>
+                          <p className="text-sm font-medium">
+                            <span className="text-slate-500 dark:text-slate-400">Người báo cáo:</span> {report.userEmail}
+                          </p>
+                          <div className="bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 p-3 rounded-lg text-sm mt-2">
+                            <span className="font-semibold block mb-1">Chi tiết lỗi:</span>
+                            {report.reason}
+                          </div>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {report.createdAt && typeof report.createdAt.toDate === 'function' ? report.createdAt.toDate().toLocaleString('vi-VN') : 'Vừa xong'}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 gap-3">
+                          <button
+                            onClick={() => handleResolveReport(report.id)}
+                            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                          >
+                            <CheckCircle2 className="w-4 h-4" /> Đã xử lý
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
