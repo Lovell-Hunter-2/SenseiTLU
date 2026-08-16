@@ -34,6 +34,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      setLoading(false); // Unblock UI immediately
+      
       if (currentUser) {
         // Check if admin
         const adminEmails = ['taikhoanphubg4@gmail.com', 'ngominhthuanbg1612007@gmail.com'];
@@ -71,7 +73,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         setIsAdmin(false);
       }
-      setLoading(false);
     });
 
     return unsubscribe;
