@@ -28,7 +28,7 @@ if ((firebaseConfig as any).recaptchaSiteKey) {
 // Initialize Firestore with Offline Persistence Cache enabled
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-});
+}, (firebaseConfig as any).firestoreDatabaseId);
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
