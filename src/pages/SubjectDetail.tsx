@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, serverTimestamp, deleteDoc, limit } from 'firebase/firestore';
-import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon, ClipboardList, ScrollText, Lightbulb, Sigma, X, LayoutTemplate, Lock, LogIn, Bot, Sparkles } from 'lucide-react';
+import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon, ClipboardList, ScrollText, Lightbulb, Sigma, X, LayoutTemplate, Lock, LogIn, Bot, Sparkles, Flag } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { logActivityEvent, logSubjectDocumentView } from '../useActivityLogger';
@@ -34,6 +34,12 @@ export default function SubjectDetail() {
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingDocId, setEditingDocId] = useState<string | null>(null);
+
+  // Report State
+  const [reportDocId, setReportDocId] = useState<string | null>(null);
+  const [reportDocTitle, setReportDocTitle] = useState<string>('');
+  const [reportReason, setReportReason] = useState('');
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   // Document Viewer State
   const [selectedDocument, setSelectedDocument] = useState<{title: string, url: string} | null>(null);
@@ -236,6 +242,41 @@ export default function SubjectDetail() {
     }
   };
 
+  const handleReportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !reportDocId || !reportReason.trim()) return;
+    setIsSubmittingReport(true);
+    try {
+      await addDoc(collection(db, 'reports'), {
+        documentId: reportDocId,
+        documentTitle: reportDocTitle,
+        subjectId: id,
+        subjectName: subject?.name || '',
+        reason: reportReason.trim(),
+        userId: user.uid,
+        userEmail: user.email,
+        status: 'pending',
+        createdAt: serverTimestamp()
+      });
+      // Add a notification for admins
+      await addDoc(collection(db, 'notifications'), {
+        title: `Báo cáo tài liệu: ${reportDocTitle}`,
+        message: `Lý do: ${reportReason.trim()}`,
+        link: `/subject/${id}`,
+        forAdminOnly: true,
+        createdAt: serverTimestamp(),
+      });
+      alert('Đã gửi báo cáo thành công. Cảm ơn bạn!');
+      setReportDocId(null);
+      setReportReason('');
+    } catch (error) {
+      console.error('Error reporting:', error);
+      alert('Có lỗi xảy ra khi gửi báo cáo.');
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
+
   if (loading) return <div className="py-12 text-center text-slate-500">Đang tải dữ liệu...</div>;
 
   if (!user) {
@@ -338,22 +379,34 @@ export default function SubjectDetail() {
                 </span>
               )}
               
-              {isAdmin && (
-                <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 ml-auto">
+                {user && (
                   <button
-                    onClick={() => handleEditClick(doc)}
-                    className="text-xs font-medium text-blue-500 hover:text-blue-600 flex items-center gap-1"
+                    onClick={() => { setReportDocId(doc.id); setReportDocTitle(doc.title); }}
+                    className="text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 p-1.5 rounded-full transition-colors"
+                    title="Báo cáo lỗi tài liệu"
                   >
-                    <Edit2 className="w-3 h-3" /> Sửa
+                    <Flag className="w-4 h-4" />
                   </button>
-                  <button
-                    onClick={() => setDeleteConfirmId(doc.id)}
-                    className="text-xs font-medium text-red-500 hover:text-red-600 flex items-center gap-1"
-                  >
-                    <Trash2 className="w-3 h-3" /> Xóa
-                  </button>
-                </div>
-              )}
+                )}
+                 
+                {isAdmin && (
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => handleEditClick(doc)}
+                      className="text-xs font-medium text-blue-500 hover:text-blue-600 flex items-center gap-1"
+                    >
+                      <Edit2 className="w-3 h-3" /> Sửa
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirmId(doc.id)}
+                      className="text-xs font-medium text-red-500 hover:text-red-600 flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3 h-3" /> Xóa
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -722,6 +775,48 @@ export default function SubjectDetail() {
                   className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                 >
                   {editingDocId ? 'Lưu thay đổi' : 'Thêm'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {reportDocId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 dark:bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm p-6 shadow-xl border border-slate-200 dark:border-slate-800 text-center relative overflow-hidden">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
+               <Flag className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">Báo cáo lỗi</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 line-clamp-2">
+              Bạn đang báo cáo tài liệu: <span className="font-semibold">{reportDocTitle}</span>
+            </p>
+            <form onSubmit={handleReportSubmit}>
+              <textarea
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                placeholder="Nhập chi tiết nội dung lỗi..."
+                className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 focus:ring-2 focus:ring-blue-500 outline-none resize-none text-sm mb-4"
+                rows={4}
+                required
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => { setReportDocId(null); setReportReason(''); }}
+                  className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium text-slate-600 dark:text-slate-300"
+                  disabled={isSubmittingReport}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors font-medium disabled:opacity-50"
+                  disabled={isSubmittingReport || !reportReason.trim()}
+                >
+                  {isSubmittingReport ? 'Đang gửi...' : 'Gửi báo cáo'}
                 </button>
               </div>
             </form>
