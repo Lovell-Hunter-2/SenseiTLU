@@ -496,7 +496,7 @@ export default function Home() {
             </div>
             <input
               type="text"
-              className="block w-full pl-11 pr-4 py-4 bg-white/80 dark:bg-slate-900 backdrop-blur-sm border border-slate-200/60 dark:border-slate-800 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] dark:shadow-none focus:shadow-[0_4px_25px_-4px_rgba(6,81,237,0.15)] focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all outline-none"
+              className="block w-full pl-11 pr-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm dark:shadow-none focus:shadow-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
               placeholder="Tìm môn học..."
               value={searchQuery}
               onChange={(e) => {
@@ -507,7 +507,7 @@ export default function Home() {
             />
             {/* Autocomplete Dropdown */}
             {showSuggestions && searchQuery && (
-              <div className="absolute w-full mt-2 bg-white/95 dark:bg-slate-900 backdrop-blur-xl border border-slate-200/60 dark:border-slate-800 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] dark:shadow-lg z-50 overflow-hidden max-h-60 overflow-y-auto hidden-scrollbar">
+              <div className="absolute w-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg z-50 overflow-hidden max-h-60 overflow-y-auto hidden-scrollbar">
                 {filteredSubjects.length > 0 ? (
                   filteredSubjects.map((sub) => (
                     <button
@@ -591,7 +591,7 @@ export default function Home() {
               return (
                 <div
                   key={subject.id}
-                  className="subject-card bg-white/80 dark:bg-slate-900 backdrop-blur-sm border border-slate-200/60 dark:border-slate-800 rounded-2xl p-5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:shadow-none dark:hover:shadow-none xl:hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full group relative focus:outline-none select-none md:select-auto"
+                  className="subject-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow-md dark:shadow-none dark:hover:shadow-none xl:hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full group relative focus:outline-none select-none md:select-auto"
                   onTouchStart={() => {
                     if (touchTimerRef.current)
                       clearTimeout(touchTimerRef.current);
@@ -679,7 +679,7 @@ export default function Home() {
       {/* Add Subject Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 dark:bg-black/50 backdrop-blur-sm">
-          <div className="bg-white/95 dark:bg-slate-900 backdrop-blur-xl rounded-3xl w-full max-w-md p-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-xl border border-white/50 dark:border-slate-800">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-6 shadow-xl border border-slate-200 dark:border-slate-800">
             <h3 className="text-xl font-bold mb-4">Thêm môn học mới</h3>
             <form onSubmit={handleAddSubject} className="space-y-4">
               <div>
@@ -756,7 +756,7 @@ export default function Home() {
       {/* Edit Subject Modal */}
       {editingSubject && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 dark:bg-black/50 backdrop-blur-sm">
-          <div className="bg-white/95 dark:bg-slate-900 backdrop-blur-xl rounded-3xl w-full max-w-md p-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-xl border border-white/50 dark:border-slate-800">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-6 shadow-xl border border-slate-200 dark:border-slate-800">
             <h3 className="text-xl font-bold mb-4">Sửa môn học</h3>
             <form onSubmit={handleUpdateSubject} className="space-y-4">
               <div>
@@ -839,7 +839,7 @@ export default function Home() {
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 dark:bg-black/50 backdrop-blur-sm">
-          <div className="bg-white/95 dark:bg-slate-900 backdrop-blur-xl rounded-3xl w-full max-w-sm p-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-xl border border-white/50 dark:border-slate-800 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-sm p-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-xl border border-slate-200 dark:border-slate-800 text-center">
             <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-8 h-8" />
             </div>
