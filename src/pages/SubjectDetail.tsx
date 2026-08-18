@@ -264,6 +264,8 @@ export default function SubjectDetail() {
         message: `Lý do: ${reportReason.trim()}`,
         link: `/subject/${id}`,
         forAdminOnly: true,
+        type: 'report',
+        userId: user.uid,
         createdAt: serverTimestamp(),
       });
       alert('Đã gửi báo cáo thành công. Cảm ơn bạn!');
