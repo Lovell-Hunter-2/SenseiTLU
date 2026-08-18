@@ -13,6 +13,7 @@ interface AppNotification {
   link?: string;
   createdAt: any;
   forAdminOnly?: boolean;
+  targetUserId?: string;
 }
 
 export function NotificationBell() {
@@ -60,14 +61,20 @@ export function NotificationBell() {
         ...doc.data()
       })) as AppNotification[];
       
-      setNotifications(docs);
+      const filteredDocs = docs.filter(doc => {
+        if (doc.forAdminOnly && !isAdmin) return false;
+        if (doc.targetUserId && doc.targetUserId !== user.uid) return false;
+        return true;
+      });
+
+      setNotifications(filteredDocs);
 
       // Check unread count
       if (user) {
         const lastReadStr = localStorage.getItem(`lastReadNotif_${user.uid}`);
         const lastReadTime = lastReadStr ? parseInt(lastReadStr, 10) : 0;
         let unread = 0;
-        for (const doc of docs) {
+        for (const doc of filteredDocs) {
           if (doc.createdAt && typeof doc.createdAt.toMillis === 'function') {
             if (doc.createdAt.toMillis() > lastReadTime) {
               unread++;
