@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
-import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon, CheckCircle2, X, FileText, User as UserIcon, MapPin, Clock, EyeOff } from 'lucide-react';
+import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon, CheckCircle2, X, FileText, User as UserIcon, MapPin, Clock, EyeOff, MessageSquare } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, doc, getDoc, getDocs, query, orderBy, limit, startAt, endAt, collectionGroup, getCountFromServer, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, orderBy, limit, startAt, endAt, collectionGroup, getCountFromServer, updateDoc, deleteDoc, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import UserManagerModal from '../components/UserManagerModal';
 import HeroImageManagerModal from '../components/HeroImageManagerModal';
 import AdminManagerModal from '../components/AdminManagerModal';
@@ -102,6 +102,11 @@ export default function AdminDashboard() {
   const [retentionData, setRetentionData] = useState<any[]>([]);
   const [systemResources, setSystemResources] = useState({ documents: 0, quizzes: 0 });
   const [systemActivities, setSystemActivities] = useState<any[]>([]);
+  
+  // Reply to report state
+  const [replyingToReport, setReplyingToReport] = useState<Report | null>(null);
+  const [replyMessage, setReplyMessage] = useState('');
+  const [isSendingReply, setIsSendingReply] = useState(false);
   
   // Dashboard states
   const [chartRange, setChartRange] = useState<number>(7);
@@ -459,6 +464,28 @@ useEffect(() => {
     } catch (error) {
       console.error("Error resolving report:", error);
       alert('Có lỗi xảy ra khi xử lý báo cáo.');
+    }
+  };
+
+  const handleSendReply = async () => {
+    if (!replyingToReport || !replyMessage.trim()) return;
+    setIsSendingReply(true);
+    try {
+      await addDoc(collection(db, 'notifications'), {
+        title: `Phản hồi từ Admin về báo cáo tài liệu`,
+        message: replyMessage.trim(),
+        link: `/subject/${replyingToReport.subjectId}`,
+        targetUserId: replyingToReport.userId,
+        createdAt: serverTimestamp(),
+      });
+      alert('Đã gửi thông báo cho người dùng thành công.');
+      setReplyingToReport(null);
+      setReplyMessage('');
+    } catch (error) {
+      console.error("Error sending reply:", error);
+      alert('Có lỗi xảy ra khi gửi thông báo.');
+    } finally {
+      setIsSendingReply(false);
     }
   };
 
@@ -830,6 +857,12 @@ useEffect(() => {
                         </div>
                         <div className="flex shrink-0 gap-3">
                           <button
+                            onClick={() => setReplyingToReport(report)}
+                            className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-400 text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                          >
+                            <MessageSquare className="w-4 h-4" /> Phản hồi
+                          </button>
+                          <button
                             onClick={() => handleResolveReport(report.id)}
                             className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
                           >
@@ -1105,6 +1138,63 @@ useEffect(() => {
                     </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Reply Modal */}
+      {replyingToReport && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg shadow-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-blue-500" /> Phản hồi báo cáo
+              </h3>
+              <button
+                onClick={() => {
+                  setReplyingToReport(null);
+                  setReplyMessage('');
+                }}
+                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Đang phản hồi cho:</p>
+                <p className="font-medium text-slate-900 dark:text-slate-200">{replyingToReport.userEmail}</p>
+                <p className="text-sm text-slate-500 mt-2 truncate">Tài liệu: {replyingToReport.documentTitle}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Nội dung tin nhắn
+                </label>
+                <textarea
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  placeholder="Nhập nội dung phản hồi (ví dụ: Cảm ơn bạn, chúng tôi đã khắc phục lỗi này...)"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all h-32 resize-none"
+                />
+              </div>
+            </div>
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setReplyingToReport(null);
+                  setReplyMessage('');
+                }}
+                className="px-5 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleSendReply}
+                disabled={!replyMessage.trim() || isSendingReply}
+                className="px-5 py-2.5 text-sm font-bold bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl transition-colors flex items-center gap-2 shadow-lg shadow-blue-500/20"
+              >
+                {isSendingReply ? 'Đang gửi...' : 'Gửi thông báo'}
+              </button>
             </div>
           </div>
         </div>
