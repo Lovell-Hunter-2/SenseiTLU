@@ -103,9 +103,18 @@ service cloud.firestore {
                             (!request.resource.data.keys().hasAny(['subjectName']) || request.resource.data.subjectName is string);
     }
 
+    match /reports/{reportId} {
+      allow read, delete: if isAdmin();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
+    }
+
     match /notifications/{notificationId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.keys().hasAll(['title', 'message', 'type', 'createdAt']) && request.resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && (
+        (request.resource.data.keys().hasAll(['title', 'message', 'type', 'createdAt']) && request.resource.data.userId == request.auth.uid) ||
+        (request.resource.data.keys().hasAll(['title', 'message', 'forAdminOnly', 'createdAt']))
+      );
       allow update, delete: if isAdmin();
     }
   }
