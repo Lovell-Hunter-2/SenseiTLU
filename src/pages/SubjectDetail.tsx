@@ -218,9 +218,29 @@ export default function SubjectDetail() {
 
       if (editingDocId) {
         await updateDoc(doc(db, 'documents', editingDocId), docData);
+        if (isAdmin && user) {
+          await addDoc(collection(db, 'system_updates'), {
+            action: 'Cập nhật',
+            entity: 'Tài liệu',
+            details: `Môn: ${subject?.name || 'Không rõ'}, Tài liệu: ${newDoc.title}`,
+            adminEmail: user.email,
+            adminId: user.uid,
+            timestamp: serverTimestamp(),
+          });
+        }
       } else {
         docData.createdAt = serverTimestamp();
         await addDoc(collection(db, 'documents'), docData);
+        if (isAdmin && user) {
+          await addDoc(collection(db, 'system_updates'), {
+            action: 'Tạo mới',
+            entity: 'Tài liệu',
+            details: `Môn: ${subject?.name || 'Không rõ'}, Tài liệu: ${newDoc.title}`,
+            adminEmail: user.email,
+            adminId: user.uid,
+            timestamp: serverTimestamp(),
+          });
+        }
       }
 
       setIsAddModalOpen(false);
@@ -233,9 +253,19 @@ export default function SubjectDetail() {
     }
   };
 
-  const handleDeleteDocument = async (docId: string) => {
+  const handleDeleteDocument = async (docId: string, docTitle: string) => {
     try {
       await deleteDoc(doc(db, 'documents', docId));
+      if (isAdmin && user) {
+        await addDoc(collection(db, 'system_updates'), {
+          action: 'Xóa',
+          entity: 'Tài liệu',
+          details: `Môn: ${subject?.name || 'Không rõ'}, Tài liệu: ${docTitle}`,
+          adminEmail: user.email,
+          adminId: user.uid,
+          timestamp: serverTimestamp(),
+        });
+      }
       setDeleteConfirmId(null);
     } catch (error) {
       console.error("Error deleting document:", error);
@@ -843,7 +873,10 @@ export default function SubjectDetail() {
                 Hủy
               </button>
               <button
-                onClick={() => handleDeleteDocument(deleteConfirmId)}
+                onClick={() => {
+                  const docToDelete = filteredDocuments.find(d => d.id === deleteConfirmId);
+                  if (docToDelete) handleDeleteDocument(deleteConfirmId, docToDelete.title);
+                }}
                 className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors font-medium"
               >
                 Xóa
