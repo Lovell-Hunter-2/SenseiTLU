@@ -27,6 +27,12 @@ service cloud.firestore {
       allow create: if isAuthenticated();
     }
 
+    match /system_updates/{updateId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() || isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId) && request.resource.data.keys().hasAll(['email', 'role']) &&
