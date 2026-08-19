@@ -421,6 +421,16 @@ export default function Home() {
         iconName: newSubject.iconName,
         createdAt: serverTimestamp(),
       });
+      if (isAdmin && user) {
+        await addDoc(collection(db, 'system_updates'), {
+          action: 'Tạo mới',
+          entity: 'Môn học',
+          details: `Tên môn: ${newSubject.name}`,
+          adminEmail: user.email,
+          adminId: user.uid,
+          timestamp: serverTimestamp(),
+        });
+      }
       setIsAddModalOpen(false);
       setNewSubject({ name: "", description: "", iconName: "Book" });
     } catch (error) {
@@ -438,15 +448,35 @@ export default function Home() {
         description: editingSubject.description,
         iconName: editingSubject.iconName,
       });
+      if (isAdmin && user) {
+        await addDoc(collection(db, 'system_updates'), {
+          action: 'Cập nhật',
+          entity: 'Môn học',
+          details: `Tên môn: ${editingSubject.name}`,
+          adminEmail: user.email,
+          adminId: user.uid,
+          timestamp: serverTimestamp(),
+        });
+      }
       setEditingSubject(null);
     } catch (error) {
       console.error("Error updating subject:", error);
     }
   };
 
-  const handleDeleteSubject = async (subjectId: string) => {
+  const handleDeleteSubject = async (subjectId: string, subjectName: string) => {
     try {
       await deleteDoc(doc(db, "subjects", subjectId));
+      if (isAdmin && user) {
+        await addDoc(collection(db, 'system_updates'), {
+          action: 'Xóa',
+          entity: 'Môn học',
+          details: `Tên môn: ${subjectName}`,
+          adminEmail: user.email,
+          adminId: user.uid,
+          timestamp: serverTimestamp(),
+        });
+      }
       setDeleteConfirmId(null);
     } catch (error) {
       console.error("Error deleting subject:", error);
@@ -856,7 +886,10 @@ export default function Home() {
                 Hủy
               </button>
               <button
-                onClick={() => handleDeleteSubject(deleteConfirmId)}
+                onClick={() => {
+                  const subjectToDelete = filteredSubjects.find(s => s.id === deleteConfirmId);
+                  if (subjectToDelete) handleDeleteSubject(deleteConfirmId, subjectToDelete.name);
+                }}
                 className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors font-medium"
               >
                 Xóa
