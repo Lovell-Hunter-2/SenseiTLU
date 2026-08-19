@@ -134,11 +134,11 @@ useEffect(() => {
     if (!isAdmin) return;
 
     const fetchAnalytics = async () => {
-      // System Activities
+      // System Updates (Admin activities)
       try {
-        const activitiesQuery = query(collectionGroup(db, 'activities'), orderBy('timestamp', 'desc'), limit(15));
+        const activitiesQuery = query(collection(db, 'system_updates'), orderBy('timestamp', 'desc'), limit(15));
         const activitiesSnap = await getDocs(activitiesQuery);
-        const fetchedActivities = await Promise.all(activitiesSnap.docs.map(async (d) => {
+        const fetchedActivities = activitiesSnap.docs.map((d) => {
           const data = d.data();
           let tsString = '';
           if (data.timestamp?.toDate) {
@@ -148,25 +148,13 @@ useEffect(() => {
              tsString = 'Vừa xong';
           }
           
-          let userName = 'Người dùng ẩn danh';
-          try {
-             const parts = d.ref.path.split('/');
-             if (parts.length >= 4 && parts[parts.length - 3] === 'users') {
-                 const userId = parts[parts.length - 2];
-                 const userDoc = await getDoc(doc(db, 'users', userId));
-                 if (userDoc.exists() && userDoc.data().email) {
-                    userName = userDoc.data().email.split('@')[0];
-                 }
-             }
-          } catch (e) {
-             console.error("Error parsing user from activity", e);
-          }
+          let userName = data.adminEmail?.split('@')[0] || 'Admin';
 
           return { id: d.id, ...data, timestampStr: tsString, userName };
-        }));
+        });
         setSystemActivities(fetchedActivities);
       } catch (err) {
-        console.error("Error fetching system activities (needs index):", err);
+        console.error("Error fetching system updates:", err);
       }
 
       // Total visits
@@ -773,26 +761,26 @@ useEffect(() => {
                   <Activity className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">Lịch sử hoạt động hệ thống</h2>
-                  <p className="text-sm text-slate-500">Theo dõi các sự kiện chính trên nền tảng (Timeline).</p>
+                  <h2 className="text-xl font-bold">Lịch sử cập nhật hệ thống</h2>
+                  <p className="text-sm text-slate-500">Theo dõi các thay đổi tài liệu, môn học, bài viết bởi Admin.</p>
                 </div>
               </div>
               
               <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 dark:before:via-slate-800 before:to-transparent">
                 {systemActivities.length === 0 ? (
-                  <p className="text-center text-slate-500 italic relative z-10 bg-white dark:bg-slate-900 py-4">Chưa có hoạt động nào được ghi nhận.</p>
+                  <p className="text-center text-slate-500 italic relative z-10 bg-white dark:bg-slate-900 py-4">Chưa có hoạt động cập nhật nào.</p>
                 ) : (
                   systemActivities.map((activity, index) => (
                   <div key={activity.id || index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                     <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white dark:border-slate-900 bg-blue-500 text-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                      {activity.type === 'page_view' ? <Activity className="w-4 h-4" /> : <Users className="w-4 h-4" />}
+                      {activity.action === 'Tạo mới' ? <CheckCircle2 className="w-4 h-4" /> : activity.action === 'Xóa' ? <X className="w-4 h-4" /> : <Activity className="w-4 h-4" />}
                     </div>
-                    <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                    <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
                       <div className="flex items-center justify-between mb-1 gap-2">
-                        <span className="font-bold text-slate-900 dark:text-white line-clamp-1">{activity.action || 'Hành động'}</span>
+                        <span className="font-bold text-slate-900 dark:text-white line-clamp-1">{activity.action} {activity.entity}</span>
                         <span className="text-xs font-medium text-slate-500 shrink-0">{activity.timestampStr}</span>
                       </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">{activity.userName}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">Bởi: {activity.userName} ({activity.adminEmail})</p>
                       <p className="text-sm text-slate-500 mt-1">{activity.details}</p>
                     </div>
                   </div>
@@ -801,7 +789,7 @@ useEffect(() => {
               </div>
               
               <div className="mt-8 text-center text-sm text-slate-500 italic">
-                *Chỉ hiển thị 15 hoạt động hệ thống gần nhất được cập nhật tự động.
+                *Chỉ hiển thị 15 hoạt động cập nhật gần nhất.
               </div>
             </div>
           )}
