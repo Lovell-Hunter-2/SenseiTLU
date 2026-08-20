@@ -185,18 +185,6 @@ export default function Layout() {
               >
                 <Download className="w-5 h-5" />
               </button>
-              {/* Theme Toggle */}
-              <button
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                aria-label="Toggle theme"
-              >
-                {theme === "dark" ? (
-                  <Sun className="w-5 h-5" />
-                ) : (
-                  <Moon className="w-5 h-5" />
-                )}
-              </button>
 
               {/* Auth */}
               {user ? (
@@ -230,6 +218,20 @@ export default function Layout() {
                           <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                             {user.email}
                           </p>
+                        </div>
+                        
+                        <div className="p-2 border-b border-slate-200 dark:border-slate-800">
+                          <button
+                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                            className="w-full flex items-center justify-between px-2 py-1.5 text-sm rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                          >
+                            <span className="text-slate-600 dark:text-slate-300">Giao diện</span>
+                            {theme === "dark" ? (
+                              <Sun className="w-4 h-4 text-slate-400" />
+                            ) : (
+                              <Moon className="w-4 h-4 text-slate-400" />
+                            )}
+                          </button>
                         </div>
 
                         {isAdmin && (
