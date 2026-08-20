@@ -31,6 +31,7 @@ import { PomodoroWidget } from "./PomodoroWidget";
 import { NotificationBell } from "./NotificationBell";
 import avtTlu from "../assets/avt_tlu.jpg";
 import { InstallAppModal } from "./InstallAppModal";
+import EcosystemDropdown from "./EcosystemDropdown";
 
 export default function Layout() {
   const { theme, setTheme } = useTheme();
@@ -132,6 +133,7 @@ export default function Layout() {
                   {link.name}
                 </Link>
               ))}
+              <EcosystemDropdown />
               <button
                 onClick={() => setIsDonateModalOpen(true)}
                 className="flex items-center gap-1.5 text-sm font-bold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors animate-pulse hover:animate-none"
@@ -299,6 +301,9 @@ export default function Layout() {
                   {link.name}
                 </Link>
               ))}
+              <div className="py-2 border-t border-slate-100 dark:border-slate-800">
+                <EcosystemDropdown />
+              </div>
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
