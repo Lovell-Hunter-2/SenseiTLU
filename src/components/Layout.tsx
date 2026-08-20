@@ -101,7 +101,7 @@ export default function Layout() {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 lg:gap-6">
             {location.pathname !== "/" && (
               <button
                 onClick={() => navigate(-1)}
@@ -113,18 +113,18 @@ export default function Layout() {
             )}
             <Link
               to="/"
-              className="text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2"
+              className="text-xl md:text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5 md:gap-2 whitespace-nowrap"
             >
-              <span className="text-3xl">🎓</span> SenseiTLU
+              <span className="text-2xl md:text-3xl">🎓</span> SenseiTLU
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center gap-6">
+            <nav className="hidden lg:flex items-center gap-4 xl:gap-6">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`text-sm font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 ${
+                  className={`text-sm font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 whitespace-nowrap ${
                     location.pathname === link.path
                       ? "text-blue-600 dark:text-blue-400"
                       : "text-slate-600 dark:text-slate-300"
@@ -136,7 +136,7 @@ export default function Layout() {
               <EcosystemDropdown />
               <button
                 onClick={() => setIsDonateModalOpen(true)}
-                className="flex items-center gap-1.5 text-sm font-bold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors animate-pulse hover:animate-none"
+                className="flex items-center gap-1.5 text-sm font-bold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors animate-pulse hover:animate-none whitespace-nowrap"
               >
                 <Heart className="w-4 h-4 fill-current" />
                 Ủng hộ Web
@@ -144,14 +144,14 @@ export default function Layout() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4">
-            <div className="hidden md:block">
+          <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 shrink-0">
+            <div className="hidden xl:block shrink-0">
               <ClockWidget />
             </div>
 
             <NotificationBell />
 
-            <div className="hidden md:flex items-center gap-2 sm:gap-4">
+            <div className="hidden md:flex items-center gap-1.5 sm:gap-2">
               {/* Support icon next to theme toggle (only on subpages) */}
               {location.pathname !== "/" && (
                 <a
@@ -177,21 +177,12 @@ export default function Layout() {
                 <img src="/avt_tlu (remove).png" alt="AI" className="w-[26px] h-[26px] object-contain rounded-b-[4px] drop-shadow-sm scale-110" />
               </button>
 
-              {/* Install App */}
-              <button
-                onClick={handleInstallClick}
-                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-blue-600 dark:text-blue-400"
-                title="Cài đặt ứng dụng"
-              >
-                <Download className="w-5 h-5" />
-              </button>
-
               {/* Auth */}
               {user ? (
                 <div className="relative">
                   <button
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
-                    className="flex items-center gap-2 p-1 pr-3 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                    className="flex items-center gap-2 p-1 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                   >
                     <img
                       src={user.photoURL || ""}
@@ -199,9 +190,6 @@ export default function Layout() {
                       className="w-8 h-8 rounded-full"
                       referrerPolicy="no-referrer"
                     />
-                    <span className="text-sm font-medium hidden sm:block max-w-[120px] truncate">
-                      {user.displayName}
-                    </span>
                   </button>
 
                   {isProfileOpen && (
@@ -210,9 +198,9 @@ export default function Layout() {
                         className="fixed inset-0 z-40"
                         onClick={() => setIsProfileOpen(false)}
                       ></div>
-                      <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 transition-all duration-200 z-50">
-                        <div className="p-3 border-b border-slate-200 dark:border-slate-800">
-                          <p className="text-sm font-medium truncate">
+                      <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 transition-all duration-200 z-50 overflow-hidden">
+                        <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+                          <p className="text-sm font-bold truncate text-slate-900 dark:text-white">
                             {user.displayName}
                           </p>
                           <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
@@ -222,41 +210,53 @@ export default function Layout() {
                         
                         <div className="p-2 border-b border-slate-200 dark:border-slate-800">
                           <button
-                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                            className="w-full flex items-center justify-between px-2 py-1.5 text-sm rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            onClick={handleInstallClick}
+                            className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                           >
-                            <span className="text-slate-600 dark:text-slate-300">Giao diện</span>
-                            {theme === "dark" ? (
-                              <Sun className="w-4 h-4 text-slate-400" />
-                            ) : (
-                              <Moon className="w-4 h-4 text-slate-400" />
-                            )}
+                            <span className="font-medium text-slate-700 dark:text-slate-300">Tải ứng dụng</span>
+                            <Download className="w-4 h-4 text-slate-500" />
+                          </button>
+                          
+                          <button
+                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                            className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                          >
+                            <span className="font-medium text-slate-700 dark:text-slate-300">Chế độ hiển thị</span>
+                            <div className="flex items-center gap-2 text-slate-500">
+                              {theme === "dark" ? (
+                                <><Sun className="w-4 h-4" /> Sáng</>
+                              ) : (
+                                <><Moon className="w-4 h-4" /> Tối</>
+                              )}
+                            </div>
                           </button>
                         </div>
 
                         {isAdmin && (
-                          <>
+                          <div className="p-2 border-b border-slate-200 dark:border-slate-800">
                             <button
                               onClick={() => {
                                 setIsProfileOpen(false);
                                 navigate("/admin");
                               }}
-                              className="w-full text-left px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800"
+                              className="w-full text-left px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg flex items-center gap-2 font-medium transition-colors"
                             >
-                              <Shield className="w-4 h-4" /> Dashboard Quản trị
+                              <Shield className="w-4 h-4" /> Quản trị viên
                             </button>
-                          </>
+                          </div>
                         )}
 
-                        <button
-                          onClick={() => {
-                            setIsProfileOpen(false);
-                            logout();
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 rounded-b-lg"
-                        >
-                          <LogOut className="w-4 h-4" /> Đăng xuất
-                        </button>
+                        <div className="p-2">
+                          <button
+                            onClick={() => {
+                              setIsProfileOpen(false);
+                              logout();
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg flex items-center gap-2 font-medium transition-colors"
+                          >
+                            <LogOut className="w-4 h-4" /> Đăng xuất
+                          </button>
+                        </div>
                       </div>
                     </>
                   )}
