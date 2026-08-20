@@ -129,49 +129,8 @@ export function AIAssistantWidget() {
           <AIAssistant 
             isVisible={true} 
             onClose={() => setIsOpen(false)} 
-            onMinimize={() => setIsMinimized(true)}
+            onMinimize={() => setIsOpen(false)}
           />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {isOpen && isMinimized && (
-          <motion.div
-            drag
-            dragMomentum={false}
-            onDragStart={() => { isDragging.current = true; }}
-            onDragEnd={handleDragEnd}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ 
-              scale: ping ? 1.2 : 1, 
-              opacity: 1,
-              x: position.x,
-              y: position.y
-            }}
-            exit={{ scale: 0, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className="fixed z-50 top-0 left-0 cursor-grab active:cursor-grabbing flex flex-col items-center gap-1 group"
-            style={{ touchAction: 'none' }}
-          >
-            {/* Nút đóng mascot - chỉ hiện khi hover */}
-            <button 
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => { e.stopPropagation(); setIsOpen(false); setIsMinimized(false); }}
-              className="absolute -top-2 -right-2 bg-slate-800 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-500"
-            >
-              <span className="text-[10px] font-bold">✕</span>
-            </button>
-
-            <button
-              onClick={handleClick}
-              className="w-16 h-16 bg-white dark:bg-slate-800 text-white rounded-full shadow-lg flex items-center justify-center relative shadow-blue-500/30 transition-transform hover:scale-105"
-            >
-              <img src="/avt_tlu (remove).png" alt="AI" className="w-[50px] h-[50px] object-contain rounded-b-2xl drop-shadow-sm scale-110" />
-            </button>
-            <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-full opacity-90 shadow-sm pointer-events-none">
-              AI
-            </span>
-          </motion.div>
         )}
       </AnimatePresence>
     </>
