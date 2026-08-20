@@ -42,7 +42,7 @@ export default function EcosystemDropdown() {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 md:left-auto md:right-0 mt-4 w-[320px] md:w-[480px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-4 z-50 animate-in fade-in slide-in-from-top-2 origin-top-left md:origin-top-right">
+        <div className="absolute top-full left-0 md:left-auto md:right-0 mt-4 w-[320px] md:w-[560px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-4 z-50 animate-in fade-in slide-in-from-top-2 origin-top-left md:origin-top-right">
           <div className="mb-4 px-2">
             <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Globe className="w-5 h-5 text-blue-500" /> Hệ sinh thái
