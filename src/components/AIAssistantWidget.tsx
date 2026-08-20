@@ -133,6 +133,7 @@ export function AIAssistantWidget() {
             dragMomentum={false}
             onDragStart={() => { isDragging.current = true; }}
             onDragEnd={handleDragEnd}
+            onClick={handleClick}
             initial={{ scale: 0, opacity: 0 }}
             animate={{ 
               scale: ping ? 1.2 : 1, 
@@ -149,17 +150,21 @@ export function AIAssistantWidget() {
             <button 
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => { e.stopPropagation(); setIsOpen(false); setIsMinimized(false); }}
-              className="absolute -top-2 -right-2 bg-slate-800 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-500"
+              className="absolute -top-2 -right-2 bg-slate-800 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-500 cursor-pointer"
             >
               <span className="text-[10px] font-bold">✕</span>
             </button>
 
-            <button
-              onClick={handleClick}
-              className="w-16 h-16 bg-white dark:bg-slate-800 text-white rounded-full shadow-lg flex items-center justify-center relative shadow-blue-500/30 transition-transform hover:scale-105"
+            <div
+              className="w-16 h-16 bg-white dark:bg-slate-800 text-white rounded-full shadow-lg flex items-center justify-center relative shadow-blue-500/30 transition-transform group-hover:scale-105 pointer-events-none"
             >
-              <img src="/avt_tlu (remove).png" alt="AI" className="w-[50px] h-[50px] object-contain rounded-b-2xl drop-shadow-sm scale-110" />
-            </button>
+              <img 
+                src="/avt_tlu (remove).png" 
+                alt="AI" 
+                draggable={false}
+                className="w-[50px] h-[50px] object-contain rounded-b-2xl drop-shadow-sm scale-110 pointer-events-none" 
+              />
+            </div>
             <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-full opacity-90 shadow-sm pointer-events-none">
               AI
             </span>
