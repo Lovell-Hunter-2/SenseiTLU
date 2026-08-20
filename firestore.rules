@@ -33,6 +33,11 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    match /ecosystem/{appId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId) && request.resource.data.keys().hasAll(['email', 'role']) &&
