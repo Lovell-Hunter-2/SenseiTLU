@@ -44,6 +44,18 @@ export default function Layout() {
   const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const profileDropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Handle click outside for profile dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Handle PWA installation
   useEffect(() => {
@@ -171,15 +183,16 @@ export default function Layout() {
                   toggleAIAssistant();
                   pingAIAssistant();
                 }}
-                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-blue-600 dark:text-blue-400"
+                className="p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-blue-600 dark:text-blue-400 flex flex-col items-center justify-center"
                 title="Trợ lý AI"
               >
-                <img src="/avt_tlu (remove).png" alt="AI" className="w-[26px] h-[26px] object-contain rounded-b-[4px] drop-shadow-sm scale-110" />
+                <img src="/avt_tlu (remove).png" alt="AI" className="w-[22px] h-[22px] object-contain rounded-b-[4px] drop-shadow-sm scale-110" />
+                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 mt-1">AI</span>
               </button>
 
               {/* Auth */}
               {user ? (
-                <div className="relative">
+                <div className="relative" ref={profileDropdownRef}>
                   <button
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
                     className="flex items-center gap-2 p-1 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
@@ -194,10 +207,6 @@ export default function Layout() {
 
                   {isProfileOpen && (
                     <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setIsProfileOpen(false)}
-                      ></div>
                       <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 transition-all duration-200 z-50 overflow-hidden">
                         <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
                           <p className="text-sm font-bold truncate text-slate-900 dark:text-white">
@@ -351,10 +360,11 @@ export default function Layout() {
                   pingAIAssistant();
                   setMobileMenuOpen(false);
                 }}
-                className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-blue-600 dark:text-blue-400"
+                className="p-1 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-blue-600 dark:text-blue-400 flex flex-col items-center justify-center"
                 title="Trợ lý AI"
               >
-                <img src="/avt_tlu (remove).png" alt="AI" className="w-[26px] h-[26px] object-contain rounded-b-[4px] drop-shadow-sm scale-110" />
+                <img src="/avt_tlu (remove).png" alt="AI" className="w-[22px] h-[22px] object-contain rounded-b-[4px] drop-shadow-sm scale-110" />
+                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 mt-1">AI</span>
               </button>
 
               {location.pathname !== "/" && (
