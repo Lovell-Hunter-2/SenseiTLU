@@ -69,11 +69,9 @@ export function AIAssistantWidget() {
     // Hidden initially until triggered by a top level component (or if you want it always visible, set isMinimized=true by default)
   }
 
-  // Khởi tạo luôn chạy nhưng thu nhỏ dưới dạng Mascot
+  // Khởi tạo không hiển thị mascot mặc định ban đầu
   useEffect(() => {
-    // Có thể mặc định bật mascot
-    setIsMinimized(true);
-    setIsOpen(true);
+    // Không set state ở đây nữa để mascot không tự động mở
   }, []);
 
   const handleDragEnd = (e: any, info: any) => {
@@ -82,19 +80,14 @@ export function AIAssistantWidget() {
     const mascotWidth = 64;
     const mascotHeight = 80;
     
-    // Vị trí sau khi kéo (sử dụng info.point thay cho offset vì element được dịch chuyển fixed layout top-0 left-0)
-    // Thực ra với motion framer khi binding x/y, animate tự duy trì vị trí tuyệt đối. 
-    // offset chỉ là mức dịch chuyển trong 1 lần kéo.
     let currentX = position.x + info.offset.x;
     let currentY = position.y + info.offset.y;
 
-    // Khoảng cách tới các cạnh màn hình
     const distLeft = currentX;
     const distRight = window.innerWidth - (currentX + mascotWidth);
     const distTop = currentY;
     const distBottom = window.innerHeight - (currentY + mascotHeight);
 
-    // Tìm cạnh gần nhất
     const minDist = Math.min(distLeft, distRight, distTop, distBottom);
 
     let snapX = currentX;
@@ -110,7 +103,6 @@ export function AIAssistantWidget() {
       snapY = window.innerHeight - mascotHeight - padding;
     }
     
-    // Đảm bảo không bị lọt ra ngoài màn hình ở trục còn lại
     snapX = Math.max(padding, Math.min(snapX, window.innerWidth - mascotWidth - padding));
     snapY = Math.max(padding, Math.min(snapY, window.innerHeight - mascotHeight - padding));
 
@@ -128,9 +120,50 @@ export function AIAssistantWidget() {
         {isOpen && !isMinimized && (
           <AIAssistant 
             isVisible={true} 
-            onClose={() => setIsOpen(false)} 
-            onMinimize={() => setIsOpen(false)}
+            onClose={() => { setIsOpen(false); setIsMinimized(false); }} 
+            onMinimize={() => setIsMinimized(true)}
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isOpen && isMinimized && (
+          <motion.div
+            drag
+            dragMomentum={false}
+            onDragStart={() => { isDragging.current = true; }}
+            onDragEnd={handleDragEnd}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ 
+              scale: ping ? 1.2 : 1, 
+              opacity: 1,
+              x: position.x,
+              y: position.y
+            }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            className="fixed z-50 top-0 left-0 cursor-grab active:cursor-grabbing flex flex-col items-center gap-1 group"
+            style={{ touchAction: 'none' }}
+          >
+            {/* Nút đóng mascot - chỉ hiện khi hover */}
+            <button 
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); setIsOpen(false); setIsMinimized(false); }}
+              className="absolute -top-2 -right-2 bg-slate-800 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-500"
+            >
+              <span className="text-[10px] font-bold">✕</span>
+            </button>
+
+            <button
+              onClick={handleClick}
+              className="w-16 h-16 bg-white dark:bg-slate-800 text-white rounded-full shadow-lg flex items-center justify-center relative shadow-blue-500/30 transition-transform hover:scale-105"
+            >
+              <img src="/avt_tlu (remove).png" alt="AI" className="w-[50px] h-[50px] object-contain rounded-b-2xl drop-shadow-sm scale-110" />
+            </button>
+            <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-full opacity-90 shadow-sm pointer-events-none">
+              AI
+            </span>
+          </motion.div>
         )}
       </AnimatePresence>
     </>
