@@ -931,16 +931,16 @@ export default function SubjectDetail() {
 
       {/* Embedded Document View Modal */}
       {showIframeModal && selectedDocument && (
-        <div className="fixed inset-0 z-[45] p-4 sm:p-6 md:p-8 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-6xl h-[85vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
-            <div className="h-14 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between px-4 sm:px-6 shrink-0">
-              <div className="flex items-center gap-3 w-3/4">
-                <div className="w-8 h-8 shrink-0 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center rounded-lg shadow-sm">
+        <div className="fixed inset-0 z-[45] p-0 sm:p-6 md:p-8 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full h-full sm:h-[85vh] max-w-6xl bg-white dark:bg-slate-900 sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden border-0 sm:border border-slate-200 dark:border-slate-800">
+            <div className="h-14 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between px-2 sm:px-6 shrink-0">
+              <div className="flex items-center gap-2 sm:gap-3 w-3/4">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center rounded-lg shadow-sm">
                   <Book className="w-4 h-4" />
                 </div>
-                <h2 className="font-bold text-slate-800 dark:text-slate-200 truncate pr-4">{selectedDocument.title}</h2>
+                <h2 className="font-bold text-sm sm:text-base text-slate-800 dark:text-slate-200 truncate pr-2 sm:pr-4">{selectedDocument.title}</h2>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                 <a 
                   href={selectedDocument.url} 
                   target="_blank" 
