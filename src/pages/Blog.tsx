@@ -136,6 +136,12 @@ export default function Blog() {
     e.preventDefault();
     if (!editingPost || !editingPost.title.trim() || !editingPost.content.trim()) return;
 
+    if (!canEditPost(editingPost)) {
+      alert("Đã hết thời gian 30 phút để chỉnh sửa bài viết này.");
+      setEditingPost(null);
+      return;
+    }
+
     try {
       await updateDoc(doc(db, 'blog', editingPost.id), {
         title: editingPost.title,
@@ -164,6 +170,19 @@ export default function Blog() {
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     if (isNaN(date.getTime())) return '';
     return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
+  };
+
+  const canEditPost = (post: any) => {
+    if (isAdmin) return true;
+    if (post.authorId !== user?.uid) return false;
+    if (!post.createdAt) return false;
+    
+    const postDate = post.createdAt.toDate ? post.createdAt.toDate() : new Date(post.createdAt);
+    if (isNaN(postDate.getTime())) return false;
+    
+    const now = new Date();
+    const diffInMinutes = (now.getTime() - postDate.getTime()) / (1000 * 60);
+    return diffInMinutes <= 30;
   };
 
   return (
@@ -228,10 +247,12 @@ export default function Blog() {
                 </div>
                 {(isAdmin || post.authorId === user?.uid) && (
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setEditingPost(post)} className="text-blue-500 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => setDeleteConfirmId(post.id)} className="text-red-500 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                    {canEditPost(post) && (
+                      <button onClick={() => setEditingPost(post)} className="text-blue-500 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="Chỉnh sửa bài viết">
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button onClick={() => setDeleteConfirmId(post.id)} className="text-red-500 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Xóa bài viết">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
