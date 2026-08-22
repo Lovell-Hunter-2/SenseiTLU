@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc, setDoc } from 'firebase/firestore';
-import { ThumbsUp, Trash2, MessageCircle, Send, Plus, X, Image as ImageIcon } from 'lucide-react';
+import { ThumbsUp, Trash2, MessageCircle, Send, Plus, X, Image as ImageIcon, Share2 } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -40,7 +40,16 @@ export default function BlogInteractions({ postId }: Props) {
   const [showReactors, setShowReactors] = useState(false);
   const [attachmentUrl, setAttachmentUrl] = useState('');
   const [showAttachMenu, setShowAttachMenu] = useState(false);
-  
+  const [shareText, setShareText] = useState('Chia sẻ');
+
+  const handleShare = () => {
+    const url = `${window.location.origin}/blog#post-${postId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setShareText('Đã copy!');
+      setTimeout(() => setShareText('Chia sẻ'), 2000);
+    });
+  };
+
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const hoverTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -303,6 +312,14 @@ export default function BlogInteractions({ postId }: Props) {
         >
           <MessageCircle className="w-5 h-5" />
           Bình luận
+        </button>
+
+        <button 
+          onClick={handleShare}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ml-auto"
+        >
+          <Share2 className="w-5 h-5" />
+          {shareText}
         </button>
       </div>
 
