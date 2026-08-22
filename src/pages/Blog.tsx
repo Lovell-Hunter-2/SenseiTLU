@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc, setDoc, updateDoc, limit } from 'firebase/firestore';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Plus, Trash2, Edit2, Calendar, Image as ImageIcon, ShieldCheck, User as UserIcon, ToggleLeft, ToggleRight, X } from 'lucide-react';
@@ -40,6 +41,16 @@ export default function Blog() {
       unsubscribeSettings();
     };
   }, []);
+
+  useEffect(() => {
+    if (posts.length > 0 && window.location.hash) {
+      const id = window.location.hash.substring(1); // remove '#'
+      const element = document.getElementById(id);
+      if (element) {
+        setTimeout(() => element.scrollIntoView({ behavior: 'smooth' }), 500);
+      }
+    }
+  }, [posts]);
 
   const togglePublicPosting = async () => {
     if (!isAdmin) return;
@@ -84,6 +95,17 @@ export default function Blog() {
         console.error("Error adding notification:", notifErr);
       }
 
+      if (isAdmin && user) {
+        await addDoc(collection(db, 'system_updates'), {
+          action: 'Tạo mới',
+          entity: 'Bài viết',
+          details: `Tiêu đề: ${newPost.title}`,
+          adminEmail: user.email,
+          adminId: user.uid,
+          timestamp: serverTimestamp(),
+        });
+      }
+
       setIsAddModalOpen(false);
       setNewPost({ title: '', content: '', imageUrl: '' });
     } catch (error) {
@@ -91,9 +113,19 @@ export default function Blog() {
     }
   };
 
-  const handleDeletePost = async (postId: string) => {
+  const handleDeletePost = async (postId: string, postTitle: string) => {
     try {
       await deleteDoc(doc(db, 'blog', postId));
+      if (isAdmin && user) {
+        await addDoc(collection(db, 'system_updates'), {
+          action: 'Xóa',
+          entity: 'Bài viết',
+          details: `Tiêu đề: ${postTitle}`,
+          adminEmail: user.email,
+          adminId: user.uid,
+          timestamp: serverTimestamp(),
+        });
+      }
       setDeleteConfirmId(null);
     } catch (error) {
       console.error("Error deleting post:", error);
@@ -111,6 +143,16 @@ export default function Blog() {
         imageUrl: editingPost.imageUrl,
         updatedAt: serverTimestamp()
       });
+      if (isAdmin && user) {
+        await addDoc(collection(db, 'system_updates'), {
+          action: 'Cập nhật',
+          entity: 'Bài viết',
+          details: `Tiêu đề: ${editingPost.title}`,
+          adminEmail: user.email,
+          adminId: user.uid,
+          timestamp: serverTimestamp(),
+        });
+      }
       setEditingPost(null);
     } catch (error) {
       console.error("Error updating post:", error);
@@ -158,7 +200,7 @@ export default function Blog() {
 
       <div className="space-y-8">
         {posts.map(post => (
-          <article key={post.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+          <article id={`post-${post.id}`} key={post.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow scroll-mt-24">
             {post.imageUrl && (
               <div className="w-full h-64 sm:h-80 overflow-hidden bg-slate-100 dark:bg-slate-800">
                 <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -198,7 +240,7 @@ export default function Blog() {
               <h2 className="text-2xl font-bold mb-4">{post.title}</h2>
               <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300">
                 <Markdown
-                  remarkPlugins={[remarkGfm]}
+                  remarkPlugins={[remarkGfm, remarkBreaks]}
                   components={{
                     a: ({ node, ...props }) => {
                       if (props.href && isImageUrl(props.href)) {
@@ -461,7 +503,10 @@ export default function Blog() {
                 Hủy
               </button>
               <button
-                onClick={() => handleDeletePost(deleteConfirmId)}
+                onClick={() => {
+                  const postToDelete = posts.find(p => p.id === deleteConfirmId);
+                  if (postToDelete) handleDeletePost(deleteConfirmId, postToDelete.title);
+                }}
                 className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors font-medium"
               >
                 Xóa
