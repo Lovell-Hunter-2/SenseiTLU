@@ -874,7 +874,7 @@ export default function SubjectDetail() {
               </button>
               <button
                 onClick={() => {
-                  const docToDelete = filteredDocuments.find(d => d.id === deleteConfirmId);
+                  const docToDelete = documents.find(d => d.id === deleteConfirmId);
                   if (docToDelete) handleDeleteDocument(deleteConfirmId, docToDelete.title);
                 }}
                 className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors font-medium"
