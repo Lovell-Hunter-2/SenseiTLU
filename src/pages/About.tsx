@@ -7,7 +7,6 @@ import {
   UploadCloud, 
   Globe,
   GraduationCap,
-  Sparkles,
   Headphones,
   MessageSquare,
 } from 'lucide-react';
@@ -72,7 +71,7 @@ export default function About() {
           transition={{ duration: 0.5 }}
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium mb-6 ring-1 ring-blue-500/20">
-            <Sparkles className="w-4 h-4" />
+            <img src="/avt_tlu (remove).png" alt="TLU" className="w-5 h-5 object-contain rounded-full" />
             Về Nền Tảng Của Chúng Tôi
           </div>
           <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6 mt-2">
