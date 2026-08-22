@@ -221,8 +221,8 @@ export default function Blog() {
         {posts.map(post => (
           <article id={`post-${post.id}`} key={post.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow scroll-mt-24">
             {post.imageUrl && (
-              <div className="w-full h-64 sm:h-80 overflow-hidden bg-slate-100 dark:bg-slate-800">
-                <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <div className="w-full bg-slate-100 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-800">
+                <img src={post.imageUrl} alt={post.title} className="w-full max-h-[600px] object-contain" referrerPolicy="no-referrer" />
               </div>
             )}
             <div className="p-6 sm:p-8">
