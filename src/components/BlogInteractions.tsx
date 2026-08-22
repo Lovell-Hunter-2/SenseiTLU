@@ -41,6 +41,20 @@ export default function BlogInteractions({ postId }: Props) {
   const [attachmentUrl, setAttachmentUrl] = useState('');
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [shareText, setShareText] = useState('Chia sẻ');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const canEditComment = (comment: any) => {
+    if (isAdmin) return true;
+    if (comment.userId !== user?.uid) return false;
+    if (!comment.createdAt) return false;
+    
+    const postDate = comment.createdAt.toDate ? comment.createdAt.toDate() : new Date(comment.createdAt);
+    if (isNaN(postDate.getTime())) return false;
+    
+    const now = new Date();
+    const diffInMinutes = (now.getTime() - postDate.getTime()) / (1000 * 60);
+    return diffInMinutes <= 30;
+  };
 
   const handleShare = () => {
     const url = `${window.location.origin}/blog#post-${postId}`;
@@ -163,10 +177,14 @@ export default function BlogInteractions({ postId }: Props) {
   };
 
 
-  const handleDeleteComment = async (commentId: string) => {
+  const handleDeleteComment = async (comment: any) => {
+    if (!canEditComment(comment)) {
+        alert("Đã hết thời gian 30 phút để xóa bình luận này.");
+        return;
+    }
     if (!window.confirm('Chắc chắn xóa bình luận này?')) return;
     try {
-      await deleteDoc(doc(db, 'blog', postId, 'comments', commentId));
+      await deleteDoc(doc(db, 'blog', postId, 'comments', comment.id));
     } catch (error) {
       console.error('Error deleting comment:', error);
     }
@@ -337,14 +355,20 @@ export default function BlogInteractions({ postId }: Props) {
                     <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">{(comment.userEmail || 'Anonymous').split('@')[0]}</p>
                     {comment.content && <p className="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap">{comment.content}</p>}
                     {comment.imageUrl && (
-                       <img src={comment.imageUrl} alt="attachment" className="rounded-lg max-w-full max-h-64 mt-2 object-contain" referrerPolicy="no-referrer" />
+                       <img 
+                          src={comment.imageUrl} 
+                          alt="attachment" 
+                          className="rounded-lg max-w-full max-h-64 mt-2 object-contain cursor-pointer hover:opacity-90 transition-opacity" 
+                          referrerPolicy="no-referrer" 
+                          onClick={() => setSelectedImage(comment.imageUrl)}
+                       />
                     )}
                   </div>
                   <div className="flex items-center gap-4 mt-1 px-4 text-xs text-slate-500">
                     <span>{formatDate(comment.createdAt)}</span>
-                    {(isAdmin || user?.uid === comment.userId) && (
+                    {canEditComment(comment) && (
                       <button 
-                        onClick={() => handleDeleteComment(comment.id)}
+                        onClick={() => handleDeleteComment(comment)}
                         className="hover:text-red-500 transition-colors"
                       >
                         Xóa
@@ -480,6 +504,27 @@ export default function BlogInteractions({ postId }: Props) {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Image Viewer Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm cursor-zoom-out"
+          onClick={() => setSelectedImage(null)}
+        >
+          <img 
+            src={selectedImage} 
+            alt="Phóng to" 
+            className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl cursor-default"
+            onClick={(e) => e.stopPropagation()} 
+          />
+          <button 
+            className="absolute top-4 right-4 text-white hover:text-slate-300 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
+            onClick={() => setSelectedImage(null)}
+          >
+            <X className="w-8 h-8" />
+          </button>
         </div>
       )}
     </div>
