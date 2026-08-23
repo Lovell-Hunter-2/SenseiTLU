@@ -348,7 +348,14 @@ export default function SubjectDetail() {
 
   // Group documents by type
   const groupedDocs = documents.reduce((acc, doc) => {
-    if (doc.isHidden && !isAdmin) return acc;
+    let isCurrentlyHidden = doc.isHidden;
+    if (doc.isHidden && doc.tempUnhideUntil) {
+      const unhideDate = doc.tempUnhideUntil.toDate ? doc.tempUnhideUntil.toDate() : new Date(doc.tempUnhideUntil);
+      if (unhideDate.getTime() > new Date().getTime()) {
+        isCurrentlyHidden = false;
+      }
+    }
+    if (isCurrentlyHidden && !isAdmin) return acc;
     if (!acc[doc.type]) acc[doc.type] = [];
     acc[doc.type].push(doc);
     return acc;
@@ -372,7 +379,18 @@ export default function SubjectDetail() {
                 <h4 className={`font-medium truncate flex items-center gap-2 ${isChatbot ? 'text-indigo-700 dark:text-indigo-300 font-bold' : 'text-slate-900 dark:text-slate-100'}`} title={doc.title}>
                   {doc.title}
                   {isChatbot && <Sparkles className="w-4 h-4 text-amber-500" />}
-                  {doc.isHidden && <span className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Đang ẩn</span>}
+                  {doc.isHidden && (
+                    (() => {
+                      let unhideDate = null;
+                      if (doc.tempUnhideUntil) {
+                        unhideDate = doc.tempUnhideUntil.toDate ? doc.tempUnhideUntil.toDate() : new Date(doc.tempUnhideUntil);
+                      }
+                      if (unhideDate && unhideDate.getTime() > new Date().getTime()) {
+                        return <span className="bg-blue-200 dark:bg-blue-700 text-blue-800 dark:text-blue-100 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Hiện tạm thời</span>;
+                      }
+                      return <span className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Đang ẩn</span>;
+                    })()
+                  )}
                 </h4>
                 {!doc.isFolder && doc.chapter && (
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
