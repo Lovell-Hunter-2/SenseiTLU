@@ -379,7 +379,7 @@ export default function SubjectDetail() {
                 <h4 className={`font-medium truncate flex items-center gap-2 ${isChatbot ? 'text-indigo-700 dark:text-indigo-300 font-bold' : 'text-slate-900 dark:text-slate-100'}`} title={doc.title}>
                   {doc.title}
                   {isChatbot && <Sparkles className="w-4 h-4 text-amber-500" />}
-                  {doc.isHidden && (
+                  {isAdmin && doc.isHidden && (
                     (() => {
                       let unhideDate = null;
                       if (doc.tempUnhideUntil) {
