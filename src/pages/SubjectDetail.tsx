@@ -363,11 +363,11 @@ export default function SubjectDetail() {
 
   const types = ['Chatbot', 'Giáo trình', 'Slide', 'Đề cương', 'File trắc nghiệm', 'Bài tập', 'Đề thi mẫu', 'Tips', 'Công thức', 'Khác'];
 
-  const renderDocCard = (doc: any, Icon: any) => {
+  const renderDocCard = (doc: any, Icon: any, wrapperClassName?: string) => {
     const isChatbot = doc.type === 'Chatbot';
 
     return (
-    <div key={doc.id} className={isChatbot ? "relative group rounded-xl p-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 shadow-sm hover:shadow-lg transition-all" : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow transform-gpu"}>
+    <div key={doc.id} className={`${isChatbot ? "relative group rounded-xl p-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 shadow-sm hover:shadow-lg transition-all" : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow transform-gpu"} ${wrapperClassName || ""}`}>
       <div className={isChatbot ? "bg-white dark:bg-slate-900 rounded-[10px] p-4 flex flex-col gap-4 h-full" : "contents"}>
         <div className="flex items-start gap-4">
           <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${isChatbot ? 'bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 text-indigo-600 dark:text-indigo-400' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'}`}>
@@ -375,25 +375,27 @@ export default function SubjectDetail() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
-              <div>
-                <h4 className={`font-medium truncate flex items-center gap-2 ${isChatbot ? 'text-indigo-700 dark:text-indigo-300 font-bold' : 'text-slate-900 dark:text-slate-100'}`} title={doc.title}>
+              <div className="min-w-0 flex-1">
+                <h4 className={`font-medium text-sm sm:text-base leading-snug break-words ${isChatbot ? 'text-indigo-700 dark:text-indigo-300 font-bold' : 'text-slate-900 dark:text-slate-100'}`} title={doc.title}>
                   {doc.title}
-                  {isChatbot && <Sparkles className="w-4 h-4 text-amber-500" />}
+                  {isChatbot && <Sparkles className="inline-block w-4 h-4 text-amber-500 ml-1.5 align-text-bottom" />}
                   {isAdmin && doc.isHidden && (
-                    (() => {
-                      let unhideDate = null;
-                      if (doc.tempUnhideUntil) {
-                        unhideDate = doc.tempUnhideUntil.toDate ? doc.tempUnhideUntil.toDate() : new Date(doc.tempUnhideUntil);
-                      }
-                      if (unhideDate && unhideDate.getTime() > new Date().getTime()) {
-                        return <span className="bg-blue-200 dark:bg-blue-700 text-blue-800 dark:text-blue-100 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Hiện tạm thời</span>;
-                      }
-                      return <span className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Đang ẩn</span>;
-                    })()
+                    <span className="inline-block ml-2 align-middle">
+                      {(() => {
+                        let unhideDate = null;
+                        if (doc.tempUnhideUntil) {
+                          unhideDate = doc.tempUnhideUntil.toDate ? doc.tempUnhideUntil.toDate() : new Date(doc.tempUnhideUntil);
+                        }
+                        if (unhideDate && unhideDate.getTime() > new Date().getTime()) {
+                          return <span className="bg-blue-200 dark:bg-blue-700 text-blue-800 dark:text-blue-100 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Hiện tạm thời</span>;
+                        }
+                        return <span className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Đang ẩn</span>;
+                      })()}
+                    </span>
                   )}
                 </h4>
                 {!doc.isFolder && doc.chapter && (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
                     {doc.chapter}
                   </p>
                 )}
@@ -401,18 +403,18 @@ export default function SubjectDetail() {
               {doc.isFolder && (
                 <button 
                   onClick={() => toggleFolder(doc.id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors shrink-0"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors shrink-0"
                 >
                   {expandedFolders[doc.id] ? (
-                    <><ChevronUp className="w-4 h-4" /> Thu gọn</>
+                    <><ChevronUp className="w-3.5 h-3.5" /> Thu gọn</>
                   ) : (
-                    <><ChevronDown className="w-4 h-4" /> Mở rộng</>
+                    <><ChevronDown className="w-3.5 h-3.5" /> Mở rộng</>
                   )}
                 </button>
               )}
             </div>
             
-            <div className="flex items-center gap-3 mt-3">
+            <div className="flex flex-wrap items-center gap-3 mt-3">
               {!doc.isFolder ? (
                 <a
                   href={doc.url}
@@ -569,18 +571,11 @@ export default function SubjectDetail() {
               <h3 className="text-lg font-bold flex items-center gap-2">
                 <Icon className="w-5 h-5 text-blue-500" /> {type}
               </h3>
-              <div className="flex flex-col md:flex-row gap-4 items-start">
-                {/* Column 1 */}
-                <div className="flex-1 flex flex-col gap-4 w-full">
-                  {docs.filter((_, i) => i % 2 === 0).map(doc => renderDocCard(doc, Icon))}
-                </div>
-                
-                {/* Column 2 */}
-                {docs.length > 1 && (
-                  <div className="flex-1 flex flex-col gap-4 w-full">
-                    {docs.filter((_, i) => i % 2 !== 0).map(doc => renderDocCard(doc, Icon))}
-                  </div>
-                )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                {docs.map((doc, index) => {
+                   const isLastAndOdd = docs.length % 2 !== 0 && index === docs.length - 1;
+                   return renderDocCard(doc, Icon, isLastAndOdd ? "md:col-span-2" : "");
+                })}
               </div>
             </div>
           );
