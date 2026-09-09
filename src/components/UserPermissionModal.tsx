@@ -31,10 +31,22 @@ export default function UserPermissionModal({ user, onClose }: UserPermissionMod
   const fetchData = async () => {
     setLoading(true);
     try {
+      // Fetch all subjects to map subjectId -> subject name
+      const subjectsSnap = await getDocs(collection(db, 'subjects'));
+      const subjectMap: Record<string, string> = {};
+      subjectsSnap.forEach(s => {
+        subjectMap[s.id] = s.data().name;
+      });
+
       if (activeTab === 'grant') {
         const q = query(collection(db, 'documents'), where('isHidden', '==', true));
         const snap = await getDocs(q);
-        setHiddenDocs(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        const docsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const docsWithSubjects = docsData.map((d: any) => ({
+          ...d,
+          subjectName: subjectMap[d.subjectId] || 'Môn học không xác định'
+        }));
+        setHiddenDocs(docsWithSubjects);
       } else {
         const userDocRef = doc(db, 'users', user.id);
         const userSnap = await getDoc(userDocRef);
@@ -46,7 +58,8 @@ export default function UserPermissionModal({ user, onClose }: UserPermissionMod
           const docsWithTitles = await Promise.all(permissions.map(async (perm: any) => {
             const dSnap = await getDoc(doc(db, 'documents', perm.docId));
             if (dSnap.exists()) {
-              return { ...perm, title: dSnap.data().title };
+              const dData = dSnap.data();
+              return { ...perm, title: dData.title, subjectName: subjectMap[dData.subjectId] || 'Môn học không xác định' };
             }
             return perm;
           }));
@@ -109,7 +122,7 @@ export default function UserPermissionModal({ user, onClose }: UserPermissionMod
       for (const docToGrant of selectedDocsToGrant) {
          await addDoc(collection(db, 'notifications'), {
              title: 'Được cấp quyền tài liệu',
-             message: `Bạn đã được cấp quyền xem tài liệu ẩn: ${docToGrant.title}`,
+             message: `Bạn đã được cấp quyền xem tài liệu ẩn: ${docToGrant.title} - Môn: ${docToGrant.subjectName}`,
              targetUserId: user.id,
              forAdminOnly: false,
              createdAt: serverTimestamp()
@@ -247,7 +260,9 @@ export default function UserPermissionModal({ user, onClose }: UserPermissionMod
                             readOnly
                             className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                           />
-                          <span className={isSelected ? 'font-medium text-blue-700 dark:text-blue-300 flex-1' : 'text-slate-700 dark:text-slate-300 flex-1'}>{doc.title}</span>
+                          <span className={isSelected ? 'font-medium text-blue-700 dark:text-blue-300 flex-1' : 'text-slate-700 dark:text-slate-300 flex-1'}>
+                            {doc.title} <span className="text-xs text-slate-400 ml-2">({doc.subjectName})</span>
+                          </span>
                         </li>
                       );
                     })}
@@ -287,7 +302,10 @@ export default function UserPermissionModal({ user, onClose }: UserPermissionMod
                             className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
                           />
                           <div>
-                            <p className="font-medium text-slate-800 dark:text-slate-200">{perm.title || 'Tài liệu không xác định'}</p>
+                            <p className="font-medium text-slate-800 dark:text-slate-200">
+                              {perm.title || 'Tài liệu không xác định'}
+                              <span className="text-xs font-normal text-slate-400 ml-2">({perm.subjectName})</span>
+                            </p>
                             <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                               <Clock className="w-3 h-3" /> {formatExpiry(perm.expiryTime)}
                             </p>
