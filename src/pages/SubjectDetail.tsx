@@ -90,17 +90,18 @@ export default function SubjectDetail() {
 
   useEffect(() => {
     if (user && !isAdmin) {
-      const fetchPermissions = async () => {
-        const userRef = doc(db, 'users', user.uid);
-        const userSnap = await getDoc(userRef);
+      const userRef = doc(db, 'users', user.uid);
+      const unsubscribe = onSnapshot(userRef, (userSnap) => {
         if (userSnap.exists()) {
           const data = userSnap.data();
           if (data.documentPermissions) {
             setUserPermissions(data.documentPermissions);
+          } else {
+            setUserPermissions([]);
           }
         }
-      };
-      fetchPermissions();
+      });
+      return () => unsubscribe();
     }
   }, [user, isAdmin]);
 
