@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, orderBy, getDocs, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { X, Users, RefreshCw, Filter, ArrowUp, ArrowDown, Activity, ChevronLeft } from 'lucide-react';
+import { X, Users, RefreshCw, Filter, ArrowUp, ArrowDown, Activity, ChevronLeft, Shield } from 'lucide-react';
+import UserPermissionModal from './UserPermissionModal';
 
 interface UserData {
   id: string;
@@ -38,6 +39,7 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [activitiesError, setActivitiesError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [permissionUser, setPermissionUser] = useState<UserData | null>(null);
 
   const filteredUsers = users.filter(user => {
     const query = searchQuery.toLowerCase();
@@ -131,7 +133,8 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
   };
 
   const content = (
-    <div className={inline ? "w-full flex-1 flex flex-col" : "bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"}>
+    <>
+      <div className={inline ? "w-full flex-1 flex flex-col" : "bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"}>
         
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800">
@@ -250,6 +253,7 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
                           <th className="px-6 py-4 whitespace-nowrap">Email</th>
                           <th className="px-6 py-4 whitespace-nowrap">Trạng thái</th>
                           <th className="px-6 py-4 whitespace-nowrap">Lần cuối đăng nhập</th>
+                          <th className="px-6 py-4 whitespace-nowrap text-right">Thao tác</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -283,11 +287,22 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
                             <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
                               {formatDate(u.lastLoginAt || u.createdAt)}
                             </td>
+                            <td className="px-6 py-4 text-right">
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPermissionUser(u);
+                                }}
+                                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-medium transition-colors border border-blue-200 dark:border-blue-800/50 flex items-center justify-center gap-1.5 ml-auto"
+                              >
+                                <Shield className="w-4 h-4" /> Cấp quyền
+                              </button>
+                            </td>
                           </tr>
                         ))}
                         {users.length === 0 && (
                           <tr>
-                            <td colSpan={4} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+                            <td colSpan={5} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                               Chưa có dữ liệu người dùng.
                             </td>
                           </tr>
@@ -301,6 +316,14 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
           )}
         </div>
       </div>
+      
+      {permissionUser && (
+        <UserPermissionModal 
+          user={permissionUser} 
+          onClose={() => setPermissionUser(null)} 
+        />
+      )}
+    </>
   );
 
   if (inline) return content;
