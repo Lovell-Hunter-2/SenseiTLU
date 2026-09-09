@@ -34,7 +34,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      setLoading(false); // Unblock UI immediately
       
       if (currentUser) {
         // Check if admin
@@ -73,6 +72,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         setIsAdmin(false);
       }
+      
+      setLoading(false); // Unblock UI only after admin status is determined
     });
 
     return unsubscribe;
