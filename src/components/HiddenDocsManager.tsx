@@ -9,6 +9,7 @@ export default function HiddenDocsManager() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [documents, setDocuments] = useState<any[]>([]);
+  const [totalHiddenCount, setTotalHiddenCount] = useState<number>(0);
   const [subjectsMap, setSubjectsMap] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   
@@ -49,6 +50,7 @@ export default function HiddenDocsManager() {
           const snapshot = await getDocs(q);
           const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
           setDocuments(docs);
+          setTotalHiddenCount(docs.length);
         } else {
           // With search -> fetch all docs and filter
           // In a real large app, this is bad, but for a simple admin dashboard it's okay.
@@ -181,7 +183,12 @@ export default function HiddenDocsManager() {
               <EyeOff className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold">Quản lý tài liệu ẩn</h2>
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                Quản lý tài liệu ẩn
+                <span className="text-sm font-semibold bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded-full">
+                  {totalHiddenCount}
+                </span>
+              </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">Tìm kiếm và thay đổi trạng thái ẩn của tài liệu</p>
             </div>
           </div>
