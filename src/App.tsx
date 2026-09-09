@@ -81,7 +81,7 @@ const PageLoadingFallback = () => (
 
 export default function App() {
   return (
-    <ThemeProvider defaultTheme="system">
+    <ThemeProvider defaultTheme="dark">
       <AuthProvider>
         <BrowserRouter>
           <ActivityTracker />
