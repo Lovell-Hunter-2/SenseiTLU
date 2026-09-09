@@ -86,6 +86,23 @@ export default function SubjectDetail() {
   const [isScanningDrive, setIsScanningDrive] = useState(false);
   const [driveApiKey, setDriveApiKey] = useState(localStorage.getItem('driveApiKey') || (import.meta as any).env.VITE_GOOGLE_DRIVE_API_KEY || '');
   const [showDriveApiInput, setShowDriveApiInput] = useState(!driveApiKey);
+  const [userPermissions, setUserPermissions] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (user && !isAdmin) {
+      const fetchPermissions = async () => {
+        const userRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          if (data.documentPermissions) {
+            setUserPermissions(data.documentPermissions);
+          }
+        }
+      };
+      fetchPermissions();
+    }
+  }, [user, isAdmin]);
 
   const toggleFolder = (docId: string) => {
     setExpandedFolders(prev => ({ ...prev, [docId]: !prev[docId] }));
@@ -349,13 +366,26 @@ export default function SubjectDetail() {
   // Group documents by type
   const groupedDocs = documents.reduce((acc, doc) => {
     let isCurrentlyHidden = doc.isHidden;
+    
+    // Check global temp unhide
     if (doc.isHidden && doc.tempUnhideUntil) {
       const unhideDate = doc.tempUnhideUntil.toDate ? doc.tempUnhideUntil.toDate() : new Date(doc.tempUnhideUntil);
       if (unhideDate.getTime() > new Date().getTime()) {
         isCurrentlyHidden = false;
       }
     }
-    if (isCurrentlyHidden && !isAdmin) return acc;
+    
+    // Check specific user permission
+    if (isCurrentlyHidden && !isAdmin) {
+      const hasPermission = userPermissions.some(p => {
+        if (p.docId !== doc.id) return false;
+        if (!p.expiryTime) return true; // forever
+        return p.expiryTime > new Date().getTime(); // not expired yet
+      });
+      
+      if (!hasPermission) return acc;
+    }
+    
     if (!acc[doc.type]) acc[doc.type] = [];
     acc[doc.type].push(doc);
     return acc;
