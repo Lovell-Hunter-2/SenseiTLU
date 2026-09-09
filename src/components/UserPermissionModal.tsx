@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Search, Shield, Clock, Check, Trash2 } from 'lucide-react';
-import { collection, getDocs, query, where, doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, updateDoc, getDoc, setDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 
 interface UserPermissionModalProps {
@@ -14,7 +14,7 @@ export default function UserPermissionModal({ user, onClose }: UserPermissionMod
   
   // Grant tab state
   const [hiddenDocs, setHiddenDocs] = useState<any[]>([]);
-  const [selectedDocToGrant, setSelectedDocToGrant] = useState<any | null>(null);
+  const [selectedDocsToGrant, setSelectedDocsToGrant] = useState<any[]>([]);
   const [duration, setDuration] = useState<string>('1'); // days
   
   // Revoke tab state
@@ -65,8 +65,19 @@ export default function UserPermissionModal({ user, onClose }: UserPermissionMod
     d.title && d.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const toggleGrantSelection = (doc: any) => {
+    setSelectedDocsToGrant(prev => {
+      const isSelected = prev.some(d => d.id === doc.id);
+      if (isSelected) {
+        return prev.filter(d => d.id !== doc.id);
+      } else {
+        return [...prev, doc];
+      }
+    });
+  };
+
   const handleGrant = async () => {
-    if (!selectedDocToGrant) return;
+    if (selectedDocsToGrant.length === 0) return;
     setSaving(true);
     try {
       const userRef = doc(db, 'users', user.id);
@@ -78,24 +89,35 @@ export default function UserPermissionModal({ user, onClose }: UserPermissionMod
         expiryTime = new Date().getTime() + (days * 24 * 60 * 60 * 1000);
       }
 
-      const newPerm = {
-        docId: selectedDocToGrant.id,
+      const newPerms = selectedDocsToGrant.map(doc => ({
+        docId: doc.id,
         expiryTime,
         grantedAt: new Date().getTime()
-      };
+      }));
 
       if (userSnap.exists()) {
         const existingPerms = userSnap.data().documentPermissions || [];
-        const updatedPerms = existingPerms.filter((p: any) => p.docId !== selectedDocToGrant.id);
-        updatedPerms.push(newPerm);
+        const updatedPerms = existingPerms.filter((p: any) => !selectedDocsToGrant.some(d => d.id === p.docId));
+        updatedPerms.push(...newPerms);
         await updateDoc(userRef, { documentPermissions: updatedPerms });
       } else {
         // Just in case user doc doesn't exist but we have auth
-        await setDoc(userRef, { documentPermissions: [newPerm] }, { merge: true });
+        await setDoc(userRef, { documentPermissions: newPerms }, { merge: true });
       }
       
-      alert('Cấp quyền thành công!');
-      setSelectedDocToGrant(null);
+      // Gửi thông báo cho từng tài liệu được cấp quyền
+      for (const docToGrant of selectedDocsToGrant) {
+         await addDoc(collection(db, 'notifications'), {
+             title: 'Được cấp quyền tài liệu',
+             message: `Bạn đã được cấp quyền xem tài liệu ẩn: ${docToGrant.title}`,
+             targetUserId: user.id,
+             forAdminOnly: false,
+             createdAt: serverTimestamp()
+         });
+      }
+      
+      alert(`Đã cấp quyền ${selectedDocsToGrant.length} tài liệu thành công!`);
+      setSelectedDocsToGrant([]);
       setSearchQuery('');
     } catch (error) {
       console.error("Lỗi cấp quyền:", error);
@@ -168,16 +190,22 @@ export default function UserPermissionModal({ user, onClose }: UserPermissionMod
         {/* Tabs */}
         <div className="flex border-b border-slate-200 dark:border-slate-800">
           <button 
-            className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'grant' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50 dark:bg-blue-900/10' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+            className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${activeTab === 'grant' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50 dark:bg-blue-900/10' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
             onClick={() => setActiveTab('grant')}
           >
             Cấp quyền
+            {selectedDocsToGrant.length > 0 && activeTab === 'grant' && (
+              <span className="bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-100 text-xs px-2 py-0.5 rounded-full">{selectedDocsToGrant.length}</span>
+            )}
           </button>
           <button 
-            className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'revoke' ? 'text-red-600 border-b-2 border-red-600 bg-red-50/50 dark:bg-red-900/10' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+            className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${activeTab === 'revoke' ? 'text-red-600 border-b-2 border-red-600 bg-red-50/50 dark:bg-red-900/10' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
             onClick={() => setActiveTab('revoke')}
           >
             Gỡ quyền
+            {selectedDocsToRevoke.size > 0 && activeTab === 'revoke' && (
+              <span className="bg-red-100 text-red-700 dark:bg-red-800 dark:text-red-100 text-xs px-2 py-0.5 rounded-full">{selectedDocsToRevoke.size}</span>
+            )}
           </button>
         </div>
 
@@ -205,16 +233,24 @@ export default function UserPermissionModal({ user, onClose }: UserPermissionMod
                   <div className="p-4 text-center text-sm text-slate-500">Không tìm thấy tài liệu ẩn nào.</div>
                 ) : (
                   <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {filteredHiddenDocs.map(doc => (
-                      <li 
-                        key={doc.id}
-                        onClick={() => setSelectedDocToGrant(doc)}
-                        className={`p-3 text-sm cursor-pointer transition-colors flex items-center justify-between ${selectedDocToGrant?.id === doc.id ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                      >
-                        <span className={selectedDocToGrant?.id === doc.id ? 'font-medium text-blue-700 dark:text-blue-300' : 'text-slate-700 dark:text-slate-300'}>{doc.title}</span>
-                        {selectedDocToGrant?.id === doc.id && <Check className="w-4 h-4 text-blue-600" />}
-                      </li>
-                    ))}
+                    {filteredHiddenDocs.map(doc => {
+                      const isSelected = selectedDocsToGrant.some(d => d.id === doc.id);
+                      return (
+                        <li 
+                          key={doc.id}
+                          onClick={() => toggleGrantSelection(doc)}
+                          className={`p-3 text-sm cursor-pointer transition-colors flex items-center gap-3 ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                        >
+                          <input 
+                            type="checkbox"
+                            checked={isSelected}
+                            readOnly
+                            className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className={isSelected ? 'font-medium text-blue-700 dark:text-blue-300 flex-1' : 'text-slate-700 dark:text-slate-300 flex-1'}>{doc.title}</span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>
@@ -242,12 +278,12 @@ export default function UserPermissionModal({ user, onClose }: UserPermissionMod
                 ) : (
                   <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                     {grantedDocs.map(perm => (
-                      <li key={perm.docId} className="p-3 text-sm flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800">
+                      <li key={perm.docId} className="p-3 text-sm flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer" onClick={() => toggleRevokeSelection(perm.docId)}>
                         <div className="flex items-center gap-3">
                           <input 
                             type="checkbox"
                             checked={selectedDocsToRevoke.has(perm.docId)}
-                            onChange={() => toggleRevokeSelection(perm.docId)}
+                            readOnly
                             className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
                           />
                           <div>
@@ -278,10 +314,10 @@ export default function UserPermissionModal({ user, onClose }: UserPermissionMod
           {activeTab === 'grant' ? (
             <button 
               onClick={handleGrant}
-              disabled={!selectedDocToGrant || saving}
+              disabled={selectedDocsToGrant.length === 0 || saving}
               className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
             >
-              {saving ? 'Đang lưu...' : 'Xác nhận cấp quyền'}
+              {saving ? 'Đang lưu...' : `Xác nhận cấp quyền (${selectedDocsToGrant.length})`}
             </button>
           ) : (
             <button 
@@ -290,7 +326,7 @@ export default function UserPermissionModal({ user, onClose }: UserPermissionMod
               className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               <Trash2 className="w-4 h-4" />
-              {saving ? 'Đang gỡ...' : 'Xác nhận gỡ quyền'}
+              {saving ? 'Đang gỡ...' : `Xác nhận gỡ quyền (${selectedDocsToRevoke.size})`}
             </button>
           )}
         </div>
