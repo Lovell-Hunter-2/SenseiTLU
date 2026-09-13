@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, serverTimestamp, deleteDoc, limit } from 'firebase/firestore';
-import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon, ClipboardList, ScrollText, Lightbulb, Sigma, X, LayoutTemplate, Lock, LogIn, Bot, Sparkles, Flag } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, serverTimestamp, deleteDoc, limit, orderBy } from 'firebase/firestore';
+import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon, ClipboardList, ScrollText, Lightbulb, Sigma, X, LayoutTemplate, Lock, LogIn, Bot, Sparkles, Flag, Search } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { logActivityEvent, logSubjectDocumentView } from '../useActivityLogger';
@@ -21,10 +21,17 @@ const typeIcons: Record<string, React.ElementType> = {
 
 export default function SubjectDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [subject, setSubject] = useState<any>(null);
   const [documents, setDocuments] = useState<any[]>([]);
   const [docLimit, setDocLimit] = useState(50);
   const { isAdmin, user, login, loading } = useAuth();
+  
+  // Search state
+  const [allSubjects, setAllSubjects] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
   
   // Modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -87,6 +94,47 @@ export default function SubjectDetail() {
   const [driveApiKey, setDriveApiKey] = useState(localStorage.getItem('driveApiKey') || (import.meta as any).env.VITE_GOOGLE_DRIVE_API_KEY || '');
   const [showDriveApiInput, setShowDriveApiInput] = useState(!driveApiKey);
   const [userPermissions, setUserPermissions] = useState<any[]>([]);
+
+  // Load all subjects for search
+  useEffect(() => {
+    let subsStr = localStorage.getItem("cachedSubjects");
+    if (subsStr) {
+       try { setAllSubjects(JSON.parse(subsStr)); } catch(e){}
+    }
+    const q = query(collection(db, "subjects"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+       const subs = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+       }));
+       setAllSubjects(subs);
+       localStorage.setItem("cachedSubjects", JSON.stringify(subs));
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Handle outside click for search suggestions
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredSubjects = allSubjects
+    .filter(
+      (sub) =>
+        sub.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (sub.description &&
+          sub.description.toLowerCase().includes(searchQuery.toLowerCase())),
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   useEffect(() => {
     if (user && !isAdmin) {
@@ -530,13 +578,58 @@ export default function SubjectDetail() {
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="text-center space-y-4 py-8">
+      <div className="text-center space-y-4 py-8 relative">
         <h1 className="text-3xl md:text-4xl font-bold flex items-center justify-center gap-3">
           <Book className="w-8 h-8 text-blue-500" /> {subject.name}
         </h1>
         <p className="text-slate-500 dark:text-slate-400">
           {subject.description || `Tổng hợp tài liệu môn ${subject.name} - Sinh viên TLU`}
         </p>
+
+        {/* Thin Search Bar */}
+        <div className="max-w-md mx-auto mt-6 relative z-50 text-left" ref={searchContainerRef}>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-slate-400" />
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-10 pr-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full shadow-sm focus:shadow-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none text-sm"
+              placeholder="Tìm kiếm môn học khác..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSuggestions(true);
+              }}
+              onFocus={() => setShowSuggestions(true)}
+            />
+          </div>
+          
+          {showSuggestions && searchQuery && (
+            <div className="absolute w-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg z-50 overflow-hidden max-h-60 overflow-y-auto hidden-scrollbar">
+              {filteredSubjects.length > 0 ? (
+                filteredSubjects.map((sub) => (
+                  <button
+                    key={`suggestion-${sub.id}`}
+                    onClick={() => {
+                      setSearchQuery("");
+                      setShowSuggestions(false);
+                      navigate(`/subject/${sub.id}`);
+                    }}
+                    className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors flex items-center gap-3"
+                  >
+                    <Search className="w-4 h-4 text-slate-400" />
+                    <span className="text-sm truncate">{sub.name}</span>
+                  </button>
+                ))
+              ) : (
+                <div className="px-4 py-3 text-slate-500 text-sm">
+                  Không tìm thấy "{searchQuery}"
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Action Bar */}
