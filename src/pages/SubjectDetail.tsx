@@ -1068,7 +1068,7 @@ export default function SubjectDetail() {
 
       {/* Embedded Document View Modal */}
       {showIframeModal && selectedDocument && (
-        <div className="fixed inset-0 z-[45] p-0 sm:p-6 md:p-8 flex items-center justify-center bg-black/80">
+        <div className="fixed inset-0 z-[60] p-0 sm:p-6 md:p-8 flex items-center justify-center bg-black/80">
           <div className="w-full h-full sm:h-[85vh] max-w-6xl bg-white dark:bg-slate-900 sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden border-0 sm:border border-slate-200 dark:border-slate-800">
             <div className="h-14 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between px-2 sm:px-6 shrink-0">
               <div className="flex items-center gap-2 sm:gap-3 w-3/4">
