@@ -587,7 +587,7 @@ export default function SubjectDetail() {
         </p>
 
         {/* Thin Search Bar */}
-        <div className="max-w-md mx-auto mt-6 relative z-50 text-left" ref={searchContainerRef}>
+        <div className="max-w-md mx-auto mt-6 relative z-30 text-left" ref={searchContainerRef}>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-4 w-4 text-slate-400" />
