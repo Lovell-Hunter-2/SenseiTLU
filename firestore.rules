@@ -42,7 +42,7 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId) && request.resource.data.keys().hasAll(['email', 'role']) &&
                     (request.resource.data.role == 'user' || isAdmin());
-      allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role);
+      allow update: if isAdmin() || (isOwner(userId) && request.resource.data.get('role', 'user') == resource.data.get('role', 'user'));
       allow delete: if isAdmin();
 
       match /activities/{activityId} {
