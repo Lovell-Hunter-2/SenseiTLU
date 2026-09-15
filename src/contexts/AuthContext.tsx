@@ -111,9 +111,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (user) {
         const userRef = doc(db, 'users', user.uid);
         if (document.visibilityState === 'hidden') {
-          setDoc(userRef, { isOnline: false }, { merge: true });
+          setDoc(userRef, { isOnline: false }, { merge: true }).catch(console.error);
         } else {
-          setDoc(userRef, { isOnline: true, lastLoginAt: new Date().toISOString() }, { merge: true });
+          setDoc(userRef, { isOnline: true, lastLoginAt: new Date().toISOString() }, { merge: true }).catch(console.error);
         }
       }
     };
@@ -121,7 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const handleBeforeUnload = () => {
       if (user) {
         const userRef = doc(db, 'users', user.uid);
-        setDoc(userRef, { isOnline: false }, { merge: true });
+        setDoc(userRef, { isOnline: false }, { merge: true }).catch(console.error);
       }
     };
 
