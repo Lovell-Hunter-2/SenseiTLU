@@ -11,7 +11,12 @@ import {
   deleteDoc,
   doc,
   updateDoc,
+  getDocs,
+  limit,
+  startAfter,
+  QueryDocumentSnapshot,
 } from "firebase/firestore";
+import { Loader2 } from "lucide-react";
 import {
   Search,
   Plus,
@@ -283,15 +288,16 @@ export default function Home() {
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
   const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const [subjects, setSubjects] = useState<any[]>(() => {
-    try {
-      const saved = localStorage.getItem("cachedSubjects");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [subjects, setSubjects] = useState<any[]>([]);
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const isFetchingRef = useRef(false);
+  const PAGE_SIZE = 12;
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchingRemote, setSearchingRemote] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const [favorites, setFavorites] = useState<string[]>(() => {
@@ -357,33 +363,116 @@ export default function Home() {
       },
     );
 
-    const q = query(collection(db, "subjects"));
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
+    // Initial page fetch
+    const fetchInitial = async () => {
+      try {
+        setInitialLoading(true);
+        const q = query(
+          collection(db, "subjects"),
+          orderBy("name", "asc"),
+          limit(PAGE_SIZE),
+        );
+        const snapshot = await getDocs(q);
         const subs = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-        subs.sort((a: any, b: any) =>
-          (a.name || "").localeCompare(b.name || "", "vi"),
-        );
         setSubjects(subs);
-        try {
-          localStorage.setItem("cachedSubjects", JSON.stringify(subs));
-        } catch (e) {
-          console.error("Could not cache subjects", e);
-        }
-      },
-      (error) => {
-        console.error("Error fetching subjects:", error);
-      },
-    );
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+        setHasMore(snapshot.docs.length === PAGE_SIZE);
+      } catch (err) {
+        console.error("Error loading subjects:", err);
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    fetchInitial();
+
     return () => {
-      unsubscribe();
       unsubImages();
     };
   }, []);
+
+  const loadMoreSubjects = async () => {
+    if (isFetchingRef.current || !hasMore || !lastDoc || searchQuery.trim()) return;
+    try {
+      isFetchingRef.current = true;
+      setIsLoadingMore(true);
+      const q = query(
+        collection(db, "subjects"),
+        orderBy("name", "asc"),
+        startAfter(lastDoc),
+        limit(PAGE_SIZE),
+      );
+      const snapshot = await getDocs(q);
+      const newSubs = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setSubjects((prev) => {
+        const existingIds = new Set(prev.map((s) => s.id));
+        const filteredNew = newSubs.filter((s) => !existingIds.has(s.id));
+        return [...prev, ...filteredNew];
+      });
+
+      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+      setHasMore(snapshot.docs.length === PAGE_SIZE);
+    } catch (err) {
+      console.error("Error loading more subjects:", err);
+    } finally {
+      setIsLoadingMore(false);
+      isFetchingRef.current = false;
+    }
+  };
+
+  // IntersectionObserver for pre-fetching: triggers ~350px before reaching the end
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMoreSubjects();
+        }
+      },
+      {
+        rootMargin: "350px", // Pre-fetch 350px before entering viewport (so the next row is ready)
+        threshold: 0,
+      }
+    );
+
+    observer.observe(target);
+    return () => {
+      observer.disconnect();
+    };
+  }, [lastDoc, hasMore, searchQuery]);
+
+  // When searching, fetch all subjects once if not already fetched all, so search doesn't miss subjects
+  useEffect(() => {
+    if (!searchQuery.trim()) return;
+
+    const fetchAllForSearch = async () => {
+      if (!hasMore || searchingRemote) return;
+      try {
+        setSearchingRemote(true);
+        const q = query(collection(db, "subjects"), orderBy("name", "asc"));
+        const snapshot = await getDocs(q);
+        const allSubs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setSubjects(allSubs);
+        setHasMore(false);
+      } catch (e) {
+        console.error("Search fetch all error:", e);
+      } finally {
+        setSearchingRemote(false);
+      }
+    };
+
+    const timer = setTimeout(fetchAllForSearch, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, hasMore, searchingRemote]);
 
   const filteredSubjects = subjects
     .filter(
@@ -415,12 +504,21 @@ export default function Home() {
     if (!newSubject.name.trim()) return;
 
     try {
-      await addDoc(collection(db, "subjects"), {
+      const docRef = await addDoc(collection(db, "subjects"), {
         name: newSubject.name,
         description: newSubject.description,
         iconName: newSubject.iconName,
         createdAt: serverTimestamp(),
       });
+      setSubjects((prev) => [
+        {
+          id: docRef.id,
+          name: newSubject.name,
+          description: newSubject.description,
+          iconName: newSubject.iconName,
+        },
+        ...prev,
+      ]);
       if (isAdmin && user) {
         await addDoc(collection(db, 'system_updates'), {
           action: 'Tạo mới',
@@ -448,6 +546,9 @@ export default function Home() {
         description: editingSubject.description,
         iconName: editingSubject.iconName,
       });
+      setSubjects((prev) =>
+        prev.map((s) => (s.id === editingSubject.id ? { ...s, ...editingSubject } : s))
+      );
       if (isAdmin && user) {
         await addDoc(collection(db, 'system_updates'), {
           action: 'Cập nhật',
@@ -467,6 +568,7 @@ export default function Home() {
   const handleDeleteSubject = async (subjectId: string, subjectName: string) => {
     try {
       await deleteDoc(doc(db, "subjects", subjectId));
+      setSubjects((prev) => prev.filter((s) => s.id !== subjectId));
       if (isAdmin && user) {
         await addDoc(collection(db, 'system_updates'), {
           action: 'Xóa',
@@ -601,7 +703,12 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredSubjects.length === 0 ? (
+          {initialLoading ? (
+            <div className="col-span-full py-20 flex flex-col items-center justify-center text-center">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-3" />
+              <p className="text-slate-500 text-sm">Đang tải danh sách môn học...</p>
+            </div>
+          ) : filteredSubjects.length === 0 ? (
             <div className="col-span-full py-16 flex flex-col items-center justify-center text-center">
               <div className="w-32 h-32 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 animate-bounce shadow-lg mt-8">
                 <span className="text-6xl">👻</span>
@@ -704,6 +811,20 @@ export default function Home() {
             })
           )}
         </div>
+
+        {/* Infinite Scroll Sentinel & Pre-fetch Status */}
+        {hasMore && !searchQuery.trim() && (
+          <div
+            ref={loadMoreRef}
+            className="w-full py-8 flex flex-col items-center justify-center text-slate-400"
+          >
+            {isLoadingMore && (
+              <div className="flex items-center gap-2 text-sm text-blue-500 font-medium animate-pulse">
+                <Loader2 className="w-4 h-4 animate-spin" /> Đang tải thêm môn học...
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Add Subject Modal */}
