@@ -187,7 +187,7 @@ useEffect(() => {
         const subjectsSnap = await getDocs(subjectsQuery);
         setTopSubjects(subjectsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
         
-        const docsQuery = query(collection(db, 'analytics_documents'), orderBy('views', 'desc'), limit(6));
+        const docsQuery = query(collection(db, 'analytics_documents'), orderBy('views', 'desc'), limit(10));
         const docsSnap = await getDocs(docsQuery);
         setTopDocs(docsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       } catch (err) {
@@ -722,19 +722,19 @@ useEffect(() => {
               </div>
 
               {/* Lists */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 overflow-hidden">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 overflow-hidden flex flex-col h-full">
                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                       <BarChart3 className="w-5 h-5 text-blue-500" /> TOP Môn học được quan tâm
                    </h3>
-                   <div className="space-y-3">
+                   <div className="space-y-2.5">
                      {topSubjects.length > 0 ? topSubjects.map((s, idx) => (
-                       <div key={s.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
-                          <span className="font-medium flex items-center gap-3">
-                             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs font-bold">{idx + 1}</span>
-                             {s.name}
+                       <div key={s.id} className="flex items-center justify-between p-3 min-h-[58px] bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100/70 dark:hover:bg-slate-800 transition-colors">
+                          <span className="font-medium flex items-center gap-3 min-w-0 pr-3">
+                             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs font-bold shrink-0">{idx + 1}</span>
+                             <span className="truncate text-sm" title={s.name}>{s.name}</span>
                           </span>
-                          <span className="text-sm text-slate-500 font-semibold">{s.views} lượt xem</span>
+                          <span className="text-sm text-slate-500 font-semibold whitespace-nowrap shrink-0">{s.views} lượt xem</span>
                        </div>
                      )) : (
                         <p className="text-slate-500 italic">Chưa có dữ liệu</p>
@@ -742,21 +742,25 @@ useEffect(() => {
                    </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 overflow-hidden flex flex-col h-full">
                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                       <BarChart3 className="w-5 h-5 text-purple-500" /> TOP Tài liệu xem nhiều nhất
                    </h3>
-                   <div className="space-y-3">
+                   <div className="space-y-2.5">
                      {topDocs.length > 0 ? topDocs.map((d, idx) => (
-                       <div key={d.id} className="flex flex-col p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
-                          <div className="flex items-start justify-between gap-2">
-                            <span className="font-medium flex items-start gap-3">
-                               <span className="flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-600 text-xs font-bold mt-0.5 flex-shrink-0">{idx + 1}</span>
-                               <span className="line-clamp-2 leading-tight">{d.title}</span>
-                            </span>
-                            <span className="text-sm text-slate-500 font-semibold whitespace-nowrap">{d.views} lượt</span>
+                       <div key={d.id} className="flex items-center justify-between p-3 min-h-[58px] bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100/70 dark:hover:bg-slate-800 transition-colors">
+                          <div className="font-medium flex items-center gap-3 min-w-0 pr-3">
+                             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-600 text-xs font-bold shrink-0">{idx + 1}</span>
+                             <div className="min-w-0">
+                               <p className="truncate text-sm leading-tight" title={d.title}>{d.title}</p>
+                               {d.subjectName && (
+                                 <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5" title={`Môn: ${d.subjectName}`}>
+                                   Môn: {d.subjectName}
+                                 </p>
+                               )}
+                             </div>
                           </div>
-                          <span className="text-xs text-slate-500 mt-2 ml-9">Môn: {d.subjectName}</span>
+                          <span className="text-sm text-slate-500 font-semibold whitespace-nowrap shrink-0">{d.views} lượt</span>
                        </div>
                      )) : (
                         <p className="text-slate-500 italic">Chưa có dữ liệu</p>
