@@ -725,226 +725,366 @@ export default function SubjectDetail() {
 
       {/* Add/Edit Document Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-6 shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]">
-            <h3 className="text-xl font-bold mb-4">{editingDocId ? 'Sửa tài liệu' : 'Thêm tài liệu mới'}</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[92vh] sm:max-h-[88vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             
-            <div className="flex gap-2 mb-6 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+            {/* Modal Header */}
+            <div className="px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                  {uploadMode === 'folder' ? <Folder className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                    {editingDocId ? 'Sửa tài liệu' : 'Thêm tài liệu mới'}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {uploadMode === 'folder' ? 'Thư mục tài liệu với nhiều mục/chương' : 'Tài liệu dạng tệp tin đơn lẻ'}
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
-                onClick={() => setUploadMode('file')}
-                className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${uploadMode === 'file' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                title="Đóng"
               >
-                1 File
-              </button>
-              <button
-                type="button"
-                onClick={() => setUploadMode('folder')}
-                className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${uploadMode === 'folder' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-              >
-                Folder (Nhiều mục)
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveDocument} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Tên tài liệu {uploadMode === 'folder' && '(Tên thư mục)'}</label>
-                <input
-                  type="text"
-                  required
-                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={newDoc.title}
-                  onChange={e => setNewDoc({...newDoc, title: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Loại tài liệu</label>
-                <select
-                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={newDoc.type}
-                  onChange={e => setNewDoc({...newDoc, type: e.target.value})}
-                >
-                  {types.map(t => (
-                    <option key={t} value={t} className="text-slate-900">{t}</option>
-                  ))}
-                </select>
-              </div>
-
-              {uploadMode === 'file' ? (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Chương (Tùy chọn)</label>
-                    <input
-                      type="text"
-                      placeholder="VD: Chương 1, Chương 2..."
-                      className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
-                      value={newDoc.chapter}
-                      onChange={e => setNewDoc({...newDoc, chapter: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">URL (Link Drive/PDF)</label>
-                    <input
-                      type="url"
-                      required
-                      className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
-                      value={newDoc.url}
-                      onChange={e => setNewDoc({...newDoc, url: e.target.value})}
-                    />
-                  </div>
-                </>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex gap-4 mb-2 border-b border-slate-200 dark:border-slate-700">
-                    <button
-                      type="button"
-                      onClick={() => setFolderInputMode('manual')}
-                      className={`text-sm font-medium pb-2 -mb-[1px] border-b-2 transition-colors ${folderInputMode === 'manual' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                    >
-                      Nhập thủ công
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFolderInputMode('auto')}
-                      className={`text-sm font-medium pb-2 -mb-[1px] border-b-2 transition-colors ${folderInputMode === 'auto' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                    >
-                      Quét từ link Drive
-                    </button>
-                  </div>
-
-                  {folderInputMode === 'auto' ? (
-                    <div className="space-y-4 bg-blue-50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30">
-                      <div className="flex items-start gap-2 text-sm text-blue-800 dark:text-blue-300">
-                        <Zap className="w-4 h-4 mt-0.5 shrink-0" />
-                        <p>Dán link thư mục Google Drive (đã bật chia sẻ "Bất kỳ ai có liên kết"). Hệ thống sẽ tự động lấy tên và link của tất cả các file bên trong.</p>
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Link thư mục Drive</label>
-                        <input
-                          type="url"
-                          placeholder="https://drive.google.com/drive/folders/..."
-                          className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
-                          value={driveFolderUrl}
-                          onChange={e => setDriveFolderUrl(e.target.value)}
-                        />
-                      </div>
-
-                      {showDriveApiInput && (
-                        <div>
-                          <label className="block text-sm font-medium mb-1 flex justify-between">
-                            <span>Google Drive API Key</span>
-                            <a href="https://developers.google.com/drive/api/quickstart/js" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline text-xs">Cách lấy Key?</a>
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="AIzaSy..."
-                            className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
-                            value={driveApiKey}
-                            onChange={e => setDriveApiKey(e.target.value)}
-                          />
-                        </div>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={handleScanDriveFolder}
-                        disabled={isScanningDrive || !driveFolderUrl}
-                        className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
-                      >
-                        {isScanningDrive ? (
-                          <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Đang quét...</>
-                        ) : (
-                          <><Zap className="w-4 h-4" /> Quét thư mục</>
-                        )}
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <label className="block text-sm font-medium">Các mục trong thư mục</label>
-                      <div className="max-h-60 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-                        {folderItems.map((item, index) => (
-                          <div key={index} className="flex gap-2 items-start">
-                            <div className="flex-1 space-y-2">
-                              <input
-                                type="text"
-                                placeholder="Tên (VD: Chương 1)"
-                                required
-                                className="w-full px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
-                                value={item.title}
-                                onChange={e => {
-                                  const newItems = [...folderItems];
-                                  newItems[index].title = e.target.value;
-                                  setFolderItems(newItems);
-                                }}
-                              />
-                              <input
-                                type="url"
-                                placeholder="URL (Link Drive/PDF)"
-                                required
-                                className="w-full px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
-                                value={item.url}
-                                onChange={e => {
-                                  const newItems = [...folderItems];
-                                  newItems[index].url = e.target.value;
-                                  setFolderItems(newItems);
-                                }}
-                              />
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (folderItems.length > 1) {
-                                  setFolderItems(folderItems.filter((_, i) => i !== index));
-                                }
-                              }}
-                              className="p-1.5 text-slate-400 hover:text-red-500 transition-colors mt-1"
-                              disabled={folderItems.length === 1}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setFolderItems([...folderItems, { title: '', url: '' }])}
-                        className="text-sm text-blue-600 dark:text-blue-400 font-medium flex items-center gap-1 hover:underline"
-                      >
-                        <Plus className="w-3 h-3" /> Thêm mục
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-              
-              <div className="flex items-center gap-2 mt-4 pb-2">
-                <input
-                  type="checkbox"
-                  id="isHidden"
-                  checked={newDoc.isHidden}
-                  onChange={e => setNewDoc({...newDoc, isHidden: e.target.checked})}
-                  className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-                />
-                <label htmlFor="isHidden" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Ẩn tài liệu này (Chỉ QTV mới thấy)
-                </label>
-              </div>
-
-              <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            {/* Mode Switcher Tabs */}
+            <div className="px-5 sm:px-6 pt-3 pb-2 shrink-0 bg-slate-50/50 dark:bg-slate-800/20 border-b border-slate-100 dark:border-slate-800/60">
+              <div className="flex gap-2 p-1 bg-slate-200/70 dark:bg-slate-800 rounded-xl">
                 <button
                   type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  onClick={() => setUploadMode('file')}
+                  className={`flex-1 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                    uploadMode === 'file'
+                      ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
                 >
-                  Hủy
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>1 File</span>
                 </button>
                 <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  type="button"
+                  onClick={() => setUploadMode('folder')}
+                  className={`flex-1 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                    uploadMode === 'folder'
+                      ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
                 >
-                  {editingDocId ? 'Lưu thay đổi' : 'Thêm'}
+                  <Folder className="w-3.5 h-3.5" />
+                  <span>Folder (Nhiều mục)</span>
+                  {uploadMode === 'folder' && folderItems.length > 0 && folderItems[0].title && (
+                    <span className="ml-1 px-1.5 py-0.2 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full text-[10px]">
+                      {folderItems.length}
+                    </span>
+                  )}
                 </button>
+              </div>
+            </div>
+
+            {/* Form with Scrollable Content & Sticky Footer */}
+            <form onSubmit={handleSaveDocument} className="flex-1 min-h-0 flex flex-col overflow-hidden">
+              {/* Scrollable Body */}
+              <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                    Tên tài liệu {uploadMode === 'folder' && '(Tên thư mục)'} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder={uploadMode === 'folder' ? 'VD: Trọn bộ Giáo trình & Slide bài giảng' : 'VD: Giáo trình Nguyên lý thống kê'}
+                    className="w-full px-3.5 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                    value={newDoc.title}
+                    onChange={e => setNewDoc({...newDoc, title: e.target.value})}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                    Loại tài liệu
+                  </label>
+                  <select
+                    className="w-full px-3.5 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                    value={newDoc.type}
+                    onChange={e => setNewDoc({...newDoc, type: e.target.value})}
+                  >
+                    {types.map(t => (
+                      <option key={t} value={t} className="text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-900">{t}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {uploadMode === 'file' ? (
+                  <>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                        Chương (Tùy chọn)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="VD: Chương 1, Chương 2..."
+                        className="w-full px-3.5 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                        value={newDoc.chapter}
+                        onChange={e => setNewDoc({...newDoc, chapter: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                        URL tài liệu (Link Drive / PDF) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="url"
+                        required
+                        placeholder="https://drive.google.com/..."
+                        className="w-full px-3.5 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                        value={newDoc.url}
+                        onChange={e => setNewDoc({...newDoc, url: e.target.value})}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-3 pt-1">
+                    {/* Sub tabs: Manual vs Drive scan */}
+                    <div className="flex gap-4 border-b border-slate-200 dark:border-slate-700">
+                      <button
+                        type="button"
+                        onClick={() => setFolderInputMode('manual')}
+                        className={`text-sm font-semibold pb-2.5 -mb-[1px] border-b-2 transition-colors flex items-center gap-1.5 ${
+                          folderInputMode === 'manual'
+                            ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                            : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        }`}
+                      >
+                        <span>Nhập thủ công</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                          {folderItems.length}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFolderInputMode('auto')}
+                        className={`text-sm font-semibold pb-2.5 -mb-[1px] border-b-2 transition-colors flex items-center gap-1.5 ${
+                          folderInputMode === 'auto'
+                            ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                            : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        }`}
+                      >
+                        <Zap className="w-3.5 h-3.5 text-amber-500" />
+                        <span>Quét từ link Drive</span>
+                      </button>
+                    </div>
+
+                    {folderInputMode === 'auto' ? (
+                      <div className="space-y-3.5 bg-blue-50/70 dark:bg-blue-950/20 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30">
+                        <div className="flex items-start gap-2.5 text-xs text-blue-800 dark:text-blue-300 leading-relaxed">
+                          <Zap className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                          <p>
+                            Dán đường link thư mục Google Drive (đã bật quyền <strong>"Bất kỳ ai có liên kết"</strong>). 
+                            Hệ thống sẽ tự động quét và thêm tất cả tài liệu vào danh sách bên dưới.
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            Link thư mục Google Drive
+                          </label>
+                          <input
+                            type="url"
+                            placeholder="https://drive.google.com/drive/folders/..."
+                            className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                            value={driveFolderUrl}
+                            onChange={e => setDriveFolderUrl(e.target.value)}
+                          />
+                        </div>
+
+                        {showDriveApiInput && (
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex justify-between items-center">
+                              <span>Google Drive API Key</span>
+                              <a
+                                href="https://developers.google.com/drive/api/quickstart/js"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline text-[11px]"
+                              >
+                                Cách lấy Key?
+                              </a>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="AIzaSy..."
+                              className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                              value={driveApiKey}
+                              onChange={e => setDriveApiKey(e.target.value)}
+                            />
+                          </div>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={handleScanDriveFolder}
+                          disabled={isScanningDrive || !driveFolderUrl}
+                          className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-400 text-white rounded-lg transition-colors font-semibold text-sm flex items-center justify-center gap-2 shadow-sm"
+                        >
+                          {isScanningDrive ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              <span>Đang quét tệp từ Drive...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Zap className="w-4 h-4" />
+                              <span>Quét thư mục & Thêm tự động</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                            Các mục trong thư mục ({folderItems.length})
+                          </label>
+                          <div className="flex items-center gap-2">
+                            {folderItems.length > 3 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (window.confirm("Bạn có chắc chắn muốn xóa hết tất cả các mục?")) {
+                                    setFolderItems([{ title: '', url: '' }]);
+                                  }
+                                }}
+                                className="text-xs text-red-500 hover:text-red-600 dark:hover:text-red-400 hover:underline"
+                              >
+                                Xóa tất cả
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setFolderItems([...folderItems, { title: '', url: '' }])}
+                              className="text-xs text-blue-600 dark:text-blue-400 font-semibold flex items-center gap-1 hover:underline bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md"
+                            >
+                              <Plus className="w-3.5 h-3.5" /> Thêm mục
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* List of items */}
+                        <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                          {folderItems.map((item, index) => (
+                            <div
+                              key={index}
+                              className="group p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-700/60 flex items-start gap-2.5 transition-all hover:border-blue-300 dark:hover:border-blue-700"
+                            >
+                              <div className="w-6 h-6 rounded-md bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-300 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5 border border-slate-200 dark:border-slate-600">
+                                {index + 1}
+                              </div>
+                              <div className="flex-1 space-y-1.5 min-w-0">
+                                <input
+                                  type="text"
+                                  placeholder="Tên mục (VD: Chương 1 - Nhập môn)"
+                                  required
+                                  className="w-full px-2.5 py-1.5 text-xs sm:text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                  value={item.title}
+                                  onChange={e => {
+                                    const newItems = [...folderItems];
+                                    newItems[index].title = e.target.value;
+                                    setFolderItems(newItems);
+                                  }}
+                                />
+                                <input
+                                  type="url"
+                                  placeholder="Link xem tài liệu (Drive/PDF)..."
+                                  required
+                                  className="w-full px-2.5 py-1.5 text-xs sm:text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                  value={item.url}
+                                  onChange={e => {
+                                    const newItems = [...folderItems];
+                                    newItems[index].url = e.target.value;
+                                    setFolderItems(newItems);
+                                  }}
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (folderItems.length > 1) {
+                                    setFolderItems(folderItems.filter((_, i) => i !== index));
+                                  }
+                                }}
+                                className="p-1.5 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors mt-0.5 shrink-0"
+                                disabled={folderItems.length === 1}
+                                title="Xóa mục này"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setFolderItems([...folderItems, { title: '', url: '' }])}
+                          className="w-full py-2 border border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center justify-center gap-1.5"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Thêm mục tiếp theo
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Visibility Checkbox */}
+                <div className="pt-2">
+                  <label htmlFor="isHidden" className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/50 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      id="isHidden"
+                      checked={newDoc.isHidden}
+                      onChange={e => setNewDoc({...newDoc, isHidden: e.target.checked})}
+                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
+                    />
+                    <div className="text-xs">
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 block">Ẩn tài liệu này</span>
+                      <span className="text-slate-500 dark:text-slate-400">Chỉ có Quản trị viên (Admin) mới nhìn thấy và tải tài liệu này.</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Sticky Footer */}
+              <div className="px-5 sm:px-6 py-3.5 bg-slate-50 dark:bg-slate-800/70 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
+                <div className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
+                  {uploadMode === 'folder' ? (
+                    <span>
+                      <strong>{folderItems.filter(i => i.title.trim() && i.url.trim()).length}</strong> / {folderItems.length} mục hoàn thiện
+                    </span>
+                  ) : (
+                    <span>Tài liệu đơn lẻ</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddModalOpen(false)}
+                    className="flex-1 sm:flex-initial px-4 py-2 text-sm font-medium border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 sm:flex-initial px-5 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl shadow-sm transition-all"
+                  >
+                    {editingDocId ? 'Lưu thay đổi' : 'Thêm tài liệu'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -1053,7 +1193,7 @@ export default function SubjectDetail() {
                 onClick={() => setShowChoiceModal(false)}
                 className="flex items-center justify-center gap-2 w-full py-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl font-medium transition-colors border border-slate-200 dark:border-slate-700"
               >
-                Mở bằng Google Drive <ExternalLink className="w-4 h-4 ml-1" />
+                Xem trực tiếp <ExternalLink className="w-4 h-4 ml-1" />
               </a>
             </div>
             <button 
