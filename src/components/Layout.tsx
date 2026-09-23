@@ -442,7 +442,7 @@ export default function Layout() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-2 sm:px-4 py-4 sm:py-8">
         <Outlet />
       </main>
 
