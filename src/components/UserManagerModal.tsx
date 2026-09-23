@@ -137,22 +137,22 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
       <div className={inline ? "w-full flex-1 flex flex-col" : "bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"}>
         
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-3 text-blue-600 dark:text-blue-400">
+        <div className="flex items-center justify-between p-3 sm:p-6 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-2.5 sm:gap-3 text-blue-600 dark:text-blue-400 min-w-0">
             {selectedUser ? (
-              <button onClick={() => setSelectedUser(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
-                <ChevronLeft className="w-6 h-6" />
+              <button onClick={() => setSelectedUser(null)} className="p-1.5 sm:p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors shrink-0">
+                <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             ) : (
-              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                <Users className="w-6 h-6" />
+              <div className="p-1.5 sm:p-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl shrink-0">
+                <Users className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
             )}
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white truncate">
                 {selectedUser ? 'Lịch sử hoạt động' : 'Quản lý người dùng'}
               </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 truncate">
                 {selectedUser ? `Theo dõi hoạt động của ${selectedUser.displayName}` : 'Theo dõi hoạt động và đăng nhập'}
               </p>
             </div>
@@ -160,7 +160,7 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
           {!inline && onClose && (
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+              className="p-1.5 sm:p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors shrink-0"
             >
               <X className="w-5 h-5" />
             </button>
@@ -168,15 +168,15 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950/50">
+        <div className="flex-1 overflow-y-auto p-2.5 sm:p-6 bg-slate-50 dark:bg-slate-950/50">
           {selectedUser ? (
-             <div className="space-y-6">
+             <div className="space-y-4 sm:space-y-6">
                {/* User Info Header in Activity View */}
-               <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-                 <img src={selectedUser.photoURL || `https://ui-avatars.com/api/?name=${selectedUser.displayName}`} alt={selectedUser.displayName} className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700" referrerPolicy="no-referrer" />
-                 <div>
-                   <h3 className="font-bold text-slate-900 dark:text-white text-lg">{selectedUser.displayName}</h3>
-                   <p className="text-sm text-slate-500">{selectedUser.email}</p>
+               <div className="flex items-center gap-3 sm:gap-4 bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                 <img src={selectedUser.photoURL || `https://ui-avatars.com/api/?name=${selectedUser.displayName}`} alt={selectedUser.displayName} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" referrerPolicy="no-referrer" />
+                 <div className="min-w-0">
+                   <h3 className="font-bold text-slate-900 dark:text-white text-base sm:text-lg truncate">{selectedUser.displayName}</h3>
+                   <p className="text-xs sm:text-sm text-slate-500 truncate">{selectedUser.email}</p>
                  </div>
                </div>
 
@@ -199,15 +199,15 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
                  ) : (
                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
                      {activities.map((act) => (
-                       <div key={act.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex items-start gap-4">
-                         <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full mt-1">
+                       <div key={act.id} className="p-3 sm:p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex items-start gap-3 sm:gap-4">
+                         <div className="p-1.5 sm:p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full mt-0.5 shrink-0">
                            <Activity className="w-4 h-4" />
                          </div>
-                         <div className="flex-1">
-                           <p className="text-sm font-medium text-slate-900 dark:text-white">
+                         <div className="flex-1 min-w-0">
+                           <p className="text-xs sm:text-sm font-medium text-slate-900 dark:text-white">
                              {act.action}: <span className="text-blue-600 dark:text-blue-400">{act.details}</span>
                            </p>
-                           <p className="text-xs text-slate-500 mt-1">{formatActivityDate(act.timestamp)}</p>
+                           <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">{formatActivityDate(act.timestamp)}</p>
                          </div>
                        </div>
                      ))}
@@ -217,9 +217,9 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
              </div>
           ) : (
             <>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                <div className="flex items-center gap-4">
-                  <div className="text-sm text-slate-500 dark:text-slate-400">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                  <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                     Tổng số: <span className="font-bold text-slate-700 dark:text-slate-200">{filteredUsers.length}</span> người dùng
                   </div>
                   <input
@@ -227,15 +227,15 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
                     placeholder="Tìm theo tên hoặc email..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full sm:w-auto px-3 py-1.5 text-xs sm:text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <button
                   onClick={toggleSort}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 whitespace-nowrap"
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 whitespace-nowrap"
                 >
-                  <Filter className="w-4 h-4" />
-                  Sắp xếp theo thời gian đăng nhập {sortOrder === 'desc' ? <ArrowDown className="w-4 h-4"/> : <ArrowUp className="w-4 h-4"/>}
+                  <Filter className="w-3.5 h-3.5" />
+                  Sắp xếp theo thời gian đăng nhập {sortOrder === 'desc' ? <ArrowDown className="w-3.5 h-3.5"/> : <ArrowUp className="w-3.5 h-3.5"/>}
                 </button>
               </div>
 
@@ -248,54 +248,54 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-sm font-medium text-slate-500 dark:text-slate-400">
-                          <th className="px-6 py-4 whitespace-nowrap">Người dùng</th>
-                          <th className="px-6 py-4 whitespace-nowrap">Email</th>
-                          <th className="px-6 py-4 whitespace-nowrap">Trạng thái</th>
-                          <th className="px-6 py-4 whitespace-nowrap">Lần cuối đăng nhập</th>
-                          <th className="px-6 py-4 whitespace-nowrap text-right">Thao tác</th>
+                        <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
+                          <th className="px-3 sm:px-6 py-3 whitespace-nowrap">Người dùng</th>
+                          <th className="px-3 sm:px-6 py-3 whitespace-nowrap">Email</th>
+                          <th className="px-3 sm:px-6 py-3 whitespace-nowrap">Trạng thái</th>
+                          <th className="px-3 sm:px-6 py-3 whitespace-nowrap">Lần cuối đăng nhập</th>
+                          <th className="px-3 sm:px-6 py-3 whitespace-nowrap text-right">Thao tác</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                      <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-xs sm:text-sm">
                         {filteredUsers.map((u) => (
                           <tr 
                             key={u.id} 
                             onClick={() => setSelectedUser(u)}
                             className="hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                           >
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
-                                <img src={u.photoURL || `https://ui-avatars.com/api/?name=${u.displayName}`} alt={u.displayName} className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700" referrerPolicy="no-referrer" />
-                                <div className="font-medium text-slate-900 dark:text-white max-w-[150px] sm:max-w-[200px] truncate" title={u.displayName}>
+                            <td className="px-3 sm:px-6 py-3">
+                              <div className="flex items-center gap-2.5">
+                                <img src={u.photoURL || `https://ui-avatars.com/api/?name=${u.displayName}`} alt={u.displayName} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" referrerPolicy="no-referrer" />
+                                <div className="font-medium text-slate-900 dark:text-white max-w-[120px] sm:max-w-[200px] truncate" title={u.displayName}>
                                   {u.displayName || 'Không rõ'}
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
+                            <td className="px-3 sm:px-6 py-3 text-slate-600 dark:text-slate-300 max-w-[150px] truncate">
                               {u.email}
                             </td>
-                            <td className="px-6 py-4">
-                              <div className={`flex items-center gap-2 inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
+                            <td className="px-3 sm:px-6 py-3">
+                              <div className={`flex items-center gap-1.5 inline-flex px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-medium ${
                                 u.isOnline 
                                   ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
                                   : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'
                               }`}>
-                                <div className={`w-2 h-2 rounded-full ${u.isOnline ? 'bg-green-500 animate-pulse' : 'bg-slate-400'}`}></div>
-                                {u.isOnline ? 'Đang hoạt động' : 'Ngoại tuyến'}
+                                <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${u.isOnline ? 'bg-green-500 animate-pulse' : 'bg-slate-400'}`}></div>
+                                {u.isOnline ? 'Đang online' : 'Ngoại tuyến'}
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                            <td className="px-3 sm:px-6 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
                               {formatDate(u.lastLoginAt || u.createdAt)}
                             </td>
-                            <td className="px-6 py-4 text-right">
+                            <td className="px-3 sm:px-6 py-3 text-right">
                               <button 
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setPermissionUser(u);
                                 }}
-                                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-medium transition-colors border border-blue-200 dark:border-blue-800/50 flex items-center justify-center gap-1.5 ml-auto"
+                                className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-lg text-xs sm:text-sm font-medium transition-colors border border-blue-200 dark:border-blue-800/50 flex items-center justify-center gap-1 ml-auto whitespace-nowrap"
                               >
-                                <Shield className="w-4 h-4" /> Cấp quyền
+                                <Shield className="w-3.5 h-3.5" /> Cấp quyền
                               </button>
                             </td>
                           </tr>
