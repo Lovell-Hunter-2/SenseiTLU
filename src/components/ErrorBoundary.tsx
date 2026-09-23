@@ -37,7 +37,12 @@ export class ErrorBoundary extends Component<Props, State> {
               Rất xin lỗi vì sự bất tiện này. Một lỗi đã xảy ra trong quá trình hiển thị giao diện.
             </p>
             <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl text-left mb-6 overflow-x-auto text-xs text-red-600 dark:text-red-400 font-mono border border-red-100 dark:border-red-900/30">
-              {this.state.error?.message || 'Unknown error'}
+              <div className="font-bold mb-1">{this.state.error?.name || 'Error'}: {this.state.error?.message || 'Unknown error'}</div>
+              {this.state.error?.stack && (
+                <pre className="text-[10px] text-slate-500 dark:text-slate-400 whitespace-pre-wrap mt-2 max-h-32 overflow-y-auto">
+                  {this.state.error.stack}
+                </pre>
+              )}
             </div>
             <div className="flex flex-col gap-2">
               <button
