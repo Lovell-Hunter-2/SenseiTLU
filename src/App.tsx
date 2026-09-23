@@ -5,8 +5,8 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
 
-// Lazy loading pages for better performance
-const Home = lazy(() => import('./pages/Home'));
+import Home from './pages/Home';
+// Lazy loading secondary pages for better performance
 const SubjectDetail = lazy(() => import('./pages/SubjectDetail'));
 const MockExam = lazy(() => import('./pages/MockExam'));
 const About = lazy(() => import('./pages/About'));
