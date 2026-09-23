@@ -479,13 +479,13 @@ useEffect(() => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row gap-8">
+    <div className="max-w-7xl mx-auto px-0 sm:px-4 py-2 sm:py-8">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-8">
         
         {/* Sidebar */}
         <div className="w-full md:w-64 flex-shrink-0">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 sticky top-24">
-            <h2 className="text-xl font-bold mb-6 px-2">Dashboard Quản trị</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-3 sm:p-4 sticky top-24">
+            <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 px-2">Dashboard Quản trị</h2>
             <nav className="space-y-1">
               <button
                 onClick={() => setActiveTab('overview')}
@@ -636,40 +636,40 @@ useEffect(() => {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 space-y-6">
+        <div className="flex-1 space-y-4 sm:space-y-6 min-w-0">
           
           {activeTab === 'overview' && (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Stats Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-2">
                   <div className="flex items-center gap-2 text-slate-500 mb-2">
                      <BarChart3 className="w-5 h-5" />
                      <h3 className="font-medium">Lượt truy cập hôm nay</h3>
                   </div>
-                  <p className="text-4xl font-bold text-blue-600">{dailyVisits}</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-blue-600">{dailyVisits}</p>
                 </div>
                 
-                <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-2">
+                <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-2">
                   <div className="flex items-center gap-2 text-slate-500 mb-2">
                      <BarChart3 className="w-5 h-5" />
                      <h3 className="font-medium">Tổng lượt truy cập</h3>
                   </div>
-                  <p className="text-4xl font-bold text-slate-800 dark:text-white">{totalVisits}</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-slate-800 dark:text-white">{totalVisits}</p>
                 </div>
                 
-                <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-2">
+                <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-2">
                     {/* Placeholder for future growth */}
                   <div className="flex items-center gap-2 text-slate-500 mb-2">
                      <Users className="w-5 h-5" />
                      <h3 className="font-medium">Tổng tài khoản</h3>
                   </div>
-                  <p className="text-4xl font-bold text-slate-800 dark:text-white">{totalUsers}</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-slate-800 dark:text-white">{totalUsers}</p>
                 </div>
               </div>
 
               {/* Chart */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative">
+              <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative">
                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                    <h3 className="text-lg font-bold flex items-center gap-2">
                       <Activity className="w-5 h-5 text-blue-500" /> Thống kê truy cập
@@ -722,19 +722,19 @@ useEffect(() => {
               </div>
 
               {/* Lists */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 overflow-hidden flex flex-col h-full">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-start">
+                <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-3.5 sm:p-6 overflow-hidden flex flex-col h-full">
                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                       <BarChart3 className="w-5 h-5 text-blue-500" /> TOP Môn học được quan tâm
                    </h3>
                    <div className="space-y-2.5">
                      {topSubjects.length > 0 ? topSubjects.map((s, idx) => (
-                       <div key={s.id} className="flex items-center justify-between p-3 min-h-[58px] bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100/70 dark:hover:bg-slate-800 transition-colors">
-                          <span className="font-medium flex items-center gap-3 min-w-0 pr-3">
+                       <div key={s.id} className="flex items-center justify-between p-2.5 sm:p-3 min-h-[54px] bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100/70 dark:hover:bg-slate-800 transition-colors">
+                          <span className="font-medium flex items-center gap-2 sm:gap-3 min-w-0 pr-2 sm:pr-3">
                              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs font-bold shrink-0">{idx + 1}</span>
                              <span className="truncate text-sm" title={s.name}>{s.name}</span>
                           </span>
-                          <span className="text-sm text-slate-500 font-semibold whitespace-nowrap shrink-0">{s.views} lượt xem</span>
+                          <span className="text-xs sm:text-sm text-slate-500 font-semibold whitespace-nowrap shrink-0">{s.views} lượt</span>
                        </div>
                      )) : (
                         <p className="text-slate-500 italic">Chưa có dữ liệu</p>
@@ -742,25 +742,25 @@ useEffect(() => {
                    </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 overflow-hidden flex flex-col h-full">
+                <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-3.5 sm:p-6 overflow-hidden flex flex-col h-full">
                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                       <BarChart3 className="w-5 h-5 text-purple-500" /> TOP Tài liệu xem nhiều nhất
                    </h3>
                    <div className="space-y-2.5">
                      {topDocs.length > 0 ? topDocs.map((d, idx) => (
-                       <div key={d.id} className="flex items-center justify-between p-3 min-h-[58px] bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100/70 dark:hover:bg-slate-800 transition-colors">
-                          <div className="font-medium flex items-center gap-3 min-w-0 pr-3">
+                       <div key={d.id} className="flex items-center justify-between p-2.5 sm:p-3 min-h-[54px] bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100/70 dark:hover:bg-slate-800 transition-colors">
+                          <div className="font-medium flex items-center gap-2 sm:gap-3 min-w-0 pr-2 sm:pr-3">
                              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-600 text-xs font-bold shrink-0">{idx + 1}</span>
                              <div className="min-w-0">
-                               <p className="truncate text-sm leading-tight" title={d.title}>{d.title}</p>
-                               {d.subjectName && (
-                                 <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5" title={`Môn: ${d.subjectName}`}>
-                                   Môn: {d.subjectName}
-                                 </p>
-                               )}
-                             </div>
+                                <p className="truncate text-sm leading-tight" title={d.title}>{d.title}</p>
+                                {d.subjectName && (
+                                  <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5" title={`Môn: ${d.subjectName}`}>
+                                    Môn: {d.subjectName}
+                                  </p>
+                                )}
+                              </div>
                           </div>
-                          <span className="text-sm text-slate-500 font-semibold whitespace-nowrap shrink-0">{d.views} lượt</span>
+                          <span className="text-xs sm:text-sm text-slate-500 font-semibold whitespace-nowrap shrink-0">{d.views} lượt</span>
                        </div>
                      )) : (
                         <p className="text-slate-500 italic">Chưa có dữ liệu</p>
@@ -772,7 +772,7 @@ useEffect(() => {
           )}
 
           {activeTab === 'activity' && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
                   <Activity className="w-5 h-5" />
@@ -792,13 +792,13 @@ useEffect(() => {
                     <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white dark:border-slate-900 bg-blue-500 text-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
                       {activity.action === 'Tạo mới' ? <CheckCircle2 className="w-4 h-4" /> : activity.action === 'Xóa' ? <X className="w-4 h-4" /> : <Activity className="w-4 h-4" />}
                     </div>
-                    <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+                    <div className="w-[calc(100%-3.5rem)] md:w-[calc(50%-2.5rem)] p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
                       <div className="flex items-center justify-between mb-1 gap-2">
                         <span className="font-bold text-slate-900 dark:text-white line-clamp-1">{activity.action} {activity.entity}</span>
                         <span className="text-xs font-medium text-slate-500 shrink-0">{activity.timestampStr}</span>
                       </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">Bởi: {activity.userName} ({activity.adminEmail})</p>
-                      <p className="text-sm text-slate-500 mt-1">{activity.details}</p>
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium">Bởi: {activity.userName} ({activity.adminEmail})</p>
+                      <p className="text-xs sm:text-sm text-slate-500 mt-1">{activity.details}</p>
                     </div>
                   </div>
                   ))
@@ -812,7 +812,7 @@ useEffect(() => {
           )}
 
           {activeTab === 'reports' && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center text-orange-600 dark:text-orange-400">
                   <AlertTriangle className="w-5 h-5" />
@@ -824,23 +824,23 @@ useEffect(() => {
               </div>
               
               {reports.length === 0 ? (
-                <div className="rounded-xl border border-orange-200 dark:border-orange-900/50 bg-orange-50 dark:bg-orange-900/10 p-8 text-center">
+                <div className="rounded-xl border border-orange-200 dark:border-orange-900/50 bg-orange-50 dark:bg-orange-900/10 p-6 sm:p-8 text-center">
                   <AlertTriangle className="w-12 h-12 text-orange-400 mx-auto mb-3 opacity-50" />
                   <h3 className="font-bold text-lg mb-2">Chưa có báo cáo nào</h3>
-                  <p className="text-slate-500 max-w-sm mx-auto">
+                  <p className="text-slate-500 max-w-sm mx-auto text-sm">
                     Hiện tại không có báo cáo lỗi tài liệu nào cần xử lý.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {reports.map(report => (
-                    <div key={report.id} className="border border-slate-200 dark:border-slate-800 rounded-xl p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <div key={report.id} className="border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                        <div className="space-y-2">
-                          <h4 className="font-bold text-lg text-red-600 dark:text-red-400 flex items-center gap-2">
-                            <AlertTriangle className="w-5 h-5" /> Báo cáo lỗi tài liệu
+                        <div className="space-y-2 min-w-0 flex-1">
+                          <h4 className="font-bold text-base sm:text-lg text-red-600 dark:text-red-400 flex items-center gap-2">
+                            <AlertTriangle className="w-5 h-5 shrink-0" /> Báo cáo lỗi tài liệu
                           </h4>
-                          <p className="text-sm font-medium">
+                          <p className="text-sm font-medium truncate">
                             <span className="text-slate-500 dark:text-slate-400">Tài liệu:</span>{' '}
                             <Link to={`/subject/${report.subjectId}`} className="text-blue-600 dark:text-blue-400 hover:underline">
                               {report.documentTitle}
@@ -860,16 +860,16 @@ useEffect(() => {
                             {report.createdAt && typeof report.createdAt.toDate === 'function' ? report.createdAt.toDate().toLocaleString('vi-VN') : 'Vừa xong'}
                           </p>
                         </div>
-                        <div className="flex shrink-0 gap-3">
+                        <div className="flex shrink-0 gap-2 sm:gap-3">
                           <button
                             onClick={() => setReplyingToReport(report)}
-                            className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-400 text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                            className="px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-400 text-xs sm:text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5"
                           >
                             <MessageSquare className="w-4 h-4" /> Phản hồi
                           </button>
                           <button
                             onClick={() => handleResolveReport(report.id)}
-                            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                            className="px-3 py-1.5 sm:px-4 sm:py-2 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5"
                           >
                             <CheckCircle2 className="w-4 h-4" /> Đã xử lý
                           </button>
@@ -883,7 +883,7 @@ useEffect(() => {
           )}
 
           {activeTab === 'storage' && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                   <Database className="w-5 h-5" />
@@ -894,24 +894,24 @@ useEffect(() => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 md:p-6 text-center">
                   <h3 className="text-sm font-semibold text-slate-500 mb-1">Tài liệu học tập</h3>
-                  <p className="text-3xl font-bold text-slate-800 dark:text-white mt-2">{systemResources.documents} <span className="text-base text-slate-400 font-normal">Tệp</span></p>
+                  <p className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white mt-2">{systemResources.documents} <span className="text-base text-slate-400 font-normal">Tệp</span></p>
                 </div>
                 <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 md:p-6 text-center">
                   <h3 className="text-sm font-semibold text-slate-500 mb-1">Bộ đề trắc nghiệm (Quiz)</h3>
-                  <p className="text-3xl font-bold text-slate-800 dark:text-white mt-2">{systemResources.quizzes} <span className="text-base text-slate-400 font-normal">Đề thi</span></p>
+                  <p className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white mt-2">{systemResources.quizzes} <span className="text-base text-slate-400 font-normal">Đề thi</span></p>
                 </div>
               </div>
-              <div className="mt-6 text-center text-sm text-slate-500 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700/50">
+              <div className="mt-6 text-center text-xs sm:text-sm text-slate-500 bg-slate-50 dark:bg-slate-800/50 p-3 sm:p-4 rounded-xl border border-slate-100 dark:border-slate-700/50">
                   <span className="font-semibold text-slate-700 dark:text-slate-300">Thông tin kỹ thuật:</span> Dữ liệu được đo đếm trực tiếp từ các bộ sưu tập Firestore (documents, quizzes). Đối với dung lượng bộ nhớ thực tế (Cloud Storage cho PDF/JPEG), Firebase Client SDK không cung cấp phương thức đọc tổng dung lượng. Để đọc dung lượng Storage, hệ thống sẽ cần tích hợp Firebase Admin SDK hoặc Cloud Functions (mở rộng sau).
               </div>
             </div>
           )}
 
           {activeTab === 'retention' && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-full bg-cyan-100 dark:bg-cyan-900/50 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
                   <LineChartIcon className="w-5 h-5" />
@@ -936,7 +936,7 @@ useEffect(() => {
                 </div>
               </div>
               
-              <div className="h-80 border border-slate-200 dark:border-slate-800 rounded-xl p-4 relative">
+              <div className="h-80 border border-slate-200 dark:border-slate-800 rounded-xl p-2 sm:p-4 relative">
                  {isChartLoading && (
                    <div className="absolute inset-0 z-10 bg-white/50 dark:bg-slate-900/50 flex items-center justify-center backdrop-blur-sm">
                      <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
@@ -945,11 +945,11 @@ useEffect(() => {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={retentionData}
-                    margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
+                    margin={{ top: 20, right: 10, left: -20, bottom: 0 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis dataKey="day" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                    <XAxis dataKey="day" stroke="#888888" fontSize={11} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#888888" fontSize={11} tickLine={false} axisLine={false} />
                     <Tooltip 
                       contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                       labelStyle={{ fontWeight: 'bold', color: '#1e293b' }}
@@ -967,7 +967,7 @@ useEffect(() => {
           )}
 
           {activeTab === 'errors' && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-800">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400">
@@ -991,10 +991,10 @@ useEffect(() => {
                 <table className="w-full text-sm text-left">
                   <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-medium">
                     <tr>
-                      <th className="px-4 py-3">Thời gian</th>
-                      <th className="px-4 py-3">Phân hệ</th>
-                      <th className="px-4 py-3">Ngữ cảnh lỗi</th>
-                      <th className="px-4 py-3">Mức độ</th>
+                      <th className="px-3 sm:px-4 py-3">Thời gian</th>
+                      <th className="px-3 sm:px-4 py-3">Phân hệ</th>
+                      <th className="px-3 sm:px-4 py-3">Ngữ cảnh lỗi</th>
+                      <th className="px-3 sm:px-4 py-3">Mức độ</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -1008,17 +1008,17 @@ useEffect(() => {
                         onClick={() => setSelectedErrorLog(log)}
                         className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                       >
-                        <td className="px-4 py-3 font-mono text-xs text-slate-500 whitespace-nowrap">{log.timestamp}</td>
-                        <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-300">
-                           <span className="bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md text-xs">{module}</span>
+                        <td className="px-3 sm:px-4 py-3 font-mono text-xs text-slate-500 whitespace-nowrap">{log.timestamp}</td>
+                        <td className="px-3 sm:px-4 py-3 font-medium text-slate-700 dark:text-slate-300">
+                           <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-xs">{module}</span>
                         </td>
-                        <td className="px-4 py-3 text-slate-900 dark:text-white font-medium">{context}</td>
-                        <td className="px-4 py-3 whitespace-nowrap">
+                        <td className="px-3 sm:px-4 py-3 text-slate-900 dark:text-white font-medium">{context}</td>
+                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                             log.severity === 'Nghiêm trọng' 
-                              ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                              ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' 
                               : log.severity === 'Cảnh báo'
-                              ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                              ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' 
                               : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                           }`}>
                             {log.severity}
@@ -1034,7 +1034,7 @@ useEffect(() => {
           )}
 
           {activeTab === 'users' && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden relative">
+            <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden relative">
               <UserManagerModal inline />
             </div>
           )}
@@ -1045,13 +1045,13 @@ useEffect(() => {
           )}
 
           {activeTab === 'admins' && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden relative">
+            <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden relative">
               <AdminManagerModal inline />
             </div>
           )}
 
           {activeTab === 'ui' && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden relative">
+            <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden relative">
               <HeroImageManagerModal inline />
             </div>
           )}
