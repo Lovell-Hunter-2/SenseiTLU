@@ -1,7 +1,5 @@
-const CACHE_NAME = 'senseitlu-cache-v1';
+const CACHE_NAME = 'senseitlu-cache-v2';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/favicon.ico',
 ];
@@ -30,18 +28,36 @@ self.addEventListener('fetch', (e) => {
   // Chỉ cache các request GET
   if (e.request.method !== 'GET') return;
 
-  // Bỏ qua các request từ chrome-extension, API firebase, googleapis
+  // Bỏ qua các request từ chrome-extension, API firebase, googleapis, ads
   if (
     e.request.url.startsWith('chrome-extension') ||
     e.request.url.includes('firestore.googleapis.com') ||
-    e.request.url.includes('identitytoolkit.googleapis.com')
+    e.request.url.includes('identitytoolkit.googleapis.com') ||
+    e.request.url.includes('googlesyndication') ||
+    e.request.url.includes('doubleclick')
   ) {
     return;
   }
 
+  // HTML Navigation: NETWORK-FIRST để luôn cập nhật bản mới nhất từ server
+  if (e.request.mode === 'navigate' || e.request.headers.get('accept')?.includes('text/html')) {
+    e.respondWith(
+      fetch(e.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Static Assets: Cache-First with Network Fallback
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
-      // Trả về cache nếu có
       if (cachedResponse) {
         // Cập nhật ngầm cache
         fetch(e.request).then((networkResponse) => {
@@ -55,7 +71,6 @@ self.addEventListener('fetch', (e) => {
         return cachedResponse;
       }
 
-      // Nếu không có cache, lấy từ mạng và cache lại
       return fetch(e.request).then((networkResponse) => {
         if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
           return networkResponse;
@@ -68,7 +83,6 @@ self.addEventListener('fetch', (e) => {
 
         return networkResponse;
       }).catch(() => {
-        // Trả về trang offline hoặc lỗi nếu không kết nối được
         return new Response("Network error - You are offline");
       });
     })
