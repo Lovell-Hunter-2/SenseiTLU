@@ -39,12 +39,34 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl text-left mb-6 overflow-x-auto text-xs text-red-600 dark:text-red-400 font-mono border border-red-100 dark:border-red-900/30">
               {this.state.error?.message || 'Unknown error'}
             </div>
-            <button
-              onClick={() => window.location.reload()}
-              className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
-            >
-              <RefreshCw className="w-5 h-5" /> Tải lại trang (F5)
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <RefreshCw className="w-5 h-5" /> Tải lại trang (F5)
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    if ('caches' in window) {
+                      const keys = await caches.keys();
+                      await Promise.all(keys.map(k => caches.delete(k)));
+                    }
+                    if ('serviceWorker' in navigator) {
+                      const registrations = await navigator.serviceWorker.getRegistrations();
+                      await Promise.all(registrations.map(r => r.unregister()));
+                    }
+                  } catch (e) {
+                    console.error(e);
+                  }
+                  window.location.reload();
+                }}
+                className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-medium transition-colors"
+              >
+                Xóa bộ nhớ đệm (Cache) & Tải lại
+              </button>
+            </div>
           </div>
         </div>
       );
