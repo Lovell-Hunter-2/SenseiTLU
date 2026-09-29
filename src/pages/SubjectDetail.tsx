@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, serverTimestamp, deleteDoc, limit, orderBy } from 'firebase/firestore';
-import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon, ClipboardList, ScrollText, Lightbulb, Sigma, X, LayoutTemplate, Lock, LogIn, Bot, Sparkles, Flag, Search } from 'lucide-react';
+import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon, ClipboardList, ScrollText, Lightbulb, Sigma, X, LayoutTemplate, Lock, LogIn, Bot, Sparkles, Flag, Search, Pin } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { logActivityEvent, logSubjectDocumentView } from '../useActivityLogger';
@@ -134,7 +134,13 @@ export default function SubjectDetail() {
         (sub.description &&
           sub.description.toLowerCase().includes(searchQuery.toLowerCase())),
     )
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => {
+      const aPriority = Boolean(a.isPriority);
+      const bPriority = Boolean(b.isPriority);
+      if (aPriority && !bPriority) return -1;
+      if (!aPriority && bPriority) return 1;
+      return (a.name || "").localeCompare(b.name || "", "vi");
+    });
 
   useEffect(() => {
     if (user && !isAdmin) {
@@ -618,8 +624,13 @@ export default function SubjectDetail() {
                     }}
                     className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors flex items-center gap-3"
                   >
-                    <Search className="w-4 h-4 text-slate-400" />
+                    <Search className="w-4 h-4 text-slate-400 shrink-0" />
                     <span className="text-sm truncate">{sub.name}</span>
+                    {sub.isPriority && (
+                      <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40 shrink-0">
+                        <Pin className="w-2.5 h-2.5 rotate-45" /> Ưu tiên
+                      </span>
+                    )}
                   </button>
                 ))
               ) : (
