@@ -7,6 +7,7 @@ import {
   addDoc,
   serverTimestamp,
   query,
+  where,
   orderBy,
   deleteDoc,
   doc,
@@ -87,6 +88,7 @@ import {
   Star,
   Lock,
   LogIn,
+  Pin,
 } from "lucide-react";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
@@ -315,6 +317,7 @@ export default function Home() {
     name: "",
     description: "",
     iconName: "Book",
+    isPriority: false,
   });
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingSubject, setEditingSubject] = useState<any>(null);
@@ -378,17 +381,38 @@ export default function Home() {
           console.warn("Could not fetch total subjects count:", countErr);
         }
 
+        // Fetch priority subjects first to ensure they are available immediately
+        let prioritySubs: any[] = [];
+        try {
+          const priorityQ = query(
+            collection(db, "subjects"),
+            where("isPriority", "==", true)
+          );
+          const prioritySnap = await getDocs(priorityQ);
+          prioritySubs = prioritySnap.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+        } catch (pErr) {
+          console.warn("Could not fetch priority subjects:", pErr);
+        }
+
         const q = query(
           collection(db, "subjects"),
           orderBy("name", "asc"),
           limit(PAGE_SIZE),
         );
         const snapshot = await getDocs(q);
-        const subs = snapshot.docs.map((doc) => ({
+        const normalSubs = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-        setSubjects(subs);
+
+        const subsMap = new Map<string, any>();
+        prioritySubs.forEach((s) => subsMap.set(s.id, s));
+        normalSubs.forEach((s) => subsMap.set(s.id, s));
+
+        setSubjects(Array.from(subsMap.values()));
         setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
         setHasMore(snapshot.docs.length === PAGE_SIZE);
       } catch (err) {
@@ -493,11 +517,20 @@ export default function Home() {
           sub.description.toLowerCase().includes(searchQuery.toLowerCase())),
     )
     .sort((a, b) => {
+      // 1. User's personal favorites always come first
       const aFav = favorites.includes(a.id);
       const bFav = favorites.includes(b.id);
       if (aFav && !bFav) return -1;
       if (!aFav && bFav) return 1;
-      return 0; // The original list is already sorted by name
+
+      // 2. System Priority (set by admin) comes next for all users
+      const aPriority = Boolean(a.isPriority);
+      const bPriority = Boolean(b.isPriority);
+      if (aPriority && !bPriority) return -1;
+      if (!aPriority && bPriority) return 1;
+
+      // 3. Alphabetical order by name
+      return (a.name || "").localeCompare(b.name || "", "vi");
     });
 
   const toggleFavorite = (subjectId: string, e: React.MouseEvent) => {
@@ -515,18 +548,21 @@ export default function Home() {
     if (!newSubject.name.trim()) return;
 
     try {
+      const isPriority = Boolean(newSubject.isPriority);
       const docRef = await addDoc(collection(db, "subjects"), {
-        name: newSubject.name,
-        description: newSubject.description,
+        name: newSubject.name.trim(),
+        description: newSubject.description.trim(),
         iconName: newSubject.iconName,
+        isPriority: isPriority,
         createdAt: serverTimestamp(),
       });
       setSubjects((prev) => [
         {
           id: docRef.id,
-          name: newSubject.name,
-          description: newSubject.description,
+          name: newSubject.name.trim(),
+          description: newSubject.description.trim(),
           iconName: newSubject.iconName,
+          isPriority: isPriority,
         },
         ...prev,
       ]);
@@ -535,14 +571,14 @@ export default function Home() {
         await addDoc(collection(db, 'system_updates'), {
           action: 'Tạo mới',
           entity: 'Môn học',
-          details: `Tên môn: ${newSubject.name}`,
+          details: `Tên môn: ${newSubject.name.trim()}${isPriority ? ' (Ưu tiên)' : ''}`,
           adminEmail: user.email,
           adminId: user.uid,
           timestamp: serverTimestamp(),
         });
       }
       setIsAddModalOpen(false);
-      setNewSubject({ name: "", description: "", iconName: "Book" });
+      setNewSubject({ name: "", description: "", iconName: "Book", isPriority: false });
     } catch (error) {
       console.error("Error adding subject:", error);
     }
@@ -553,19 +589,21 @@ export default function Home() {
     if (!editingSubject || !editingSubject.name.trim()) return;
 
     try {
+      const isPriority = Boolean(editingSubject.isPriority);
       await updateDoc(doc(db, "subjects", editingSubject.id), {
-        name: editingSubject.name,
-        description: editingSubject.description,
-        iconName: editingSubject.iconName,
+        name: editingSubject.name.trim(),
+        description: editingSubject.description?.trim() || "",
+        iconName: editingSubject.iconName || "Book",
+        isPriority: isPriority,
       });
       setSubjects((prev) =>
-        prev.map((s) => (s.id === editingSubject.id ? { ...s, ...editingSubject } : s))
+        prev.map((s) => (s.id === editingSubject.id ? { ...s, ...editingSubject, isPriority } : s))
       );
       if (isAdmin && user) {
         await addDoc(collection(db, 'system_updates'), {
           action: 'Cập nhật',
           entity: 'Môn học',
-          details: `Tên môn: ${editingSubject.name}`,
+          details: `Tên môn: ${editingSubject.name.trim()}${isPriority ? ' (Ưu tiên)' : ''}`,
           adminEmail: user.email,
           adminId: user.uid,
           timestamp: serverTimestamp(),
@@ -663,11 +701,18 @@ export default function Home() {
                       }}
                       className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors flex items-center gap-3"
                     >
-                      <Search className="w-4 h-4 text-slate-400" />
-                      <span>{sub.name}</span>
-                      {favorites.includes(sub.id) && (
-                        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 ml-auto" />
-                      )}
+                      <Search className="w-4 h-4 text-slate-400 shrink-0" />
+                      <span className="truncate">{sub.name}</span>
+                      <div className="ml-auto flex items-center gap-2 shrink-0">
+                        {sub.isPriority && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40">
+                            <Pin className="w-2.5 h-2.5 rotate-45" /> Ưu tiên
+                          </span>
+                        )}
+                        {favorites.includes(sub.id) && (
+                          <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                        )}
+                      </div>
                     </button>
                   ))
                 ) : (
@@ -740,10 +785,15 @@ export default function Home() {
             filteredSubjects.map((subject) => {
               const Icon = iconMap[subject.iconName] || Book;
               const isFav = favorites.includes(subject.id);
+              const isPriority = Boolean(subject.isPriority);
               return (
                 <div
                   key={subject.id}
-                  className="subject-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow-md dark:shadow-none dark:hover:shadow-none xl:hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full group relative focus:outline-none select-none md:select-auto"
+                  className={`subject-card bg-white dark:bg-slate-900 border rounded-2xl p-5 shadow-sm hover:shadow-md dark:shadow-none dark:hover:shadow-none xl:hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full group relative focus:outline-none select-none md:select-auto ${
+                    isPriority
+                      ? "border-amber-300 dark:border-amber-700/60 ring-1 ring-amber-400/30"
+                      : "border-slate-200 dark:border-slate-800"
+                  }`}
                   onTouchStart={() => {
                     if (touchTimerRef.current)
                       clearTimeout(touchTimerRef.current);
@@ -788,7 +838,10 @@ export default function Home() {
                       <button
                         onClick={(e) => {
                           e.preventDefault();
-                          setEditingSubject(subject);
+                          setEditingSubject({
+                            ...subject,
+                            isPriority: Boolean(subject.isPriority),
+                          });
                         }}
                         className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                         title="Sửa môn học"
@@ -807,8 +860,16 @@ export default function Home() {
                       </button>
                     </div>
                   )}
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 border border-slate-200/50 dark:border-slate-700/50 flex items-center justify-center mb-5 text-2xl shadow-sm group-hover:scale-110 transition-transform duration-300">
-                    {emojiMap[subject.iconName] || "📚"}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 border border-slate-200/50 dark:border-slate-700/50 flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition-transform duration-300">
+                      {emojiMap[subject.iconName] || "📚"}
+                    </div>
+                    {isPriority && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 dark:border-amber-700 mr-12 shadow-xs">
+                        <Pin className="w-3 h-3 rotate-45 text-amber-600 dark:text-amber-400" />
+                        Ưu tiên
+                      </span>
+                    )}
                   </div>
                   <h3 className="text-lg font-bold mb-2">{subject.name}</h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 flex-1">
@@ -850,11 +911,12 @@ export default function Home() {
             <form onSubmit={handleAddSubject} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Tên môn học
+                  Tên môn học <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
+                  placeholder="Ví dụ: Lập trình Web, Giải tích 1..."
                   className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
                   value={newSubject.name}
                   onChange={(e) =>
@@ -868,6 +930,7 @@ export default function Home() {
                 </label>
                 <input
                   type="text"
+                  placeholder="Mô tả tóm tắt nội dung môn học..."
                   className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
                   value={newSubject.description}
                   onChange={(e) =>
@@ -899,6 +962,37 @@ export default function Home() {
                   ))}
                 </select>
               </div>
+
+              {/* Priority Checkbox Option */}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${newSubject.isPriority ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}>
+                      <Pin className="w-4 h-4 rotate-45" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                        Ưu tiên môn học
+                        {newSubject.isPriority && (
+                          <span className="text-[10px] bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 px-1.5 py-0.2 rounded font-medium">Bật</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        Ghim môn học này lên đầu danh sách cho tất cả người dùng
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 focus:ring-amber-500 cursor-pointer accent-amber-500 shrink-0 ml-2"
+                    checked={newSubject.isPriority}
+                    onChange={(e) =>
+                      setNewSubject({ ...newSubject, isPriority: e.target.checked })
+                    }
+                  />
+                </label>
+              </div>
+
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
@@ -909,7 +1003,7 @@ export default function Home() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
                 >
                   Thêm
                 </button>
@@ -927,7 +1021,7 @@ export default function Home() {
             <form onSubmit={handleUpdateSubject} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Tên môn học
+                  Tên môn học <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -982,6 +1076,40 @@ export default function Home() {
                   ))}
                 </select>
               </div>
+
+              {/* Priority Checkbox Option */}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${editingSubject.isPriority ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}>
+                      <Pin className="w-4 h-4 rotate-45" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                        Ưu tiên môn học
+                        {editingSubject.isPriority && (
+                          <span className="text-[10px] bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 px-1.5 py-0.2 rounded font-medium">Bật</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        Ghim môn học này lên đầu danh sách cho tất cả người dùng
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 focus:ring-amber-500 cursor-pointer accent-amber-500 shrink-0 ml-2"
+                    checked={Boolean(editingSubject.isPriority)}
+                    onChange={(e) =>
+                      setEditingSubject({
+                        ...editingSubject,
+                        isPriority: e.target.checked,
+                      })
+                    }
+                  />
+                </label>
+              </div>
+
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
@@ -992,7 +1120,7 @@ export default function Home() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
                 >
                   Lưu thay đổi
                 </button>
