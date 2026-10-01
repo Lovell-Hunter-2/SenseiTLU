@@ -229,6 +229,47 @@ export default function AdminDashboard() {
 useEffect(() => {
     if (!isAdmin) return;
 
+    // Real-time Top Subjects
+    const unsubSubjects = onSnapshot(
+      query(collection(db, 'analytics_subjects'), orderBy('views', 'desc'), limit(15)),
+      (snapshot) => {
+        setTopSubjects(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+      },
+      (err) => console.error("Error in real-time subjects subscription:", err)
+    );
+
+    // Real-time Top Documents
+    const unsubDocs = onSnapshot(
+      query(collection(db, 'analytics_documents'), orderBy('views', 'desc'), limit(15)),
+      (snapshot) => {
+        setTopDocs(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+      },
+      (err) => console.error("Error in real-time docs subscription:", err)
+    );
+
+    // Real-time Daily visits
+    const todayStr = getVietnamDateString();
+    const unsubDaily = onSnapshot(
+      doc(db, 'analytics', `daily_visits_${todayStr}`),
+      (snap) => {
+        if (snap.exists()) {
+          setDailyVisits(snap.data().visits || 0);
+        }
+      },
+      (err) => console.error("Error in real-time daily visits subscription:", err)
+    );
+
+    // Real-time Total visits
+    const unsubTotal = onSnapshot(
+      doc(db, 'analytics', 'total_visits'),
+      (snap) => {
+        if (snap.exists()) {
+          setTotalVisits(snap.data().visits || 0);
+        }
+      },
+      (err) => console.error("Error in real-time total visits subscription:", err)
+    );
+
     const fetchAnalytics = async () => {
       // System Updates (Admin activities)
       try {
@@ -251,42 +292,6 @@ useEffect(() => {
         setSystemActivities(fetchedActivities);
       } catch (err) {
         console.error("Error fetching system updates:", err);
-      }
-
-      // Total visits
-      try {
-        const totalRef = doc(db, 'analytics', 'total_visits');
-        const totalSnap = await getDoc(totalRef);
-        if (totalSnap.exists()) {
-          setTotalVisits(totalSnap.data().visits || 0);
-        }
-      } catch (err) {
-         console.error("Error fetching total visits:", err);
-      }
-
-      // Daily visits (today)
-      try {
-        const todayStr = getVietnamDateString();
-        const dailyRef = doc(db, 'analytics', `daily_visits_${todayStr}`);
-        const dailySnap = await getDoc(dailyRef);
-        if (dailySnap.exists()) {
-          setDailyVisits(dailySnap.data().visits || 0);
-        }
-      } catch (err) {
-         console.error("Error fetching daily visits:", err);
-      }
-
-      // Top Subjects & Docs
-      try {
-        const subjectsQuery = query(collection(db, 'analytics_subjects'), orderBy('views', 'desc'), limit(10));
-        const subjectsSnap = await getDocs(subjectsQuery);
-        setTopSubjects(subjectsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-        
-        const docsQuery = query(collection(db, 'analytics_documents'), orderBy('views', 'desc'), limit(10));
-        const docsSnap = await getDocs(docsQuery);
-        setTopDocs(docsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-      } catch (err) {
-         console.error("Error fetching top subjects/docs:", err);
       }
 
       // Users Data
@@ -329,11 +334,16 @@ useEffect(() => {
       } catch (err) {
          console.error("Error fetching error logs:", err);
       }
-
-      // Note: Chart Data & Retention Data generation moved to a separate useEffect
     };
 
     fetchAnalytics();
+
+    return () => {
+      unsubSubjects();
+      unsubDocs();
+      unsubDaily();
+      unsubTotal();
+    };
   }, [isAdmin]);
 
   // Chart Generation Effect
@@ -574,12 +584,12 @@ useEffect(() => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-0 sm:px-4 pt-1 sm:pt-2 pb-6 sm:pb-8">
-      <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
+    <div className="max-w-7xl mx-auto px-0 sm:px-4 pt-1 sm:pt-2 pb-2">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start md:h-[calc(100vh-5.5rem)] md:overflow-hidden">
         
-        {/* Sidebar - independently scrollable on desktop */}
-        <div className="w-full md:w-64 flex-shrink-0 md:sticky md:top-20 z-20">
-          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-3 sm:p-4 md:max-h-[calc(100vh-5.5rem)] md:overflow-y-auto hidden-scrollbar">
+        {/* Sidebar - strictly independent scroll on desktop */}
+        <div className="w-full md:w-64 flex-shrink-0 md:h-full">
+          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-3 sm:p-4 md:h-full md:overflow-y-auto custom-scrollbar">
             <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 px-2">Dashboard Quản trị</h2>
             <nav className="space-y-1">
               <button
@@ -731,7 +741,7 @@ useEffect(() => {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 space-y-4 sm:space-y-6 min-w-0">
+        <div className="flex-1 min-w-0 w-full md:h-full md:overflow-y-auto custom-scrollbar md:pr-2 space-y-4 sm:space-y-6 pb-8">
           
           {activeTab === 'overview' && (
             <div className="space-y-4 sm:space-y-6">
