@@ -114,118 +114,97 @@ export default function AdminDashboard() {
   const [usersCache, setUsersCache] = useState<any>(null);
   const [isChartLoading, setIsChartLoading] = useState(false);
 
+  // Real-time Firestore visit metrics for content analytics
+  const [todayHourlyData, setTodayHourlyData] = useState<{ [hour: string]: number }>({});
+  const [dailyVisitsHistory, setDailyVisitsHistory] = useState<{ [dateStr: string]: number }>({});
+
   // Content analytics state (Subjects & Docs)
   const [contentAnalyticsTab, setContentAnalyticsTab] = useState<'subjects' | 'documents'>('subjects');
   const [contentAnalyticsRange, setContentAnalyticsRange] = useState<'day' | 'week' | 'month'>('day');
 
-  // Compute timeframe analytics chart data and ranking list for Subjects & Documents
+  // Compute timeframe analytics chart data and ranking list for Subjects & Documents strictly from Real Firebase Data
   const getContentAnalyticsData = () => {
     const rawList = contentAnalyticsTab === 'subjects' ? topSubjects : topDocs;
-    
+    const totalItemViews = rawList.reduce((acc, curr) => acc + (curr.views || 0), 0);
+    const maxItemViews = rawList[0]?.views || 1;
+
+    let chartSlots: { name: string; views: number }[] = [];
+
     if (contentAnalyticsRange === 'day') {
-      // 4 time slots in day: 00h-06h, 06h-12h, 12h-18h, 18h-24h
-      const chartSlots = [
-        { name: '00h - 06h (Đêm)', key: 'night', views: 0, weight: 0.12 },
-        { name: '06h - 12h (Sáng)', key: 'morning', views: 0, weight: 0.28 },
-        { name: '12h - 18h (Chiều)', key: 'afternoon', views: 0, weight: 0.36 },
-        { name: '18h - 24h (Tối)', key: 'evening', views: 0, weight: 0.24 },
+      // 4 real time intervals today measured directly from Firebase hourly visits
+      const h = todayHourlyData;
+      const night = (h['00'] || 0) + (h['01'] || 0) + (h['02'] || 0) + (h['03'] || 0) + (h['04'] || 0) + (h['05'] || 0);
+      const morning = (h['06'] || 0) + (h['07'] || 0) + (h['08'] || 0) + (h['09'] || 0) + (h['10'] || 0) + (h['11'] || 0);
+      const afternoon = (h['12'] || 0) + (h['13'] || 0) + (h['14'] || 0) + (h['15'] || 0) + (h['16'] || 0) + (h['17'] || 0);
+      const evening = (h['18'] || 0) + (h['19'] || 0) + (h['20'] || 0) + (h['21'] || 0) + (h['22'] || 0) + (h['23'] || 0);
+
+      chartSlots = [
+        { name: '00h - 06h (Đêm)', views: night },
+        { name: '06h - 12h (Sáng)', views: morning },
+        { name: '12h - 18h (Chiều)', views: afternoon },
+        { name: '18h - 24h (Tối)', views: evening },
       ];
-
-      const totalItemsViews = rawList.reduce((acc, curr) => acc + (curr.views || 0), 0);
-      const baseDailyViews = Math.max(dailyVisits, Math.round(totalItemsViews * 0.4)) || 1;
-
-      chartSlots.forEach((slot) => {
-        slot.views = Math.max(1, Math.round(baseDailyViews * slot.weight));
-      });
-
-      const rankingList = rawList.slice(0, 10).map((item, idx) => {
-        const itemViews = Math.max(1, Math.round((item.views || 1) * 0.35 + (idx === 0 ? 8 : 2)));
-        const totalTopViews = rawList.slice(0, 10).reduce((a, b) => a + Math.max(1, Math.round((b.views || 1) * 0.35 + 2)), 0);
-        const share = Math.max(1, Math.round((itemViews / (totalTopViews || 1)) * 100));
-        const peakSlots = ['12h - 18h (Chiều)', '18h - 24h (Tối)', '06h - 12h (Sáng)'];
-        return {
-          ...item,
-          views: itemViews,
-          sharePercent: share,
-          peakBadge: `Cao điểm: ${peakSlots[idx % peakSlots.length]}`,
-        };
-      });
-
-      return { chartData: chartSlots, rankingList };
     } else if (contentAnalyticsRange === 'week') {
-      // 7 days of week
-      const dayNames = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-      const dayWeights = [0.14, 0.17, 0.16, 0.18, 0.15, 0.11, 0.09];
-      const totalItemsViews = rawList.reduce((acc, curr) => acc + (curr.views || 0), 0);
-      const baseWeeklyViews = Math.max(totalVisits > 0 ? Math.round(totalVisits * 0.4) : 100, Math.round(totalItemsViews * 0.8)) || 70;
-
-      const chartSlots = dayNames.map((name, i) => ({
-        name,
-        views: Math.max(1, Math.round(baseWeeklyViews * dayWeights[i])),
-      }));
-
-      const rankingList = rawList.slice(0, 10).map((item, idx) => {
-        const itemViews = Math.max(1, Math.round((item.views || 1) * 0.75 + (idx === 0 ? 25 : 5)));
-        const totalTopViews = rawList.slice(0, 10).reduce((a, b) => a + Math.max(1, Math.round((b.views || 1) * 0.75 + 5)), 0);
-        const share = Math.max(1, Math.round((itemViews / (totalTopViews || 1)) * 100));
-        const peakDays = ['Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 2'];
-        return {
-          ...item,
-          views: itemViews,
-          sharePercent: share,
-          peakBadge: `Cao điểm: ${peakDays[idx % peakDays.length]}`,
-        };
-      });
-
-      return { chartData: chartSlots, rankingList };
+      // Last 7 days real visits from Firebase daily_visits
+      chartSlots = [];
+      for (let i = 6; i >= 0; i--) {
+        const { dateStr, displayDate } = getVnDateStringWithOffset(i);
+        chartSlots.push({
+          name: displayDate,
+          views: dailyVisitsHistory[dateStr] || 0
+        });
+      }
     } else {
-      // 4 weeks of month
-      const weekNames = ['Tuần 1 (1-7)', 'Tuần 2 (8-14)', 'Tuần 3 (15-21)', 'Tuần 4 (22-30)'];
-      const weekWeights = [0.22, 0.28, 0.26, 0.24];
-      const totalItemsViews = rawList.reduce((acc, curr) => acc + (curr.views || 0), 0);
-      const baseMonthlyViews = Math.max(totalVisits || 150, totalItemsViews) || 150;
-
-      const chartSlots = weekNames.map((name, i) => ({
-        name,
-        views: Math.max(1, Math.round(baseMonthlyViews * weekWeights[i])),
-      }));
-
-      const rankingList = rawList.slice(0, 10).map((item, idx) => {
-        const itemViews = item.views || 1;
-        const totalTopViews = rawList.slice(0, 10).reduce((a, b) => a + (b.views || 1), 0);
-        const share = Math.max(1, Math.round((itemViews / (totalTopViews || 1)) * 100));
-        const peakWeeks = ['Tuần 2', 'Tuần 3', 'Tuần 1', 'Tuần 4'];
-        return {
-          ...item,
-          views: itemViews,
-          sharePercent: share,
-          peakBadge: `Cao điểm: ${peakWeeks[idx % peakWeeks.length]}`,
-        };
-      });
-
-      return { chartData: chartSlots, rankingList };
+      // 4 weeks of the last 30 days from real Firebase daily_visits
+      let w1 = 0, w2 = 0, w3 = 0, w4 = 0;
+      for (let i = 0; i < 30; i++) {
+        const { dateStr } = getVnDateStringWithOffset(i);
+        const v = dailyVisitsHistory[dateStr] || 0;
+        if (i < 7) w1 += v; // 7 days most recent
+        else if (i < 14) w2 += v;
+        else if (i < 21) w3 += v;
+        else w4 += v;
+      }
+      chartSlots = [
+        { name: 'Tuần 4 (22-30 ngày trước)', views: w4 },
+        { name: 'Tuần 3 (15-21 ngày trước)', views: w3 },
+        { name: 'Tuần 2 (8-14 ngày trước)', views: w2 },
+        { name: 'Tuần 1 (1-7 ngày gần nhất)', views: w1 },
+      ];
     }
+
+    // Ranking list measured directly from Firebase analytics_subjects / analytics_documents in real-time
+    const rankingList = rawList.slice(0, 15).map((item, idx) => {
+      const views = item.views || 0;
+      const sharePercent = totalItemViews > 0 ? Math.round((views / totalItemViews) * 100) : 0;
+      return {
+        ...item,
+        views,
+        sharePercent,
+      };
+    });
+
+    return { chartData: chartSlots, rankingList, totalItemViews, maxItemViews };
   };
 
-  const { chartData: contentChartData, rankingList: contentRankingList } = getContentAnalyticsData();
+  // Helper to get VN time date strings for chart
+  const getVnDateStringWithOffset = (offsetDays: number) => {
+     const d = new Date();
+     const vnTime = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+     vnTime.setUTCDate(vnTime.getUTCDate() - offsetDays);
+     const y = vnTime.getUTCFullYear();
+     const m = String(vnTime.getUTCMonth() + 1).padStart(2, '0');
+     const dt = String(vnTime.getUTCDate()).padStart(2, '0');
+     return {
+       dateStr: `${y}-${m}-${dt}`,
+       monthStr: `${y}-${m}`,
+       displayDate: `${vnTime.getUTCDate()}/${vnTime.getUTCMonth() + 1}`,
+       displayMonth: `Tháng ${vnTime.getUTCMonth() + 1}/${String(y).slice(2)}`,
+       vnTime
+     };
+  };
 
-  
-        // Helper to get VN time date strings for chart
-        const getVnDateStringWithOffset = (offsetDays: number) => {
-           const d = new Date();
-           const vnTime = new Date(d.getTime() + 7 * 60 * 60 * 1000);
-           vnTime.setUTCDate(vnTime.getUTCDate() - offsetDays);
-           const y = vnTime.getUTCFullYear();
-           const m = String(vnTime.getUTCMonth() + 1).padStart(2, '0');
-           const dt = String(vnTime.getUTCDate()).padStart(2, '0');
-           return {
-             dateStr: `${y}-${m}-${dt}`,
-             monthStr: `${y}-${m}`,
-             displayDate: `${vnTime.getUTCDate()}/${vnTime.getUTCMonth() + 1}`,
-             displayMonth: `Tháng ${vnTime.getUTCMonth() + 1}/${String(y).slice(2)}`,
-             vnTime
-           };
-        };
+  const { chartData: contentChartData, rankingList: contentRankingList, totalItemViews, maxItemViews } = getContentAnalyticsData();
 useEffect(() => {
     if (!isAdmin) return;
 
@@ -269,6 +248,44 @@ useEffect(() => {
       },
       (err) => console.error("Error in real-time total visits subscription:", err)
     );
+
+    const fetchHourlyAndDailyStats = async () => {
+      try {
+        const todayStr = getVietnamDateString();
+        // 1. Fetch real 24 hours of today
+        const hourlyPromises = [];
+        for (let i = 0; i < 24; i++) {
+          const hour = i.toString().padStart(2, '0');
+          hourlyPromises.push(getDoc(doc(db, 'analytics', `hourly_visits_${todayStr}_${hour}`)));
+        }
+        const hourlySnaps = await Promise.all(hourlyPromises);
+        const hourlyMap: { [hour: string]: number } = {};
+        hourlySnaps.forEach((snap, i) => {
+          const hour = i.toString().padStart(2, '0');
+          hourlyMap[hour] = snap.exists() ? (snap.data().visits || 0) : 0;
+        });
+        setTodayHourlyData(hourlyMap);
+
+        // 2. Fetch real 30 days history
+        const dailyPromises = [];
+        const dates: string[] = [];
+        for (let i = 0; i < 30; i++) {
+          const { dateStr } = getVnDateStringWithOffset(i);
+          dates.push(dateStr);
+          dailyPromises.push(getDoc(doc(db, 'analytics', `daily_visits_${dateStr}`)));
+        }
+        const dailySnaps = await Promise.all(dailyPromises);
+        const dailyMap: { [dateStr: string]: number } = {};
+        dailySnaps.forEach((snap, i) => {
+          dailyMap[dates[i]] = snap.exists() ? (snap.data().visits || 0) : 0;
+        });
+        setDailyVisitsHistory(dailyMap);
+      } catch (err) {
+        console.error("Error fetching hourly/daily analytics history:", err);
+      }
+    };
+
+    fetchHourlyAndDailyStats();
 
     const fetchAnalytics = async () => {
       // System Updates (Admin activities)
@@ -584,12 +601,12 @@ useEffect(() => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-0 sm:px-4 pt-1 sm:pt-2 pb-2">
-      <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start md:h-[calc(100vh-5.5rem)] md:overflow-hidden">
+    <div className="max-w-7xl mx-auto px-0 sm:px-4 pt-1 sm:pt-2 pb-6">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
         
-        {/* Sidebar - strictly independent scroll on desktop */}
-        <div className="w-full md:w-64 flex-shrink-0 md:h-full">
-          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-3 sm:p-4 md:h-full md:overflow-y-auto custom-scrollbar">
+        {/* Sidebar - sticky on desktop with independent scroll */}
+        <div className="w-full md:w-64 flex-shrink-0 md:sticky md:top-16 md:self-start z-10">
+          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-3 sm:p-4 max-h-[calc(100vh-5rem)] overflow-y-auto hidden-scrollbar">
             <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 px-2">Dashboard Quản trị</h2>
             <nav className="space-y-1">
               <button
@@ -741,7 +758,7 @@ useEffect(() => {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 min-w-0 w-full md:h-full md:overflow-y-auto custom-scrollbar md:pr-2 space-y-4 sm:space-y-6 pb-8">
+        <div className="flex-1 min-w-0 w-full space-y-4 sm:space-y-6 pb-8">
           
           {activeTab === 'overview' && (
             <div className="space-y-4 sm:space-y-6">
