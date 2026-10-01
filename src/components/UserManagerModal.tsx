@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, orderBy, getDocs, limit } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, getDocs, limit, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { X, Users, RefreshCw, Filter, ArrowUp, ArrowDown, Activity, ChevronLeft, Shield } from 'lucide-react';
@@ -56,12 +56,30 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
 
     const q = query(collection(db, 'users'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      let fetchedUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserData));
+      const now = Date.now();
+      let fetchedUsers = snapshot.docs.map(docSnap => {
+        const data = docSnap.data() as UserData;
+        const userObj = { id: docSnap.id, ...data };
+        
+        // Check if lastLoginAt or createdAt is recorded in the future (due to client clock mismatch)
+        const loginTime = userObj.lastLoginAt ? new Date(userObj.lastLoginAt).getTime() : 0;
+        if (loginTime > now + 60000) {
+          // Auto-correct corrupt future timestamp in Firestore
+          updateDoc(doc(db, 'users', docSnap.id), {
+            lastLoginAt: new Date(now).toISOString()
+          }).catch(console.error);
+          userObj.lastLoginAt = new Date(now).toISOString();
+        }
+
+        return userObj;
+      });
       
-      // Sort logic
+      // Sort logic with future-time clamping
       fetchedUsers.sort((a, b) => {
-        const timeA = new Date(a.lastLoginAt || a.createdAt || 0).getTime();
-        const timeB = new Date(b.lastLoginAt || b.createdAt || 0).getTime();
+        const rawA = new Date(a.lastLoginAt || a.createdAt || 0).getTime();
+        const rawB = new Date(b.lastLoginAt || b.createdAt || 0).getTime();
+        const timeA = rawA > now ? now : rawA;
+        const timeB = rawB > now ? now : rawB;
         return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
       });
 
@@ -114,10 +132,15 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
     try {
       const date = new Date(isoString);
       if (isNaN(date.getTime())) return 'Chưa rõ';
+      
+      // Prevent displaying future time if client machine was set ahead
+      const now = Date.now();
+      const safeTime = date.getTime() > now ? new Date(now) : date;
+
       return new Intl.DateTimeFormat('vi-VN', {
         day: '2-digit', month: '2-digit', year: 'numeric',
         hour: '2-digit', minute: '2-digit'
-      }).format(date);
+      }).format(safeTime);
     } catch {
       return 'Chưa rõ';
     }
