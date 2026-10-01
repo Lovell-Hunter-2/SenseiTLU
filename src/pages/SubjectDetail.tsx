@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, serverTimestamp, deleteDoc, limit, orderBy } from 'firebase/firestore';
-import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon, ClipboardList, ScrollText, Lightbulb, Sigma, X, LayoutTemplate, Lock, LogIn, Bot, Sparkles, Flag, Search, Pin } from 'lucide-react';
+import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon, ClipboardList, ScrollText, Lightbulb, Sigma, X, LayoutTemplate, Lock, LogIn, Bot, Sparkles, Flag, Search, Pin, Eye } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { logActivityEvent, logSubjectDocumentView } from '../useActivityLogger';
+import { getVietnamDateString } from '../services/analyticsService';
 
 const typeIcons: Record<string, React.ElementType> = {
   'Chatbot': Bot,
@@ -26,6 +27,10 @@ export default function SubjectDetail() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [docLimit, setDocLimit] = useState(50);
   const { isAdmin, user, login, loading } = useAuth();
+  
+  // Admin stats state
+  const [subjectStats, setSubjectStats] = useState<{ today: number; total: number }>({ today: 0, total: 0 });
+  const [docStatsMap, setDocStatsMap] = useState<Record<string, { today: number; total: number }>>({});
   
   // Search state
   const [allSubjects, setAllSubjects] = useState<any[]>([]);
@@ -262,6 +267,68 @@ export default function SubjectDetail() {
     return unsubscribe;
   }, [id, docLimit]);
 
+  // Real-time Subject View Stats (for Admin)
+  useEffect(() => {
+    if (!isAdmin || !id) return;
+    const today = getVietnamDateString();
+
+    const unsubTotal = onSnapshot(doc(db, 'analytics_subjects', id), (snap) => {
+      if (snap.exists()) {
+        setSubjectStats(prev => ({ ...prev, total: snap.data().views || 0 }));
+      }
+    }, (err) => console.error(err));
+
+    const unsubToday = onSnapshot(doc(db, 'analytics', `sub_today_${today}_${id}`), (snap) => {
+      if (snap.exists()) {
+        setSubjectStats(prev => ({ ...prev, today: snap.data().visits || 0 }));
+      }
+    }, (err) => console.error(err));
+
+    return () => {
+      unsubTotal();
+      unsubToday();
+    };
+  }, [isAdmin, id]);
+
+  // Real-time Document View Stats (for Admin)
+  useEffect(() => {
+    if (!isAdmin || documents.length === 0) return;
+    const today = getVietnamDateString();
+    const unsubs: (() => void)[] = [];
+
+    documents.forEach((d) => {
+      if (!d.title) return;
+      const docId = d.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      if (!docId) return;
+
+      const unsubTotal = onSnapshot(doc(db, 'analytics_documents', docId), (snap) => {
+        if (snap.exists()) {
+          const total = snap.data().views || 0;
+          setDocStatsMap(prev => ({
+            ...prev,
+            [d.id]: { today: prev[d.id]?.today || 0, total }
+          }));
+        }
+      }, (err) => console.error(err));
+      unsubs.push(unsubTotal);
+
+      const unsubToday = onSnapshot(doc(db, 'analytics', `doc_today_${today}_${docId}`), (snap) => {
+        if (snap.exists()) {
+          const todayVisits = snap.data().visits || 0;
+          setDocStatsMap(prev => ({
+            ...prev,
+            [d.id]: { today: todayVisits, total: prev[d.id]?.total || 0 }
+          }));
+        }
+      }, (err) => console.error(err));
+      unsubs.push(unsubToday);
+    });
+
+    return () => {
+      unsubs.forEach(u => u());
+    };
+  }, [isAdmin, documents]);
+
   const handleSaveDocument = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDoc.title.trim() || !id) return;
@@ -450,6 +517,7 @@ export default function SubjectDetail() {
 
   const renderDocCard = (doc: any, Icon: any, wrapperClassName?: string) => {
     const isChatbot = doc.type === 'Chatbot';
+    const docStat = docStatsMap[doc.id] || { today: 0, total: 0 };
 
     return (
     <div key={doc.id} className={`${isChatbot ? "relative group rounded-xl p-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 shadow-sm hover:shadow-lg transition-all" : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow transform-gpu"} ${wrapperClassName || ""}`}>
@@ -499,24 +567,39 @@ export default function SubjectDetail() {
               )}
             </div>
             
-            <div className="flex flex-wrap items-center gap-3 mt-3">
-              {!doc.isFolder ? (
-                <a
-                  href={doc.url}
-                  onClick={isChatbot ? undefined : (e) => handleDocumentClick(e, doc.title, doc.url)}
-                  target={isChatbot ? "_blank" : undefined}
-                  rel={isChatbot ? "noopener noreferrer" : undefined}
-                  className={`inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-white rounded-lg transition-colors shadow-sm ${isChatbot ? 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-                >
-                  {isChatbot ? <><Bot className="w-4 h-4" /> Mở Chatbot</> : <><ExternalLink className="w-4 h-4" /> Xem tài liệu</>}
-                </a>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                  <Folder className="w-4 h-4" /> {doc.items?.length || 0} mục
-                </span>
-              )}
+            <div className="flex flex-wrap items-center justify-between gap-3 mt-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {!doc.isFolder ? (
+                  <a
+                    href={doc.url}
+                    onClick={isChatbot ? undefined : (e) => handleDocumentClick(e, doc.title, doc.url)}
+                    target={isChatbot ? "_blank" : undefined}
+                    rel={isChatbot ? "noopener noreferrer" : undefined}
+                    className={`inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-white rounded-lg transition-colors shadow-sm ${isChatbot ? 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                  >
+                    {isChatbot ? <><Bot className="w-4 h-4" /> Mở Chatbot</> : <><ExternalLink className="w-4 h-4" /> Xem tài liệu</>}
+                  </a>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <Folder className="w-4 h-4" /> {doc.items?.length || 0} mục
+                  </span>
+                )}
+
+                {/* Admin Document Views Stat Pill */}
+                {isAdmin && (
+                  <span 
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50/70 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/50 text-xs font-medium" 
+                    title="Thống kê lượt xem tài liệu này (Dành riêng cho Admin)"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                    <span>Hôm nay: <strong className="font-bold text-blue-600 dark:text-blue-400">{docStat.today}</strong></span>
+                    <span className="text-slate-300 dark:text-slate-600">•</span>
+                    <span>Tổng: <strong className="font-bold text-slate-800 dark:text-slate-200">{docStat.total}</strong></span>
+                  </span>
+                )}
+              </div>
               
-              <div className="flex items-center gap-3 ml-auto">
+              <div className="flex items-center gap-3">
                 {user && (
                   <button
                     onClick={() => { setReportDocId(doc.id); setReportDocTitle(doc.title); }}
@@ -584,11 +667,30 @@ export default function SubjectDetail() {
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="text-center space-y-4 py-8 relative">
-        <h1 className="text-3xl md:text-4xl font-bold flex items-center justify-center gap-3">
-          <Book className="w-8 h-8 text-blue-500" /> {subject.name}
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400">
+      <div className="text-center space-y-3 py-6 relative">
+        <div className="flex flex-col items-center justify-center gap-2">
+          <h1 className="text-3xl md:text-4xl font-bold flex items-center justify-center gap-3">
+            <Book className="w-8 h-8 text-blue-500" /> {subject.name}
+          </h1>
+
+          {/* Admin Real-time View Stats Badge */}
+          {isAdmin && (
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-50/90 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 shadow-xs text-xs">
+              <span className="flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400">
+                <Eye className="w-3.5 h-3.5" /> Lượt truy cập:
+              </span>
+              <span className="text-slate-700 dark:text-slate-300">
+                Hôm nay: <strong className="text-blue-600 dark:text-blue-400 font-bold">{subjectStats.today}</strong>
+              </span>
+              <span className="text-slate-300 dark:text-slate-700">•</span>
+              <span className="text-slate-700 dark:text-slate-300">
+                Tổng: <strong className="font-bold text-slate-900 dark:text-slate-100">{subjectStats.total}</strong>
+              </span>
+            </div>
+          )}
+        </div>
+
+        <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-sm sm:text-base">
           {subject.description || `Tổng hợp tài liệu môn ${subject.name} - Sinh viên TLU`}
         </p>
 
