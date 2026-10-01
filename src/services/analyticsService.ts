@@ -48,10 +48,19 @@ export async function logGlobalPageView() {
 
 export async function logSubjectView(subjectId: string, subjectName: string) {
   try {
+    const today = getVietnamDateString();
     const subjectRef = doc(db, 'analytics_subjects', subjectId);
     await setDoc(subjectRef, {
       name: subjectName,
       views: increment(1),
+      lastUpdated: serverTimestamp()
+    }, { merge: true });
+
+    // Track daily subject view
+    const todaySubRef = doc(db, 'analytics', `sub_today_${today}_${subjectId}`);
+    await setDoc(todaySubRef, {
+      visits: increment(1),
+      date: today,
       lastUpdated: serverTimestamp()
     }, { merge: true });
   } catch (error) {
@@ -61,6 +70,7 @@ export async function logSubjectView(subjectId: string, subjectName: string) {
 
 export async function logDocumentView(docTitle: string, subjectName: string) {
   try {
+    const today = getVietnamDateString();
     // Generate a safe id from document title
     const docId = docTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     if (!docId) return;
@@ -70,6 +80,14 @@ export async function logDocumentView(docTitle: string, subjectName: string) {
       title: docTitle,
       subjectName,
       views: increment(1),
+      lastUpdated: serverTimestamp()
+    }, { merge: true });
+
+    // Track daily document view
+    const todayDocRef = doc(db, 'analytics', `doc_today_${today}_${docId}`);
+    await setDoc(todayDocRef, {
+      visits: increment(1),
+      date: today,
       lastUpdated: serverTimestamp()
     }, { merge: true });
   } catch (error) {
