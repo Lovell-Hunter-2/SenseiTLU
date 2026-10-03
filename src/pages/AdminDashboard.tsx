@@ -225,20 +225,129 @@ export default function AdminDashboard() {
 useEffect(() => {
     if (!isAdmin) return;
 
-    // Real-time Top Subjects (Top 10)
+    // Real-time Top Subjects (Top 10 overall) and Timeframe stats
     const unsubSubjects = onSnapshot(
-      query(collection(db, 'analytics_subjects'), orderBy('views', 'desc'), limit(10)),
+      collection(db, 'analytics_subjects'),
       (snapshot) => {
-        setTopSubjects(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+        const todayStr = getVietnamDateString();
+        const allSubs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as any));
+        
+        // Sort for Top 10 overall
+        const sortedOverall = [...allSubs].sort((a, b) => (b.views || 0) - (a.views || 0));
+        setTopSubjects(sortedOverall.slice(0, 10));
+
+        // Process timeframe lists
+        const dayItems: { id: string; name: string; views: number }[] = [];
+        const weekItems: { id: string; name: string; views: number }[] = [];
+        const monthItems: { id: string; name: string; views: number }[] = [];
+        const hourlyMap: Record<string, number> = {};
+        const dailyMap: Record<string, number> = {};
+
+        allSubs.forEach((s) => {
+          const name = s.name || s.id;
+          const todayV = s[`daily_${todayStr}`] || 0;
+
+          let weekV = 0;
+          let monthV = 0;
+
+          for (let i = 0; i < 30; i++) {
+            const { dateStr } = getVnDateStringWithOffset(i);
+            const count = s[`daily_${dateStr}`] || 0;
+            dailyMap[dateStr] = (dailyMap[dateStr] || 0) + count;
+            if (i < 7) weekV += count;
+            monthV += count;
+          }
+
+          // Compute hourly for today
+          for (let i = 0; i < 24; i++) {
+            const h = i.toString().padStart(2, '0');
+            const hCount = s[`hourly_${todayStr}_${h}`] || 0;
+            hourlyMap[h] = (hourlyMap[h] || 0) + hCount;
+          }
+
+          dayItems.push({ id: s.id, name, views: todayV });
+          weekItems.push({ id: s.id, name, views: weekV });
+          monthItems.push({ id: s.id, name, views: monthV });
+        });
+
+        // Sort descending by views in timeframe
+        dayItems.sort((a, b) => b.views - a.views);
+        weekItems.sort((a, b) => b.views - a.views);
+        monthItems.sort((a, b) => b.views - a.views);
+
+        setSubjectHourlyToday(hourlyMap);
+        setSubjectDailyHistory(dailyMap);
+
+        setTimeframeContentStats((prev) => ({
+          ...prev,
+          day: { ...prev.day, subjects: dayItems },
+          week: { ...prev.week, subjects: weekItems },
+          month: { ...prev.month, subjects: monthItems },
+        }));
       },
       (err) => console.error("Error in real-time subjects subscription:", err)
     );
 
-    // Real-time Top Documents (Top 10)
+    // Real-time Top Documents (Top 10 overall) and Timeframe stats
     const unsubDocs = onSnapshot(
-      query(collection(db, 'analytics_documents'), orderBy('views', 'desc'), limit(10)),
+      collection(db, 'analytics_documents'),
       (snapshot) => {
-        setTopDocs(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+        const todayStr = getVietnamDateString();
+        const allDocs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as any));
+
+        // Sort for Top 10 overall
+        const sortedOverall = [...allDocs].sort((a, b) => (b.views || 0) - (a.views || 0));
+        setTopDocs(sortedOverall.slice(0, 10));
+
+        // Process timeframe lists
+        const dayItems: { id: string; title: string; subjectName?: string; views: number }[] = [];
+        const weekItems: { id: string; title: string; subjectName?: string; views: number }[] = [];
+        const monthItems: { id: string; title: string; subjectName?: string; views: number }[] = [];
+        const hourlyMap: Record<string, number> = {};
+        const dailyMap: Record<string, number> = {};
+
+        allDocs.forEach((d) => {
+          const title = d.title || d.id;
+          const subjectName = d.subjectName || '';
+          const todayV = d[`daily_${todayStr}`] || 0;
+
+          let weekV = 0;
+          let monthV = 0;
+
+          for (let i = 0; i < 30; i++) {
+            const { dateStr } = getVnDateStringWithOffset(i);
+            const count = d[`daily_${dateStr}`] || 0;
+            dailyMap[dateStr] = (dailyMap[dateStr] || 0) + count;
+            if (i < 7) weekV += count;
+            monthV += count;
+          }
+
+          // Compute hourly for today
+          for (let i = 0; i < 24; i++) {
+            const h = i.toString().padStart(2, '0');
+            const hCount = d[`hourly_${todayStr}_${h}`] || 0;
+            hourlyMap[h] = (hourlyMap[h] || 0) + hCount;
+          }
+
+          dayItems.push({ id: d.id, title, subjectName, views: todayV });
+          weekItems.push({ id: d.id, title, subjectName, views: weekV });
+          monthItems.push({ id: d.id, title, subjectName, views: monthV });
+        });
+
+        // Sort descending by views in timeframe
+        dayItems.sort((a, b) => b.views - a.views);
+        weekItems.sort((a, b) => b.views - a.views);
+        monthItems.sort((a, b) => b.views - a.views);
+
+        setDocHourlyToday(hourlyMap);
+        setDocDailyHistory(dailyMap);
+
+        setTimeframeContentStats((prev) => ({
+          ...prev,
+          day: { ...prev.day, docs: dayItems },
+          week: { ...prev.week, docs: weekItems },
+          month: { ...prev.month, docs: monthItems },
+        }));
       },
       (err) => console.error("Error in real-time docs subscription:", err)
     );
@@ -303,179 +412,6 @@ useEffect(() => {
     };
 
     fetchHourlyAndDailyStats();
-
-    // Fetch timeframe stats (day, week, month) for ALL subjects and documents strictly using real data
-    const fetchContentTimeframeStats = async () => {
-      try {
-        const todayStr = getVietnamDateString();
-
-        // 1. Get all subjects
-        const subjectsSnap = await getDocs(collection(db, 'analytics_subjects'));
-        let subjectsList: { id: string; name: string; views: number }[] = [];
-        if (!subjectsSnap.empty) {
-          subjectsList = subjectsSnap.docs.map(d => ({ id: d.id, name: d.data().name || d.id, views: d.data().views || 0 }));
-        } else {
-          const rawSubSnap = await getDocs(collection(db, 'subjects'));
-          subjectsList = rawSubSnap.docs.map(d => ({ id: d.id, name: d.data().name || d.id, views: 0 }));
-        }
-
-        // 2. Get all documents
-        const docsSnap = await getDocs(collection(db, 'analytics_documents'));
-        let docsList: { id: string; title: string; subjectName?: string; views: number }[] = [];
-        if (!docsSnap.empty) {
-          docsList = docsSnap.docs.map(d => ({
-            id: d.id,
-            title: d.data().title || d.id,
-            subjectName: d.data().subjectName || '',
-            views: d.data().views || 0
-          }));
-        }
-
-        // 3. Process Subjects by timeframe
-        const subDayItems: { id: string; name: string; views: number }[] = [];
-        const subWeekItems: { id: string; name: string; views: number }[] = [];
-        const subMonthItems: { id: string; name: string; views: number }[] = [];
-        const subDailySumMap: Record<string, number> = {};
-        const subHourlyMap: Record<string, number> = {};
-
-        // Fetch subject hourly totals
-        const subHourPromises = [];
-        for (let i = 0; i < 24; i++) {
-          const hour = i.toString().padStart(2, '0');
-          subHourPromises.push(getDoc(doc(db, 'analytics', `sub_hourly_${todayStr}_${hour}`)));
-        }
-        const subHourSnaps = await Promise.all(subHourPromises);
-        subHourSnaps.forEach((snap, i) => {
-          const hour = i.toString().padStart(2, '0');
-          subHourlyMap[hour] = snap.exists() ? (snap.data().visits || 0) : 0;
-        });
-        setSubjectHourlyToday(subHourlyMap);
-
-        await Promise.all(subjectsList.map(async (s) => {
-          try {
-            // Check today (sub_daily or sub_today)
-            const todayDoc = await getDoc(doc(db, 'analytics', `sub_daily_${todayStr}_${s.id}`));
-            let todayV = todayDoc.exists() ? (todayDoc.data().visits || 0) : 0;
-            if (todayV === 0) {
-              const legacyToday = await getDoc(doc(db, 'analytics', `sub_today_${todayStr}_${s.id}`));
-              if (legacyToday.exists()) todayV = legacyToday.data().visits || 0;
-            }
-
-            // Check 30 days
-            const dailyPromises = [];
-            const dates: string[] = [];
-            for (let i = 0; i < 30; i++) {
-              const { dateStr } = getVnDateStringWithOffset(i);
-              dates.push(dateStr);
-              dailyPromises.push(getDoc(doc(db, 'analytics', `sub_daily_${dateStr}_${s.id}`)));
-            }
-            const dailySnaps = await Promise.all(dailyPromises);
-
-            let weekV = todayV;
-            let monthV = todayV;
-
-            dailySnaps.forEach((snap, idx) => {
-              const dateStr = dates[idx];
-              const v = snap.exists() ? (snap.data().visits || 0) : 0;
-              subDailySumMap[dateStr] = (subDailySumMap[dateStr] || 0) + v;
-              if (idx < 7 && idx > 0) weekV += v;
-              if (idx > 0) monthV += v;
-            });
-
-            subDayItems.push({ id: s.id, name: s.name, views: todayV });
-            subWeekItems.push({ id: s.id, name: s.name, views: weekV });
-            subMonthItems.push({ id: s.id, name: s.name, views: monthV });
-          } catch (e) {
-            console.error("Error processing subject timeframe:", e);
-          }
-        }));
-
-        setSubjectDailyHistory(subDailySumMap);
-
-        // 4. Process Documents by timeframe
-        const docDayItems: { id: string; title: string; subjectName?: string; views: number }[] = [];
-        const docWeekItems: { id: string; title: string; subjectName?: string; views: number }[] = [];
-        const docMonthItems: { id: string; title: string; subjectName?: string; views: number }[] = [];
-        const docDailySumMap: Record<string, number> = {};
-        const docHourlyMap: Record<string, number> = {};
-
-        // Fetch doc hourly totals
-        const docHourPromises = [];
-        for (let i = 0; i < 24; i++) {
-          const hour = i.toString().padStart(2, '0');
-          docHourPromises.push(getDoc(doc(db, 'analytics', `doc_hourly_${todayStr}_${hour}`)));
-        }
-        const docHourSnaps = await Promise.all(docHourPromises);
-        docHourSnaps.forEach((snap, i) => {
-          const hour = i.toString().padStart(2, '0');
-          docHourlyMap[hour] = snap.exists() ? (snap.data().visits || 0) : 0;
-        });
-        setDocHourlyToday(docHourlyMap);
-
-        await Promise.all(docsList.map(async (d) => {
-          try {
-            const docKey = (d.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-') || d.id;
-            
-            // Check today
-            const todayDoc = await getDoc(doc(db, 'analytics', `doc_daily_${todayStr}_${docKey}`));
-            let todayV = todayDoc.exists() ? (todayDoc.data().visits || 0) : 0;
-            if (todayV === 0) {
-              const legacyDoc = await getDoc(doc(db, 'analytics', `doc_today_${todayStr}_${docKey}`));
-              if (legacyDoc.exists()) todayV = legacyDoc.data().visits || 0;
-            }
-
-            // Check 30 days
-            const dailyPromises = [];
-            const dates: string[] = [];
-            for (let i = 0; i < 30; i++) {
-              const { dateStr } = getVnDateStringWithOffset(i);
-              dates.push(dateStr);
-              dailyPromises.push(getDoc(doc(db, 'analytics', `doc_daily_${dateStr}_${docKey}`)));
-            }
-            const dailySnaps = await Promise.all(dailyPromises);
-
-            let weekV = todayV;
-            let monthV = todayV;
-
-            dailySnaps.forEach((snap, idx) => {
-              const dateStr = dates[idx];
-              const v = snap.exists() ? (snap.data().visits || 0) : 0;
-              docDailySumMap[dateStr] = (docDailySumMap[dateStr] || 0) + v;
-              if (idx < 7 && idx > 0) weekV += v;
-              if (idx > 0) monthV += v;
-            });
-
-            docDayItems.push({ id: d.id, title: d.title, subjectName: d.subjectName, views: todayV });
-            docWeekItems.push({ id: d.id, title: d.title, subjectName: d.subjectName, views: weekV });
-            docMonthItems.push({ id: d.id, title: d.title, subjectName: d.subjectName, views: monthV });
-          } catch (e) {
-            console.error("Error processing doc timeframe:", e);
-          }
-        }));
-
-        setDocDailyHistory(docDailySumMap);
-
-        // Sort each timeframe list descending by views
-        subDayItems.sort((a, b) => b.views - a.views);
-        subWeekItems.sort((a, b) => b.views - a.views);
-        subMonthItems.sort((a, b) => b.views - a.views);
-
-        docDayItems.sort((a, b) => b.views - a.views);
-        docWeekItems.sort((a, b) => b.views - a.views);
-        docMonthItems.sort((a, b) => b.views - a.views);
-
-        setTimeframeContentStats({
-          day: { subjects: subDayItems, docs: docDayItems },
-          week: { subjects: subWeekItems, docs: docWeekItems },
-          month: { subjects: subMonthItems, docs: docMonthItems },
-        });
-
-      } catch (err) {
-        console.error("Error fetching content timeframe stats:", err);
-      }
-    };
-
-    fetchContentTimeframeStats();
 
     const fetchAnalytics = async () => {
       // System Updates (Admin activities)
