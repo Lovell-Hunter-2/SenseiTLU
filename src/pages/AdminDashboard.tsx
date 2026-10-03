@@ -117,75 +117,23 @@ export default function AdminDashboard() {
   // Real-time Firestore visit metrics for content analytics
   const [todayHourlyData, setTodayHourlyData] = useState<{ [hour: string]: number }>({});
   const [dailyVisitsHistory, setDailyVisitsHistory] = useState<{ [dateStr: string]: number }>({});
+  const [subjectHourlyToday, setSubjectHourlyToday] = useState<{ [hour: string]: number }>({});
+  const [subjectDailyHistory, setSubjectDailyHistory] = useState<{ [dateStr: string]: number }>({});
+  const [docHourlyToday, setDocHourlyToday] = useState<{ [hour: string]: number }>({});
+  const [docDailyHistory, setDocDailyHistory] = useState<{ [dateStr: string]: number }>({});
 
   // Content analytics state (Subjects & Docs)
   const [contentAnalyticsTab, setContentAnalyticsTab] = useState<'subjects' | 'documents'>('subjects');
   const [contentAnalyticsRange, setContentAnalyticsRange] = useState<'day' | 'week' | 'month'>('day');
-
-  // Compute timeframe analytics chart data and ranking list for Subjects & Documents strictly from Real Firebase Data
-  const getContentAnalyticsData = () => {
-    const rawList = contentAnalyticsTab === 'subjects' ? topSubjects : topDocs;
-    const totalItemViews = rawList.reduce((acc, curr) => acc + (curr.views || 0), 0);
-    const maxItemViews = rawList[0]?.views || 1;
-
-    let chartSlots: { name: string; views: number }[] = [];
-
-    if (contentAnalyticsRange === 'day') {
-      // 4 real time intervals today measured directly from Firebase hourly visits
-      const h = todayHourlyData;
-      const night = (h['00'] || 0) + (h['01'] || 0) + (h['02'] || 0) + (h['03'] || 0) + (h['04'] || 0) + (h['05'] || 0);
-      const morning = (h['06'] || 0) + (h['07'] || 0) + (h['08'] || 0) + (h['09'] || 0) + (h['10'] || 0) + (h['11'] || 0);
-      const afternoon = (h['12'] || 0) + (h['13'] || 0) + (h['14'] || 0) + (h['15'] || 0) + (h['16'] || 0) + (h['17'] || 0);
-      const evening = (h['18'] || 0) + (h['19'] || 0) + (h['20'] || 0) + (h['21'] || 0) + (h['22'] || 0) + (h['23'] || 0);
-
-      chartSlots = [
-        { name: '00h - 06h (Đêm)', views: night },
-        { name: '06h - 12h (Sáng)', views: morning },
-        { name: '12h - 18h (Chiều)', views: afternoon },
-        { name: '18h - 24h (Tối)', views: evening },
-      ];
-    } else if (contentAnalyticsRange === 'week') {
-      // Last 7 days real visits from Firebase daily_visits
-      chartSlots = [];
-      for (let i = 6; i >= 0; i--) {
-        const { dateStr, displayDate } = getVnDateStringWithOffset(i);
-        chartSlots.push({
-          name: displayDate,
-          views: dailyVisitsHistory[dateStr] || 0
-        });
-      }
-    } else {
-      // 4 weeks of the last 30 days from real Firebase daily_visits
-      let w1 = 0, w2 = 0, w3 = 0, w4 = 0;
-      for (let i = 0; i < 30; i++) {
-        const { dateStr } = getVnDateStringWithOffset(i);
-        const v = dailyVisitsHistory[dateStr] || 0;
-        if (i < 7) w1 += v; // 7 days most recent
-        else if (i < 14) w2 += v;
-        else if (i < 21) w3 += v;
-        else w4 += v;
-      }
-      chartSlots = [
-        { name: 'Tuần 4 (22-30 ngày trước)', views: w4 },
-        { name: 'Tuần 3 (15-21 ngày trước)', views: w3 },
-        { name: 'Tuần 2 (8-14 ngày trước)', views: w2 },
-        { name: 'Tuần 1 (1-7 ngày gần nhất)', views: w1 },
-      ];
-    }
-
-    // Ranking list measured directly from Firebase analytics_subjects / analytics_documents in real-time
-    const rankingList = rawList.slice(0, 15).map((item, idx) => {
-      const views = item.views || 0;
-      const sharePercent = totalItemViews > 0 ? Math.round((views / totalItemViews) * 100) : 0;
-      return {
-        ...item,
-        views,
-        sharePercent,
-      };
-    });
-
-    return { chartData: chartSlots, rankingList, totalItemViews, maxItemViews };
-  };
+  const [timeframeContentStats, setTimeframeContentStats] = useState<{
+    day: { subjects: { id: string; name: string; views: number }[]; docs: { id: string; title: string; subjectName?: string; views: number }[] };
+    week: { subjects: { id: string; name: string; views: number }[]; docs: { id: string; title: string; subjectName?: string; views: number }[] };
+    month: { subjects: { id: string; name: string; views: number }[]; docs: { id: string; title: string; subjectName?: string; views: number }[] };
+  }>({
+    day: { subjects: [], docs: [] },
+    week: { subjects: [], docs: [] },
+    month: { subjects: [], docs: [] },
+  });
 
   // Helper to get VN time date strings for chart
   const getVnDateStringWithOffset = (offsetDays: number) => {
@@ -204,7 +152,76 @@ export default function AdminDashboard() {
      };
   };
 
-  const { chartData: contentChartData, rankingList: contentRankingList, totalItemViews, maxItemViews } = getContentAnalyticsData();
+  // Compute timeframe analytics chart data and ranking list for Subjects & Documents strictly by timeframe (Day / Week / Month)
+  const getContentAnalyticsData = () => {
+    const timeframeData = timeframeContentStats[contentAnalyticsRange] || { subjects: [], docs: [] };
+    const rawList = contentAnalyticsTab === 'subjects' ? timeframeData.subjects : timeframeData.docs;
+
+    const totalTimeframeViews = rawList.reduce((acc, curr) => acc + curr.views, 0);
+    const maxTimeframeViews = rawList[0]?.views || 1;
+
+    let chartSlots: { name: string; views: number }[] = [];
+
+    const isSubject = contentAnalyticsTab === 'subjects';
+    const hourlyMap = isSubject ? (Object.keys(subjectHourlyToday).length > 0 ? subjectHourlyToday : todayHourlyData) : (Object.keys(docHourlyToday).length > 0 ? docHourlyToday : todayHourlyData);
+    const dailyMap = isSubject ? (Object.keys(subjectDailyHistory).length > 0 ? subjectDailyHistory : dailyVisitsHistory) : (Object.keys(docDailyHistory).length > 0 ? docDailyHistory : dailyVisitsHistory);
+
+    if (contentAnalyticsRange === 'day') {
+      const h = hourlyMap;
+      const night = (h['00'] || 0) + (h['01'] || 0) + (h['02'] || 0) + (h['03'] || 0) + (h['04'] || 0) + (h['05'] || 0);
+      const morning = (h['06'] || 0) + (h['07'] || 0) + (h['08'] || 0) + (h['09'] || 0) + (h['10'] || 0) + (h['11'] || 0);
+      const afternoon = (h['12'] || 0) + (h['13'] || 0) + (h['14'] || 0) + (h['15'] || 0) + (h['16'] || 0) + (h['17'] || 0);
+      const evening = (h['18'] || 0) + (h['19'] || 0) + (h['20'] || 0) + (h['21'] || 0) + (h['22'] || 0) + (h['23'] || 0);
+
+      chartSlots = [
+        { name: '00h - 06h (Đêm)', views: night },
+        { name: '06h - 12h (Sáng)', views: morning },
+        { name: '12h - 18h (Chiều)', views: afternoon },
+        { name: '18h - 24h (Tối)', views: evening },
+      ];
+    } else if (contentAnalyticsRange === 'week') {
+      chartSlots = [];
+      for (let i = 6; i >= 0; i--) {
+        const { dateStr, displayDate } = getVnDateStringWithOffset(i);
+        const dayV = dailyMap[dateStr] || 0;
+        chartSlots.push({
+          name: displayDate,
+          views: dayV
+        });
+      }
+    } else {
+      chartSlots = [];
+      const wVisits = [0, 0, 0, 0];
+      for (let i = 0; i < 30; i++) {
+        const { dateStr } = getVnDateStringWithOffset(i);
+        const v = dailyMap[dateStr] || 0;
+        if (i < 7) wVisits[3] += v;
+        else if (i < 14) wVisits[2] += v;
+        else if (i < 21) wVisits[1] += v;
+        else wVisits[0] += v;
+      }
+      const weekLabels = ['Tuần 1 (1-7)', 'Tuần 2 (8-14)', 'Tuần 3 (15-21)', 'Tuần 4 (22-30)'];
+      chartSlots = weekLabels.map((name, idx) => ({
+        name,
+        views: wVisits[idx]
+      }));
+    }
+
+    // Top 10 by timeframe views
+    const rankingList = rawList.slice(0, 10).map((item) => {
+      const views = item.views;
+      const sharePercent = totalTimeframeViews > 0 ? Math.round((views / totalTimeframeViews) * 100) : 0;
+      return {
+        ...item,
+        views,
+        sharePercent,
+      };
+    });
+
+    return { chartData: chartSlots, rankingList, totalTimeframeViews, maxTimeframeViews };
+  };
+
+  const { chartData: contentChartData, rankingList: contentRankingList } = getContentAnalyticsData();
 useEffect(() => {
     if (!isAdmin) return;
 
@@ -286,6 +303,179 @@ useEffect(() => {
     };
 
     fetchHourlyAndDailyStats();
+
+    // Fetch timeframe stats (day, week, month) for ALL subjects and documents strictly using real data
+    const fetchContentTimeframeStats = async () => {
+      try {
+        const todayStr = getVietnamDateString();
+
+        // 1. Get all subjects
+        const subjectsSnap = await getDocs(collection(db, 'analytics_subjects'));
+        let subjectsList: { id: string; name: string; views: number }[] = [];
+        if (!subjectsSnap.empty) {
+          subjectsList = subjectsSnap.docs.map(d => ({ id: d.id, name: d.data().name || d.id, views: d.data().views || 0 }));
+        } else {
+          const rawSubSnap = await getDocs(collection(db, 'subjects'));
+          subjectsList = rawSubSnap.docs.map(d => ({ id: d.id, name: d.data().name || d.id, views: 0 }));
+        }
+
+        // 2. Get all documents
+        const docsSnap = await getDocs(collection(db, 'analytics_documents'));
+        let docsList: { id: string; title: string; subjectName?: string; views: number }[] = [];
+        if (!docsSnap.empty) {
+          docsList = docsSnap.docs.map(d => ({
+            id: d.id,
+            title: d.data().title || d.id,
+            subjectName: d.data().subjectName || '',
+            views: d.data().views || 0
+          }));
+        }
+
+        // 3. Process Subjects by timeframe
+        const subDayItems: { id: string; name: string; views: number }[] = [];
+        const subWeekItems: { id: string; name: string; views: number }[] = [];
+        const subMonthItems: { id: string; name: string; views: number }[] = [];
+        const subDailySumMap: Record<string, number> = {};
+        const subHourlyMap: Record<string, number> = {};
+
+        // Fetch subject hourly totals
+        const subHourPromises = [];
+        for (let i = 0; i < 24; i++) {
+          const hour = i.toString().padStart(2, '0');
+          subHourPromises.push(getDoc(doc(db, 'analytics', `sub_hourly_${todayStr}_${hour}`)));
+        }
+        const subHourSnaps = await Promise.all(subHourPromises);
+        subHourSnaps.forEach((snap, i) => {
+          const hour = i.toString().padStart(2, '0');
+          subHourlyMap[hour] = snap.exists() ? (snap.data().visits || 0) : 0;
+        });
+        setSubjectHourlyToday(subHourlyMap);
+
+        await Promise.all(subjectsList.map(async (s) => {
+          try {
+            // Check today (sub_daily or sub_today)
+            const todayDoc = await getDoc(doc(db, 'analytics', `sub_daily_${todayStr}_${s.id}`));
+            let todayV = todayDoc.exists() ? (todayDoc.data().visits || 0) : 0;
+            if (todayV === 0) {
+              const legacyToday = await getDoc(doc(db, 'analytics', `sub_today_${todayStr}_${s.id}`));
+              if (legacyToday.exists()) todayV = legacyToday.data().visits || 0;
+            }
+
+            // Check 30 days
+            const dailyPromises = [];
+            const dates: string[] = [];
+            for (let i = 0; i < 30; i++) {
+              const { dateStr } = getVnDateStringWithOffset(i);
+              dates.push(dateStr);
+              dailyPromises.push(getDoc(doc(db, 'analytics', `sub_daily_${dateStr}_${s.id}`)));
+            }
+            const dailySnaps = await Promise.all(dailyPromises);
+
+            let weekV = todayV;
+            let monthV = todayV;
+
+            dailySnaps.forEach((snap, idx) => {
+              const dateStr = dates[idx];
+              const v = snap.exists() ? (snap.data().visits || 0) : 0;
+              subDailySumMap[dateStr] = (subDailySumMap[dateStr] || 0) + v;
+              if (idx < 7 && idx > 0) weekV += v;
+              if (idx > 0) monthV += v;
+            });
+
+            subDayItems.push({ id: s.id, name: s.name, views: todayV });
+            subWeekItems.push({ id: s.id, name: s.name, views: weekV });
+            subMonthItems.push({ id: s.id, name: s.name, views: monthV });
+          } catch (e) {
+            console.error("Error processing subject timeframe:", e);
+          }
+        }));
+
+        setSubjectDailyHistory(subDailySumMap);
+
+        // 4. Process Documents by timeframe
+        const docDayItems: { id: string; title: string; subjectName?: string; views: number }[] = [];
+        const docWeekItems: { id: string; title: string; subjectName?: string; views: number }[] = [];
+        const docMonthItems: { id: string; title: string; subjectName?: string; views: number }[] = [];
+        const docDailySumMap: Record<string, number> = {};
+        const docHourlyMap: Record<string, number> = {};
+
+        // Fetch doc hourly totals
+        const docHourPromises = [];
+        for (let i = 0; i < 24; i++) {
+          const hour = i.toString().padStart(2, '0');
+          docHourPromises.push(getDoc(doc(db, 'analytics', `doc_hourly_${todayStr}_${hour}`)));
+        }
+        const docHourSnaps = await Promise.all(docHourPromises);
+        docHourSnaps.forEach((snap, i) => {
+          const hour = i.toString().padStart(2, '0');
+          docHourlyMap[hour] = snap.exists() ? (snap.data().visits || 0) : 0;
+        });
+        setDocHourlyToday(docHourlyMap);
+
+        await Promise.all(docsList.map(async (d) => {
+          try {
+            const docKey = (d.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-') || d.id;
+            
+            // Check today
+            const todayDoc = await getDoc(doc(db, 'analytics', `doc_daily_${todayStr}_${docKey}`));
+            let todayV = todayDoc.exists() ? (todayDoc.data().visits || 0) : 0;
+            if (todayV === 0) {
+              const legacyDoc = await getDoc(doc(db, 'analytics', `doc_today_${todayStr}_${docKey}`));
+              if (legacyDoc.exists()) todayV = legacyDoc.data().visits || 0;
+            }
+
+            // Check 30 days
+            const dailyPromises = [];
+            const dates: string[] = [];
+            for (let i = 0; i < 30; i++) {
+              const { dateStr } = getVnDateStringWithOffset(i);
+              dates.push(dateStr);
+              dailyPromises.push(getDoc(doc(db, 'analytics', `doc_daily_${dateStr}_${docKey}`)));
+            }
+            const dailySnaps = await Promise.all(dailyPromises);
+
+            let weekV = todayV;
+            let monthV = todayV;
+
+            dailySnaps.forEach((snap, idx) => {
+              const dateStr = dates[idx];
+              const v = snap.exists() ? (snap.data().visits || 0) : 0;
+              docDailySumMap[dateStr] = (docDailySumMap[dateStr] || 0) + v;
+              if (idx < 7 && idx > 0) weekV += v;
+              if (idx > 0) monthV += v;
+            });
+
+            docDayItems.push({ id: d.id, title: d.title, subjectName: d.subjectName, views: todayV });
+            docWeekItems.push({ id: d.id, title: d.title, subjectName: d.subjectName, views: weekV });
+            docMonthItems.push({ id: d.id, title: d.title, subjectName: d.subjectName, views: monthV });
+          } catch (e) {
+            console.error("Error processing doc timeframe:", e);
+          }
+        }));
+
+        setDocDailyHistory(docDailySumMap);
+
+        // Sort each timeframe list descending by views
+        subDayItems.sort((a, b) => b.views - a.views);
+        subWeekItems.sort((a, b) => b.views - a.views);
+        subMonthItems.sort((a, b) => b.views - a.views);
+
+        docDayItems.sort((a, b) => b.views - a.views);
+        docWeekItems.sort((a, b) => b.views - a.views);
+        docMonthItems.sort((a, b) => b.views - a.views);
+
+        setTimeframeContentStats({
+          day: { subjects: subDayItems, docs: docDayItems },
+          week: { subjects: subWeekItems, docs: docWeekItems },
+          month: { subjects: subMonthItems, docs: docMonthItems },
+        });
+
+      } catch (err) {
+        console.error("Error fetching content timeframe stats:", err);
+      }
+    };
+
+    fetchContentTimeframeStats();
 
     const fetchAnalytics = async () => {
       // System Updates (Admin activities)
@@ -961,93 +1151,97 @@ useEffect(() => {
                     </div>
                   </div>
 
-                  {/* Top List with Progress Bars & Badges */}
-                  <div className="lg:col-span-6 space-y-2.5">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                        <Award className="w-4 h-4 text-amber-500" />
-                        Bảng xếp hạng {contentAnalyticsTab === 'subjects' ? 'Môn học' : 'Tài liệu'} được xem nhiều nhất
-                      </h4>
-                      <span className="text-xs text-slate-400 font-medium">Lượt xem & Tỷ trọng</span>
-                    </div>
+                    {/* Top List with Progress Bars & Badges */}
+                    <div className="lg:col-span-6 space-y-2.5">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                          <Award className="w-4 h-4 text-amber-500" />
+                          Bảng xếp hạng {contentAnalyticsTab === 'subjects' ? 'Môn học' : 'Tài liệu'} xem nhiều ({contentAnalyticsRange === 'day' ? 'Hôm nay' : contentAnalyticsRange === 'week' ? '7 ngày qua' : '30 ngày qua'})
+                        </h4>
+                        <span className="text-xs text-slate-400 font-medium">
+                          {contentAnalyticsRange === 'day' ? 'Hôm nay' : contentAnalyticsRange === 'week' ? '7 ngày qua' : '30 ngày qua'}
+                        </span>
+                      </div>
 
-                    <div className="space-y-2.5 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
-                      {contentRankingList.length > 0 ? (
-                        contentRankingList.map((item, idx) => {
-                          const maxViews = contentRankingList[0]?.views || 1;
-                          const progressPercent = Math.min(100, Math.round((item.views / maxViews) * 100));
-                          const isTop1 = idx === 0;
-                          const isTop2 = idx === 1;
-                          const isTop3 = idx === 2;
+                      <div className="space-y-2.5 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
+                        {contentRankingList.length > 0 ? (
+                          contentRankingList.map((item, idx) => {
+                            const maxViews = contentRankingList[0]?.views || 1;
+                            const progressPercent = Math.min(100, Math.round((item.views / maxViews) * 100));
+                            const isTop1 = idx === 0;
+                            const isTop2 = idx === 1;
+                            const isTop3 = idx === 2;
 
-                          return (
-                            <div
-                              key={item.id || idx}
-                              className={`p-3 rounded-xl border transition-all ${
-                                isTop1
-                                  ? 'bg-amber-500/5 dark:bg-amber-500/10 border-amber-200 dark:border-amber-800/60'
-                                  : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-800'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between gap-3 mb-1.5">
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                                    isTop1 ? 'bg-amber-500 text-white shadow-xs' :
-                                    isTop2 ? 'bg-slate-300 dark:bg-slate-600 text-slate-800 dark:text-white' :
-                                    isTop3 ? 'bg-amber-700/80 text-white' :
-                                    'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                                  }`}>
-                                    {idx + 1}
-                                  </span>
-                                  <div className="min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-sm font-bold truncate text-slate-900 dark:text-slate-100" title={item.name || item.title}>
-                                        {item.name || item.title}
-                                      </span>
-                                      {isTop1 && (
-                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300 shrink-0">
-                                          <Flame className="w-3 h-3 fill-current text-amber-500" /> Hot #1
+                            return (
+                              <div
+                                key={item.id || idx}
+                                className={`p-3 rounded-xl border transition-all ${
+                                  isTop1
+                                    ? 'bg-amber-500/5 dark:bg-amber-500/10 border-amber-200 dark:border-amber-800/60'
+                                    : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-800'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between gap-3 mb-1.5">
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                                      isTop1 ? 'bg-amber-500 text-white shadow-xs' :
+                                      isTop2 ? 'bg-slate-300 dark:bg-slate-600 text-slate-800 dark:text-white' :
+                                      isTop3 ? 'bg-amber-700/80 text-white' :
+                                      'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                                    }`}>
+                                      {idx + 1}
+                                    </span>
+                                    <div className="min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm font-bold truncate text-slate-900 dark:text-slate-100" title={item.name || item.title}>
+                                          {item.name || item.title}
                                         </span>
+                                        {isTop1 && (
+                                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300 shrink-0">
+                                            <Flame className="w-3 h-3 fill-current text-amber-500" /> Hot #1
+                                          </span>
+                                        )}
+                                      </div>
+                                      {item.subjectName && (
+                                        <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
+                                          Môn: {item.subjectName}
+                                        </p>
                                       )}
                                     </div>
-                                    {item.subjectName && (
-                                      <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
-                                        Môn: {item.subjectName}
-                                      </p>
-                                    )}
+                                  </div>
+                                  <div className="text-right shrink-0">
+                                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                                      {item.views}
+                                    </span>
+                                    <span className="text-xs text-slate-500 ml-1">
+                                      {contentAnalyticsRange === 'day' ? 'lượt hôm nay' : contentAnalyticsRange === 'week' ? 'lượt / 7 ngày' : 'lượt / 30 ngày'}
+                                    </span>
                                   </div>
                                 </div>
-                                <div className="text-right shrink-0">
-                                  <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                                    {item.views}
-                                  </span>
-                                  <span className="text-xs text-slate-500 ml-1">lượt</span>
-                                </div>
-                              </div>
 
-                              {/* Progress bar and peak info */}
-                              <div className="space-y-1 mt-2">
-                                <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                                  <div
-                                    className={`h-full rounded-full transition-all duration-500 ${
-                                      contentAnalyticsTab === 'subjects'
-                                        ? 'bg-gradient-to-r from-blue-500 to-indigo-500'
-                                        : 'bg-gradient-to-r from-purple-500 to-pink-500'
-                                    }`}
-                                    style={{ width: `${progressPercent}%` }}
-                                  />
-                                </div>
-                                <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 pt-0.5">
-                                  <span>Tỷ trọng: ~{item.sharePercent}%</span>
-                                  <span className="font-medium text-slate-500 dark:text-slate-400">
-                                    {item.peakBadge}
-                                  </span>
+                                {/* Progress bar and peak info */}
+                                <div className="space-y-1 mt-2">
+                                  <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full transition-all duration-500 ${
+                                        contentAnalyticsTab === 'subjects'
+                                          ? 'bg-gradient-to-r from-blue-500 to-indigo-500'
+                                          : 'bg-gradient-to-r from-purple-500 to-pink-500'
+                                      }`}
+                                      style={{ width: `${progressPercent}%` }}
+                                    />
+                                  </div>
+                                  <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 pt-0.5">
+                                    <span>Tỷ trọng: ~{item.sharePercent}% {contentAnalyticsRange === 'day' ? 'trong ngày' : contentAnalyticsRange === 'week' ? 'trong tuần' : 'trong tháng'}</span>
+                                    <span className="font-medium text-slate-500 dark:text-slate-400">
+                                      {item.views > 0 ? (isTop1 ? 'Xem nhiều nhất' : `Hạng #${idx + 1}`) : 'Chưa có lượt xem'}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })
-                      ) : (
+                            );
+                          })
+                        ) : (
                         <div className="py-8 text-center text-slate-400 text-sm">Chưa có dữ liệu thống kê</div>
                       )}
                     </div>
