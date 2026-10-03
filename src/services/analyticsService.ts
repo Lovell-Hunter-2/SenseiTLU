@@ -53,31 +53,17 @@ export async function logSubjectView(subjectId: string, subjectName: string) {
     const vnTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
     const hour = vnTime.getUTCHours().toString().padStart(2, '0');
 
-    // Total subject views
+    // Total and timeframe subject views stored directly on subject doc
     const subjectRef = doc(db, 'analytics_subjects', subjectId);
     await setDoc(subjectRef, {
       name: subjectName,
       views: increment(1),
+      [`daily_${today}`]: increment(1),
+      [`hourly_${today}_${hour}`]: increment(1),
       lastUpdated: serverTimestamp()
     }, { merge: true });
 
-    // Track daily subject view
-    const dailySubRef = doc(db, 'analytics', `sub_daily_${today}_${subjectId}`);
-    await setDoc(dailySubRef, {
-      visits: increment(1),
-      date: today,
-      lastUpdated: serverTimestamp()
-    }, { merge: true });
-
-    // Track sub_today (legacy alias)
-    const todaySubRef = doc(db, 'analytics', `sub_today_${today}_${subjectId}`);
-    await setDoc(todaySubRef, {
-      visits: increment(1),
-      date: today,
-      lastUpdated: serverTimestamp()
-    }, { merge: true });
-
-    // Track subject hourly total for today
+    // Track global subject hourly total for today
     const hourlySubRef = doc(db, 'analytics', `sub_hourly_${today}_${hour}`);
     await setDoc(hourlySubRef, {
       visits: increment(1),
@@ -86,8 +72,8 @@ export async function logSubjectView(subjectId: string, subjectName: string) {
       lastUpdated: serverTimestamp()
     }, { merge: true });
 
-    // Track subject daily total
-    const dailyTotalSubRef = doc(db, 'analytics', `sub_daily_total_${today}`);
+    // Track global subject daily total
+    const dailyTotalSubRef = doc(db, 'analytics', `sub_daily_${today}`);
     await setDoc(dailyTotalSubRef, {
       visits: increment(1),
       date: today,
@@ -109,32 +95,18 @@ export async function logDocumentView(docTitle: string, subjectName: string) {
     const docId = docTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     if (!docId) return;
 
-    // Total document views
+    // Total and timeframe document views stored directly on doc doc
     const docRef = doc(db, 'analytics_documents', docId);
     await setDoc(docRef, {
       title: docTitle,
       subjectName,
       views: increment(1),
+      [`daily_${today}`]: increment(1),
+      [`hourly_${today}_${hour}`]: increment(1),
       lastUpdated: serverTimestamp()
     }, { merge: true });
 
-    // Track daily document view
-    const dailyDocRef = doc(db, 'analytics', `doc_daily_${today}_${docId}`);
-    await setDoc(dailyDocRef, {
-      visits: increment(1),
-      date: today,
-      lastUpdated: serverTimestamp()
-    }, { merge: true });
-
-    // Track doc_today (legacy alias)
-    const todayDocRef = doc(db, 'analytics', `doc_today_${today}_${docId}`);
-    await setDoc(todayDocRef, {
-      visits: increment(1),
-      date: today,
-      lastUpdated: serverTimestamp()
-    }, { merge: true });
-
-    // Track document hourly total for today
+    // Track global document hourly total for today
     const hourlyDocRef = doc(db, 'analytics', `doc_hourly_${today}_${hour}`);
     await setDoc(hourlyDocRef, {
       visits: increment(1),
@@ -143,8 +115,8 @@ export async function logDocumentView(docTitle: string, subjectName: string) {
       lastUpdated: serverTimestamp()
     }, { merge: true });
 
-    // Track document daily total
-    const dailyTotalDocRef = doc(db, 'analytics', `doc_daily_total_${today}`);
+    // Track global document daily total
+    const dailyTotalDocRef = doc(db, 'analytics', `doc_daily_${today}`);
     await setDoc(dailyTotalDocRef, {
       visits: increment(1),
       date: today,
