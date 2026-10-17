@@ -4,6 +4,7 @@ import { useAuth } from './contexts/AuthContext';
 import { collection, addDoc, doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import { logGlobalPageView, logSubjectView, logDocumentView } from './services/analyticsService';
+import { getCachedData } from './services/cacheService';
 
 const routeNames: Record<string, string> = {
   '/': 'Trang chủ',
@@ -107,12 +108,19 @@ export function useActivityLogger() {
 
           if (subjectId) {
             try {
-              const subjectDoc = await getDoc(doc(db, 'subjects', subjectId));
-              if (subjectDoc.exists()) {
-                detailStr = subjectDoc.data().name;
-                logSubjectView(subjectId, detailStr); // Log global subject view
+              // 1. Check cache first to avoid extra Firestore reads on navigation
+              const cachedSub = getCachedData<any>(`subject_${subjectId}`);
+              if (cachedSub && cachedSub.name) {
+                detailStr = cachedSub.name;
+                logSubjectView(subjectId, detailStr);
               } else {
-                detailStr = `Môn học (ID: ${subjectId})`;
+                const subjectDoc = await getDoc(doc(db, 'subjects', subjectId));
+                if (subjectDoc.exists()) {
+                  detailStr = subjectDoc.data().name;
+                  logSubjectView(subjectId, detailStr);
+                } else {
+                  detailStr = `Môn học (ID: ${subjectId})`;
+                }
               }
             } catch (e) {
                detailStr = `Môn học (ID: ${subjectId})`;
