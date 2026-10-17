@@ -39,6 +39,38 @@ export function getQuotaCycleInfo() {
   };
 }
 
+export async function logFirestoreRead(count = 1) {
+  try {
+    const { cycleId } = getQuotaCycleInfo();
+    const quotaRef = doc(db, 'analytics', `quota_cycle_${cycleId}`);
+    await setDoc(quotaRef, {
+      cycleId,
+      estimatedReads: increment(count),
+      lastUpdated: serverTimestamp()
+    }, { merge: true });
+  } catch (err) {
+    console.error('Error logging firestore read:', err);
+  }
+}
+
+export async function updatePresence(userUid?: string) {
+  try {
+    let sid = sessionStorage.getItem('tlu_session_id');
+    if (!sid) {
+      sid = 's_' + Math.random().toString(36).substring(2, 10);
+      sessionStorage.setItem('tlu_session_id', sid);
+    }
+    const presenceRef = doc(db, 'presence', sid);
+    await setDoc(presenceRef, {
+      sid,
+      userUid: userUid || 'anonymous',
+      lastSeen: serverTimestamp()
+    }, { merge: true });
+  } catch (err) {
+    // ignore
+  }
+}
+
 export async function logFirestoreWrite(count = 1) {
   try {
     const { cycleId } = getQuotaCycleInfo();
