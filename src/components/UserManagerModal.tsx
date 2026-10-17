@@ -335,71 +335,102 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
         ) : (
           <>
             {/* Top Controls & Pagination Toolbar */}
-            <div className="shrink-0 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xs border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 py-2.5 sm:py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 z-10">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                {/* Search box */}
-                <div className="relative flex-1 min-w-[180px] max-w-xs sm:max-w-sm">
-                  <input
-                    type="text"
-                    placeholder="Tìm theo tên hoặc email..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-8 py-1.5 text-xs sm:text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs"
-                  />
-                  <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery('')}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                      title="Xóa tìm kiếm"
+            <div className="shrink-0 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xs border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 py-3 sm:py-3.5 space-y-3 sm:space-y-3.5 z-10">
+              {/* Row 1: Search, Filter, Page Size and 4 Pagination Arrows */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                  {/* Search box */}
+                  <div className="relative flex-1 min-w-[180px] max-w-xs sm:max-w-sm">
+                    <input
+                      type="text"
+                      placeholder="Tìm theo tên hoặc email..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs"
+                    />
+                    <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                        title="Xóa tìm kiếm"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Sort button */}
+                  <button
+                    type="button"
+                    onClick={toggleSort}
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 whitespace-nowrap shadow-xs"
+                    title="Đổi chiều sắp xếp theo thời gian đăng nhập"
+                  >
+                    <Filter className="w-3.5 h-3.5 text-slate-500" />
+                    <span className="hidden sm:inline">Đăng nhập:</span>
+                    {sortOrder === 'desc' ? (
+                      <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-semibold">Mới nhất <ArrowDown className="w-3.5 h-3.5"/></span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-semibold">Cũ nhất <ArrowUp className="w-3.5 h-3.5"/></span>
+                    )}
+                  </button>
+
+                  {/* Page Size Selector (20, 25, 50) */}
+                  <div className="flex items-center gap-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 px-2.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 shadow-xs">
+                    <span className="hidden sm:inline">Mỗi trang:</span>
+                    <select
+                      value={pageSize}
+                      onChange={(e) => setPageSize(Number(e.target.value))}
+                      className="bg-transparent text-slate-800 dark:text-slate-200 font-semibold text-xs sm:text-sm focus:outline-none cursor-pointer"
                     >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
+                      <option value={20} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">20 tên / trang</option>
+                      <option value={25} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">25 tên / trang</option>
+                      <option value={50} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">50 tên / trang</option>
+                    </select>
+                  </div>
                 </div>
 
-                {/* Sort button */}
-                <button
-                  type="button"
-                  onClick={toggleSort}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 whitespace-nowrap shadow-xs"
-                  title="Đổi chiều sắp xếp theo thời gian đăng nhập"
-                >
-                  <Filter className="w-3.5 h-3.5 text-slate-500" />
-                  <span className="hidden sm:inline">Đăng nhập:</span>
-                  {sortOrder === 'desc' ? (
-                    <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-semibold">Mới nhất <ArrowDown className="w-3.5 h-3.5"/></span>
-                  ) : (
-                    <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-semibold">Cũ nhất <ArrowUp className="w-3.5 h-3.5"/></span>
-                  )}
-                </button>
-
-                {/* Page Size Selector (20, 25, 50) */}
-                <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-xs">
-                  <span className="hidden sm:inline">Mỗi trang:</span>
-                  <select
-                    value={pageSize}
-                    onChange={(e) => setPageSize(Number(e.target.value))}
-                    className="bg-transparent text-slate-800 dark:text-slate-200 font-semibold text-xs focus:outline-none cursor-pointer"
-                  >
-                    <option value={20} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">20 tên / trang</option>
-                    <option value={25} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">25 tên / trang</option>
-                    <option value={50} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">50 tên / trang</option>
-                  </select>
+                {/* 4 Pagination Arrows Toolbar at top */}
+                <div className="flex items-center justify-end self-end sm:self-auto">
+                  {renderPaginationControls(true)}
                 </div>
               </div>
 
-              {/* 4 Pagination Arrows Toolbar at top */}
-              <div className="flex items-center justify-between sm:justify-end gap-2.5 self-end sm:self-auto w-full sm:w-auto">
-                <div className="text-xs text-slate-500 dark:text-slate-400 hidden xl:block">
-                  {filteredUsers.length > 0 ? (
-                    <span>({startIndex + 1} - {endIndex} / {filteredUsers.length} người dùng)</span>
-                  ) : (
-                    <span>(0 người dùng)</span>
-                  )}
+              {/* Row 2: Prominent, larger user count badge lowered down into the spacious area */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-1 sm:pt-2">
+                <div className="inline-flex items-center gap-2.5 sm:gap-3 px-3.5 sm:px-4 py-2 sm:py-2.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200/90 dark:border-slate-700/90 shadow-xs">
+                  <div className="p-1 sm:p-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg shrink-0">
+                    <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </div>
+                  <div className="text-xs sm:text-sm md:text-base text-slate-700 dark:text-slate-200 font-medium">
+                    <span>Hiển thị người dùng </span>
+                    <strong className="font-bold text-blue-600 dark:text-blue-400 text-sm sm:text-base md:text-lg">
+                      {filteredUsers.length > 0 ? `${startIndex + 1} – ${endIndex}` : '0'}
+                    </strong>
+                    <span className="text-slate-400 dark:text-slate-500 mx-1.5 font-normal">/</span>
+                    <strong className="font-bold text-slate-900 dark:text-white text-sm sm:text-base md:text-lg">
+                      {filteredUsers.length.toLocaleString('vi-VN')}
+                    </strong>
+                    <span className="text-slate-600 dark:text-slate-300 ml-1">người dùng</span>
+                  </div>
                 </div>
-                {renderPaginationControls(true)}
+
+                {searchQuery && (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50/80 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/80 rounded-lg text-xs sm:text-sm">
+                    <span className="text-slate-500 dark:text-slate-400">Đang lọc theo:</span>
+                    <strong className="font-semibold">"{searchQuery}"</strong>
+                    <button 
+                      type="button" 
+                      onClick={() => setSearchQuery('')}
+                      className="ml-1 hover:text-red-500 text-slate-400 transition-colors"
+                      title="Bỏ tìm kiếm"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -497,8 +528,8 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
             {!loading && filteredUsers.length > 0 && (
               <div className="shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
                 <div className="flex items-center gap-2">
-                  <span>
-                    Đang hiển thị <strong>{startIndex + 1} - {endIndex}</strong> trên tổng <strong>{filteredUsers.length}</strong> người dùng
+                  <span className="text-xs sm:text-sm">
+                    Đang hiển thị <strong className="text-blue-600 dark:text-blue-400 font-bold">{startIndex + 1} – {endIndex}</strong> trên tổng số <strong className="text-slate-900 dark:text-white font-bold">{filteredUsers.length.toLocaleString('vi-VN')}</strong> người dùng
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
