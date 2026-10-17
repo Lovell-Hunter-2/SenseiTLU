@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, serverTimestamp, deleteDoc, limit, orderBy } from 'firebase/firestore';
-import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon, ClipboardList, ScrollText, Lightbulb, Sigma, X, LayoutTemplate, Lock, LogIn, Bot, Sparkles, Flag, Search, Pin, Eye } from 'lucide-react';
+import { doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, serverTimestamp, deleteDoc, limit, orderBy, getDocs } from 'firebase/firestore';
+import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon, ClipboardList, ScrollText, Lightbulb, Sigma, X, LayoutTemplate, Lock, LogIn, Bot, Sparkles, Flag, Search, Pin, Eye, RefreshCw } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { logActivityEvent, logSubjectDocumentView } from '../useActivityLogger';
 import { getVietnamDateString } from '../services/analyticsService';
+import { getCachedData, setCachedData, invalidateCache, CacheTTL } from '../services/cacheService';
 
 const typeIcons: Record<string, React.ElementType> = {
   'Chatbot': Bot,
@@ -100,22 +101,49 @@ export default function SubjectDetail() {
   const [showDriveApiInput, setShowDriveApiInput] = useState(!driveApiKey);
   const [userPermissions, setUserPermissions] = useState<any[]>([]);
 
-  // Load all subjects for search
+  // Load all subjects for search (Cache-First: saves 50-100 reads per view)
   useEffect(() => {
-    let subsStr = localStorage.getItem("cachedSubjects");
-    if (subsStr) {
-       try { setAllSubjects(JSON.parse(subsStr)); } catch(e){}
+    // 1. Try cache first
+    const cachedSubs = getCachedData<any[]>('all_subjects_search');
+    if (cachedSubs && Array.isArray(cachedSubs) && cachedSubs.length > 0) {
+      setAllSubjects(cachedSubs);
+      return;
     }
-    const q = query(collection(db, "subjects"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-       const subs = snapshot.docs.map((doc) => ({
+
+    // 2. Fallback to localStorage legacy key if available
+    let legacyStr = localStorage.getItem("cachedSubjects");
+    if (legacyStr) {
+      try {
+        const parsed = JSON.parse(legacyStr);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setAllSubjects(parsed);
+          setCachedData('all_subjects_search', parsed, CacheTTL.LONG);
+          return;
+        }
+      } catch (e) {}
+    }
+
+    // 3. Cache miss: fetch once with getDocs (no continuous onSnapshot listener)
+    const fetchSearchSubjects = async () => {
+      try {
+        const q = query(collection(db, "subjects"), orderBy("name", "asc"));
+        const snapshot = await getDocs(q);
+        const subs = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-       }));
-       setAllSubjects(subs);
-       localStorage.setItem("cachedSubjects", JSON.stringify(subs));
-    });
-    return () => unsubscribe();
+        }));
+        if (subs.length > 0) {
+          setAllSubjects(subs);
+          setCachedData('all_subjects_search', subs, CacheTTL.LONG);
+          localStorage.setItem("cachedSubjects", JSON.stringify(subs));
+        }
+      } catch (err) {
+        // In case of quota limit or error, keep whatever stale data is in storage
+        const stale = getCachedData<any[]>('all_subjects_search', true);
+        if (stale) setAllSubjects(stale);
+      }
+    };
+    fetchSearchSubjects();
   }, []);
 
   // Handle outside click for search suggestions
@@ -242,30 +270,77 @@ export default function SubjectDetail() {
     }
   };
 
-  useEffect(() => {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isDataCached, setIsDataCached] = useState(false);
+
+  // Fetch subject and documents with Cache-First strategy
+  const loadSubjectAndDocs = useCallback(async (forceRefresh: boolean = false) => {
     if (!id) return;
+    if (forceRefresh) setIsRefreshing(true);
 
-    // Fetch subject
-    const fetchSubject = async () => {
-      const docRef = doc(db, 'subjects', id);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setSubject({ id: docSnap.id, ...data });
-        document.title = `Tài liệu ${data.name} TLU`;
+    try {
+      // 1. Subject info
+      const cacheKeySub = `subject_${id}`;
+      const cachedSub = forceRefresh ? null : getCachedData<any>(cacheKeySub);
+
+      if (cachedSub) {
+        setSubject(cachedSub);
+        document.title = `Tài liệu ${cachedSub.name} TLU`;
+        setIsDataCached(true);
+      } else {
+        try {
+          const docRef = doc(db, 'subjects', id);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data: any = { id: docSnap.id, ...docSnap.data() };
+            setSubject(data);
+            document.title = `Tài liệu ${data.name || ''} TLU`;
+            setCachedData(cacheKeySub, data, CacheTTL.LONG);
+          }
+        } catch (subErr) {
+          console.warn("[Cache] Subject fetch failed, using stale cache:", subErr);
+          const staleSub = getCachedData<any>(cacheKeySub, true);
+          if (staleSub) {
+            setSubject(staleSub);
+            document.title = `Tài liệu ${staleSub.name} TLU`;
+            setIsDataCached(true);
+          }
+        }
       }
-    };
-    fetchSubject();
 
-    // Fetch documents
-    const q = query(collection(db, 'documents'), where('subjectId', '==', id), limit(docLimit));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      setDocuments(docs);
-    });
+      // 2. Documents
+      const cacheKeyDocs = `subject_docs_${id}_${docLimit}`;
+      const cachedDocs = forceRefresh ? null : getCachedData<any[]>(cacheKeyDocs);
 
-    return unsubscribe;
+      if (cachedDocs && cachedDocs.length > 0) {
+        setDocuments(cachedDocs);
+        setIsDataCached(true);
+      } else {
+        try {
+          const q = query(collection(db, 'documents'), where('subjectId', '==', id), limit(docLimit));
+          const snapshot = await getDocs(q);
+          const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          setDocuments(docs);
+          setCachedData(cacheKeyDocs, docs, CacheTTL.MEDIUM);
+        } catch (docErr) {
+          console.warn("[Cache] Documents fetch failed, using stale cache:", docErr);
+          const staleDocs = getCachedData<any[]>(cacheKeyDocs, true);
+          if (staleDocs) {
+            setDocuments(staleDocs);
+            setIsDataCached(true);
+          }
+        }
+      }
+    } finally {
+      if (forceRefresh) {
+        setTimeout(() => setIsRefreshing(false), 400);
+      }
+    }
   }, [id, docLimit]);
+
+  useEffect(() => {
+    loadSubjectAndDocs(false);
+  }, [loadSubjectAndDocs]);
 
   // Real-time Subject View Stats (for Admin)
   useEffect(() => {
@@ -378,6 +453,12 @@ export default function SubjectDetail() {
         }
       }
 
+      // Invalidate cache and reload
+      if (id) {
+        invalidateCache(`subject_docs_${id}`);
+        loadSubjectAndDocs(true);
+      }
+
       setIsAddModalOpen(false);
       setEditingDocId(null);
       setNewDoc({ title: '', type: 'Giáo trình', url: '', chapter: '', isHidden: false });
@@ -400,6 +481,10 @@ export default function SubjectDetail() {
           adminId: user.uid,
           timestamp: serverTimestamp(),
         });
+      }
+      if (id) {
+        invalidateCache(`subject_docs_${id}`);
+        loadSubjectAndDocs(true);
       }
       setDeleteConfirmId(null);
     } catch (error) {
@@ -743,10 +828,21 @@ export default function SubjectDetail() {
 
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
-          <div className="w-2 h-4 bg-blue-500 rounded-sm"></div>
-          Tài liệu môn học
-        </h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+            <div className="w-2 h-4 bg-blue-500 rounded-sm"></div>
+            Tài liệu môn học
+          </h2>
+          <button
+            onClick={() => loadSubjectAndDocs(true)}
+            disabled={isRefreshing}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg transition-all active:scale-95 disabled:opacity-60"
+            title="Làm mới để lấy tài liệu mới nhất từ máy chủ"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-500' : ''}`} />
+            <span>{isRefreshing ? 'Đang cập nhật...' : 'Làm mới'}</span>
+          </button>
+        </div>
         {isAdmin && (
           <button
             onClick={() => {
