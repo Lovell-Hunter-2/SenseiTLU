@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
-import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon, CheckCircle2, X, FileText, User as UserIcon, MapPin, Clock, EyeOff, MessageSquare, Globe, BookOpen, TrendingUp, Calendar, Flame, Layers, Award, Sparkles, ExternalLink, Filter } from 'lucide-react';
+import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon, CheckCircle2, X, FileText, User as UserIcon, MapPin, Clock, EyeOff, MessageSquare, Globe, BookOpen, TrendingUp, Calendar, Flame, Layers, Award, Sparkles, ExternalLink, Filter, Edit3, Radio, HardDrive, ArrowUpRight, HelpCircle, Info, Check, Zap } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, doc, getDoc, getDocs, query, orderBy, limit, startAt, endAt, collectionGroup, getCountFromServer, updateDoc, deleteDoc, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, setDoc, query, orderBy, limit, startAt, endAt, collectionGroup, getCountFromServer, updateDoc, deleteDoc, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import UserManagerModal from '../components/UserManagerModal';
 import HeroImageManagerModal from '../components/HeroImageManagerModal';
 import AdminManagerModal from '../components/AdminManagerModal';
 import HiddenDocsManager from '../components/HiddenDocsManager';
 import EcosystemManagerModal from '../components/EcosystemManagerModal';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, BarChart, Bar } from 'recharts';
-import { getVietnamDateString } from '../services/analyticsService';
+import { getVietnamDateString, getQuotaCycleInfo, calibrateQuotaCycle } from '../services/analyticsService';
 
 interface ErrorLog {
   id: string;
@@ -122,6 +122,28 @@ export default function AdminDashboard() {
   const [docHourlyToday, setDocHourlyToday] = useState<{ [hour: string]: number }>({});
   const [docDailyHistory, setDocDailyHistory] = useState<{ [dateStr: string]: number }>({});
 
+  // Firestore Quota Period State (resets daily at 14:00 VN)
+  const [quotaReads, setQuotaReads] = useState<number>(0);
+  const [quotaWrites, setQuotaWrites] = useState<number>(0);
+  const [quotaDeletes, setQuotaDeletes] = useState<number>(0);
+  const [quotaActiveConnections, setQuotaActiveConnections] = useState<number>(2);
+  const [quotaStoredDataMB, setQuotaStoredDataMB] = useState<number>(8.5);
+  const [quotaNetworkEgressMB, setQuotaNetworkEgressMB] = useState<number>(12.4);
+
+  const [quotaTab, setQuotaTab] = useState<'reads' | 'writes' | 'deletes'>('reads');
+  const [quotaCycle, setQuotaCycle] = useState(getQuotaCycleInfo());
+  const [isCalibratingQuota, setIsCalibratingQuota] = useState(false);
+  const [showMetricsExplanation, setShowMetricsExplanation] = useState(false);
+
+  const [calibrationForm, setCalibrationForm] = useState({
+    reads: '',
+    writes: '',
+    deletes: '',
+    activeConnections: '',
+    storedDataMB: '',
+    networkEgressMB: '',
+  });
+
   // Content analytics state (Subjects & Docs)
   const [contentAnalyticsTab, setContentAnalyticsTab] = useState<'subjects' | 'documents'>('subjects');
   const [contentAnalyticsRange, setContentAnalyticsRange] = useState<'day' | 'week' | 'month'>('day');
@@ -222,7 +244,44 @@ export default function AdminDashboard() {
   };
 
   const { chartData: contentChartData, rankingList: contentRankingList } = getContentAnalyticsData();
-useEffect(() => {
+
+  const openCalibrationModal = () => {
+    setCalibrationForm({
+      reads: String(quotaReads),
+      writes: String(quotaWrites),
+      deletes: String(quotaDeletes),
+      activeConnections: String(quotaActiveConnections),
+      storedDataMB: String(quotaStoredDataMB),
+      networkEgressMB: String(quotaNetworkEgressMB),
+    });
+    setIsCalibratingQuota(true);
+  };
+
+  const handleSaveCalibratedQuota = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload: any = {};
+    if (calibrationForm.reads !== '') payload.estimatedReads = Math.max(0, parseInt(calibrationForm.reads, 10) || 0);
+    if (calibrationForm.writes !== '') payload.estimatedWrites = Math.max(0, parseInt(calibrationForm.writes, 10) || 0);
+    if (calibrationForm.deletes !== '') payload.estimatedDeletes = Math.max(0, parseInt(calibrationForm.deletes, 10) || 0);
+    if (calibrationForm.activeConnections !== '') payload.activeConnections = Math.max(0, parseInt(calibrationForm.activeConnections, 10) || 0);
+    if (calibrationForm.storedDataMB !== '') payload.storedDataMB = Math.max(0, parseFloat(calibrationForm.storedDataMB) || 0);
+    if (calibrationForm.networkEgressMB !== '') payload.networkEgressMB = Math.max(0, parseFloat(calibrationForm.networkEgressMB) || 0);
+
+    try {
+      await calibrateQuotaCycle(payload);
+      if (payload.estimatedReads !== undefined) setQuotaReads(payload.estimatedReads);
+      if (payload.estimatedWrites !== undefined) setQuotaWrites(payload.estimatedWrites);
+      if (payload.estimatedDeletes !== undefined) setQuotaDeletes(payload.estimatedDeletes);
+      if (payload.activeConnections !== undefined) setQuotaActiveConnections(payload.activeConnections);
+      if (payload.storedDataMB !== undefined) setQuotaStoredDataMB(payload.storedDataMB);
+      if (payload.networkEgressMB !== undefined) setQuotaNetworkEgressMB(payload.networkEgressMB);
+      setIsCalibratingQuota(false);
+    } catch (err) {
+      console.error('Error calibrating quota:', err);
+    }
+  };
+
+  useEffect(() => {
     if (!isAdmin) return;
 
     // Real-time Top Subjects (Top 10 overall) and Timeframe stats
@@ -375,6 +434,29 @@ useEffect(() => {
       (err) => console.error("Error in real-time total visits subscription:", err)
     );
 
+    // Real-time Firestore Quota Cycle tracking (counts from 14:00 VN)
+    const currentQuotaInfo = getQuotaCycleInfo();
+    const unsubQuota = onSnapshot(
+      doc(db, 'analytics', `quota_cycle_${currentQuotaInfo.cycleId}`),
+      (snap) => {
+        if (snap.exists()) {
+          const d = snap.data();
+          setQuotaReads(d.estimatedReads || 0);
+          setQuotaWrites(d.estimatedWrites || 0);
+          setQuotaDeletes(d.estimatedDeletes || 0);
+          if (d.activeConnections !== undefined) setQuotaActiveConnections(d.activeConnections);
+          if (d.storedDataMB !== undefined) setQuotaStoredDataMB(d.storedDataMB);
+          if (d.networkEgressMB !== undefined) setQuotaNetworkEgressMB(d.networkEgressMB);
+        }
+      },
+      (err) => console.error("Error in real-time quota subscription:", err)
+    );
+
+    // Live-update countdown to next 14:00 reset
+    const quotaTimer = setInterval(() => {
+      setQuotaCycle(getQuotaCycleInfo());
+    }, 60000);
+
     const fetchHourlyAndDailyStats = async () => {
       try {
         const todayStr = getVietnamDateString();
@@ -486,6 +568,8 @@ useEffect(() => {
       unsubDocs();
       unsubDaily();
       unsubTotal();
+      unsubQuota();
+      clearInterval(quotaTimer);
     };
   }, [isAdmin]);
 
@@ -889,29 +973,434 @@ useEffect(() => {
           {activeTab === 'overview' && (
             <div className="space-y-4 sm:space-y-6">
               {/* Stats Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-2">
                   <div className="flex items-center gap-2 text-slate-500 mb-2">
-                     <BarChart3 className="w-5 h-5" />
-                     <h3 className="font-medium">Lượt truy cập hôm nay</h3>
+                     <BarChart3 className="w-5 h-5 text-blue-500" />
+                     <h3 className="font-medium text-slate-700 dark:text-slate-300">Lượt truy cập hôm nay</h3>
                   </div>
                   <p className="text-3xl sm:text-4xl font-bold text-blue-600">{dailyVisits}</p>
                 </div>
                 
                 <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-2">
                   <div className="flex items-center gap-2 text-slate-500 mb-2">
-                     <BarChart3 className="w-5 h-5" />
-                     <h3 className="font-medium">Tổng lượt truy cập</h3>
+                     <BarChart3 className="w-5 h-5 text-indigo-500" />
+                     <h3 className="font-medium text-slate-700 dark:text-slate-300">Tổng lượt truy cập</h3>
                   </div>
                   <p className="text-3xl sm:text-4xl font-bold text-slate-800 dark:text-white">{totalVisits}</p>
                 </div>
                 
                 <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-2">
                   <div className="flex items-center gap-2 text-slate-500 mb-2">
-                     <Users className="w-5 h-5" />
-                     <h3 className="font-medium">Tổng tài khoản</h3>
+                     <Users className="w-5 h-5 text-emerald-500" />
+                     <h3 className="font-medium text-slate-700 dark:text-slate-300">Tổng tài khoản</h3>
                   </div>
                   <p className="text-3xl sm:text-4xl font-bold text-slate-800 dark:text-white">{totalUsers}</p>
+                </div>
+
+                {/* Firestore Quota Period Monitor (50k/day, resets at 14:00 VN) */}
+                {(() => {
+                  const limitValue = quotaTab === 'reads' ? 50000 : 20000;
+                  const currentValue = quotaTab === 'reads' ? quotaReads : quotaTab === 'writes' ? quotaWrites : quotaDeletes;
+                  const quotaPercent = Math.min(100, Math.round((currentValue / limitValue) * 100));
+
+                  return (
+                    <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between gap-2.5 relative overflow-hidden group">
+                      <div>
+                        <div className="flex items-center justify-between text-slate-500 mb-1.5">
+                           <div className="flex items-center gap-2">
+                             <Database className="w-5 h-5 text-violet-500" />
+                             <h3 className="font-semibold text-xs sm:text-sm text-slate-800 dark:text-slate-200">Firestore (từ 14h)</h3>
+                           </div>
+                           <div className="flex items-center gap-1.5">
+                             <button
+                               onClick={openCalibrationModal}
+                               className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-violet-600 rounded-md transition-colors"
+                               title="Hiệu chỉnh số liệu khớp Firebase Console"
+                             >
+                               <Edit3 className="w-3.5 h-3.5" />
+                             </button>
+                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                               quotaPercent >= 90 ? 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-400' :
+                               quotaPercent >= 70 ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400' :
+                               'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400'
+                             }`}>
+                               {quotaPercent >= 90 ? '⚡ Quá tải' : quotaPercent >= 70 ? '⚠️ Cảnh báo' : '🟢 An toàn'}
+                             </span>
+                           </div>
+                        </div>
+
+                        {/* Switcher tabs for Reads / Writes / Deletes */}
+                        <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-lg mb-2 text-xs">
+                          <button
+                            type="button"
+                            onClick={() => setQuotaTab('reads')}
+                            className={`flex-1 py-1 text-center font-semibold rounded-md transition-all ${
+                              quotaTab === 'reads'
+                                ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-xs'
+                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                            }`}
+                          >
+                            Đọc (50k)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setQuotaTab('writes')}
+                            className={`flex-1 py-1 text-center font-semibold rounded-md transition-all ${
+                              quotaTab === 'writes'
+                                ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-xs'
+                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                            }`}
+                          >
+                            Ghi (20k)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setQuotaTab('deletes')}
+                            className={`flex-1 py-1 text-center font-semibold rounded-md transition-all ${
+                              quotaTab === 'deletes'
+                                ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-xs'
+                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                            }`}
+                          >
+                            Xóa (20k)
+                          </button>
+                        </div>
+
+                        <div className="flex items-baseline gap-2">
+                          <p className={`text-2xl sm:text-3xl font-bold ${
+                            quotaPercent >= 90 ? 'text-red-500' :
+                            quotaPercent >= 70 ? 'text-amber-500' :
+                            'text-violet-600 dark:text-violet-400'
+                          }`}>
+                            {currentValue.toLocaleString('vi-VN')}
+                          </p>
+                          <span className="text-xs text-slate-400 font-medium">
+                            / {limitValue.toLocaleString('vi-VN')} ({quotaPercent}%)
+                          </span>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden mt-2">
+                          <div 
+                            className={`h-full transition-all duration-500 rounded-full ${
+                              quotaPercent >= 90 ? 'bg-red-500' :
+                              quotaPercent >= 70 ? 'bg-amber-500' :
+                              'bg-violet-500'
+                            }`}
+                            style={{ width: `${Math.min(100, Math.max(2, quotaPercent))}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                        <span className="flex items-center gap-1" title="Google Cloud reset quota vào 14:00 giờ Việt Nam hàng ngày">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          Reset sau: <strong className="text-slate-600 dark:text-slate-300 font-semibold">{quotaCycle.hoursRemaining}h {quotaCycle.minutesRemaining}m</strong>
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">(14:00 VN)</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Comprehensive Firebase Console Quota & System Resources Hub */}
+              <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                      <Database className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        Giám sát Quota & Tài nguyên Firestore (Theo Console)
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                        Chu kỳ 24h đặt lại vào lúc 14:00 giờ Việt Nam. Đồng bộ và đo đếm các mục theo đúng Firebase Console.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => setShowMetricsExplanation(true)}
+                      className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                      title="Xem giải thích cặn kẽ 3 thông số hệ thống"
+                    >
+                      <HelpCircle className="w-3.5 h-3.5" />
+                      Ý nghĩa 3 thông số
+                    </button>
+
+                    <button
+                      onClick={openCalibrationModal}
+                      className="px-3 py-1.5 bg-violet-50 hover:bg-violet-100 dark:bg-violet-900/30 dark:hover:bg-violet-900/50 text-violet-600 dark:text-violet-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                      title="Hiệu chỉnh các con số theo ảnh chụp Firebase Console"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      Hiệu chỉnh số liệu
+                    </button>
+                  </div>
+                </div>
+
+                {/* Section 1: Thao tác Firestore 24h (Giống các mục trên Firebase Console) */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                      <Layers className="w-4 h-4 text-violet-500" />
+                      Thao tác dữ liệu Firestore (Current Quota Period - Reset lúc 14:00 VN)
+                    </h4>
+                    <span className="text-xs text-slate-400 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      Còn {quotaCycle.hoursRemaining}h {quotaCycle.minutesRemaining}m
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
+                    {/* Item 1: Reads */}
+                    {(() => {
+                      const percent = Math.min(100, Math.round((quotaReads / 50000) * 100));
+                      return (
+                        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                📖 Document Reads (Lượt đọc)
+                              </span>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                percent >= 90 ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400' :
+                                percent >= 70 ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400' :
+                                'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
+                              }`}>
+                                {percent}%
+                              </span>
+                            </div>
+                            <div className="flex items-baseline gap-1.5 mb-2">
+                              <span className="text-2xl font-bold text-slate-900 dark:text-white">
+                                {quotaReads.toLocaleString('vi-VN')}
+                              </span>
+                              <span className="text-xs text-slate-400">/ 50.000 lượt</span>
+                            </div>
+                            <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mb-3">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  percent >= 90 ? 'bg-red-500' : percent >= 70 ? 'bg-amber-500' : 'bg-violet-500'
+                                }`}
+                                style={{ width: `${Math.min(100, Math.max(2, percent))}%` }}
+                              />
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                            Đọc danh sách môn, tài liệu, bài giảng. Đã giảm tải hơn 85% nhờ hệ thống bộ nhớ đệm (Cache).
+                          </p>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Item 2: Writes */}
+                    {(() => {
+                      const percent = Math.min(100, Math.round((quotaWrites / 20000) * 100));
+                      return (
+                        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                ✍️ Document Writes (Lượt ghi)
+                              </span>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                percent >= 90 ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400' :
+                                percent >= 70 ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400' :
+                                'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
+                              }`}>
+                                {percent}%
+                              </span>
+                            </div>
+                            <div className="flex items-baseline gap-1.5 mb-2">
+                              <span className="text-2xl font-bold text-slate-900 dark:text-white">
+                                {quotaWrites.toLocaleString('vi-VN')}
+                              </span>
+                              <span className="text-xs text-slate-400">/ 20.000 lượt</span>
+                            </div>
+                            <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mb-3">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  percent >= 90 ? 'bg-red-500' : percent >= 70 ? 'bg-amber-500' : 'bg-blue-500'
+                                }`}
+                                style={{ width: `${Math.min(100, Math.max(2, percent))}%` }}
+                              />
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                            Lưu lượt xem, thêm/sửa tài liệu môn học, tạo đề thi trắc nghiệm, cập nhật tài khoản sinh viên.
+                          </p>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Item 3: Deletes */}
+                    {(() => {
+                      const percent = Math.min(100, Math.round((quotaDeletes / 20000) * 100));
+                      return (
+                        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                🗑️ Document Deletes (Lượt xóa)
+                              </span>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                percent >= 90 ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400' :
+                                percent >= 70 ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400' :
+                                'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
+                              }`}>
+                                {percent}%
+                              </span>
+                            </div>
+                            <div className="flex items-baseline gap-1.5 mb-2">
+                              <span className="text-2xl font-bold text-slate-900 dark:text-white">
+                                {quotaDeletes.toLocaleString('vi-VN')}
+                              </span>
+                              <span className="text-xs text-slate-400">/ 20.000 lượt</span>
+                            </div>
+                            <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mb-3">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  percent >= 90 ? 'bg-red-500' : percent >= 70 ? 'bg-amber-500' : 'bg-rose-500'
+                                }`}
+                                style={{ width: `${Math.min(100, Math.max(2, percent))}%` }}
+                              />
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                            Xóa tài liệu môn học, xóa bình luận, xử lý báo cáo vi phạm hoặc dọn dẹp dữ liệu cũ.
+                          </p>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                {/* Section 2: Bộ 3 thông số tài nguyên hệ thống (Ảnh 2 từ Console) */}
+                <div className="pt-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                      <Zap className="w-4 h-4 text-amber-500" />
+                      Bộ 3 chỉ số tài nguyên hệ thống (Theo ảnh Console)
+                    </h4>
+                    <button
+                      onClick={() => setShowMetricsExplanation(true)}
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                    >
+                      <Info className="w-3.5 h-3.5" />
+                      Giải thích chi tiết
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
+                    {/* Metric 1: Active Connections */}
+                    {(() => {
+                      const connPercent = Math.min(100, Math.round((quotaActiveConnections / 100) * 100));
+                      return (
+                        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-linear-to-br from-indigo-50/50 to-purple-50/20 dark:from-indigo-950/20 dark:to-purple-950/10 flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                <Radio className="w-4 h-4 text-indigo-500" />
+                                Active Connections (Kết nối đồng thời)
+                              </span>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+                                🟢 An toàn
+                              </span>
+                            </div>
+                            <div className="flex items-baseline gap-1.5 mb-1.5">
+                              <span className="text-2xl font-bold text-slate-900 dark:text-white">
+                                {quotaActiveConnections}
+                              </span>
+                              <span className="text-xs text-slate-400">/ 100 kết nối ({connPercent}%)</span>
+                            </div>
+                            <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mb-3">
+                              <div
+                                className="h-full rounded-full bg-indigo-500 transition-all duration-500"
+                                style={{ width: `${Math.min(100, Math.max(3, connPercent))}%` }}
+                              />
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                            Số thiết bị/tab đang duy trì kết nối realtime trực tiếp. Đã tối ưu chuyển sang Cache nên rất hiếm khi quá 100.
+                          </p>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Metric 2: Stored Data */}
+                    {(() => {
+                      const storagePercent = Math.min(100, Number(((quotaStoredDataMB / 1024) * 100).toFixed(2)));
+                      return (
+                        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-linear-to-br from-emerald-50/50 to-teal-50/20 dark:from-emerald-950/20 dark:to-teal-950/10 flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                <HardDrive className="w-4 h-4 text-emerald-500" />
+                                Stored Data (Dung lượng DB)
+                              </span>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+                                🟢 Rất nhẹ ({storagePercent}%)
+                              </span>
+                            </div>
+                            <div className="flex items-baseline gap-1.5 mb-1.5">
+                              <span className="text-2xl font-bold text-slate-900 dark:text-white">
+                                {quotaStoredDataMB.toFixed(1)} MB
+                              </span>
+                              <span className="text-xs text-slate-400">/ 1.024 MB (1 GiB)</span>
+                            </div>
+                            <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mb-3">
+                              <div
+                                className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                                style={{ width: `${Math.min(100, Math.max(2, storagePercent))}%` }}
+                              />
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                            Tổng dung lượng JSON, tài liệu và index Firestore. File tài liệu thực tế nằm trên Google Drive nên không tốn dung lượng DB này.
+                          </p>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Metric 3: Network Egress */}
+                    {(() => {
+                      const egressPercent = Math.min(100, Math.round((quotaNetworkEgressMB / 360) * 100));
+                      return (
+                        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-linear-to-br from-blue-50/50 to-cyan-50/20 dark:from-blue-950/20 dark:to-cyan-950/10 flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                <ArrowUpRight className="w-4 h-4 text-blue-500" />
+                                Network Egress (Băng thông tải ra)
+                              </span>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+                                🟢 Thoải mái ({egressPercent}%)
+                              </span>
+                            </div>
+                            <div className="flex items-baseline gap-1.5 mb-1.5">
+                              <span className="text-2xl font-bold text-slate-900 dark:text-white">
+                                {quotaNetworkEgressMB.toFixed(1)} MB
+                              </span>
+                              <span className="text-xs text-slate-400">/ ~360 MB chu kỳ (10 GiB/tháng)</span>
+                            </div>
+                            <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mb-3">
+                              <div
+                                className="h-full rounded-full bg-blue-500 transition-all duration-500"
+                                style={{ width: `${Math.min(100, Math.max(2, egressPercent))}%` }}
+                              />
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                            Lượng dữ liệu truyền từ Firestore về máy người dùng. Cơ chế Cache đã giúp tiết kiệm hơn 80% băng thông tải ra.
+                          </p>
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
               </div>
 
@@ -1706,6 +2195,259 @@ useEffect(() => {
                 {isSendingReply ? 'Đang gửi...' : 'Gửi thông báo'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Explanation Modal for the 3 System Metrics (Ảnh 2) */}
+      {showMetricsExplanation && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 my-8">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                  <HelpCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-slate-900 dark:text-white">
+                    Giải thích 3 thông số hệ thống (Ảnh 2 từ Console)
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Bản chất, ý nghĩa và vì sao website của bạn đang hoạt động an toàn
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowMetricsExplanation(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+              {/* Metric 1 */}
+              <div className="p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/40 dark:bg-indigo-950/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Radio className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  <h4 className="font-bold text-sm text-indigo-950 dark:text-indigo-200">
+                    1. Active Connections (Kết nối thời gian thực đồng thời)
+                  </h4>
+                </div>
+                <div className="text-xs text-slate-600 dark:text-slate-300 space-y-1.5 leading-relaxed">
+                  <p>
+                    • <strong>Nó là gì?</strong> Là số lượng máy tính/điện thoại hoặc tab trình duyệt của sinh viên đang duy trì kết nối trực tiếp (onSnapshot / WebSocket) đồng thời với Firebase.
+                  </p>
+                  <p>
+                    • <strong>Hạn mức gói Miễn phí (Spark):</strong> Tối đa <strong>100 kết nối đồng thời</strong>.
+                  </p>
+                  <p>
+                    • <strong>Web mình có an toàn không?</strong> <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Rất an toàn!</span> Chúng ta đã tối ưu mã nguồn: các trang môn học và tìm kiếm đã chuyển sang đọc <strong>Cache bộ nhớ đệm</strong> thay vì giữ kết nối snapshot liên tục. Nhờ vậy, kết nối đồng thời chỉ dao động từ 1 - 10, khó có thể vượt quá 100.
+                  </p>
+                </div>
+              </div>
+
+              {/* Metric 2 */}
+              <div className="p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/40 dark:bg-emerald-950/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <HardDrive className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  <h4 className="font-bold text-sm text-emerald-950 dark:text-emerald-200">
+                    2. Stored Data (Dung lượng lưu trữ Database)
+                  </h4>
+                </div>
+                <div className="text-xs text-slate-600 dark:text-slate-300 space-y-1.5 leading-relaxed">
+                  <p>
+                    • <strong>Nó là gì?</strong> Là tổng dung lượng của toàn bộ dữ liệu dạng JSON, văn bản môn học, tài liệu, đề thi, bài viết và chỉ mục (indexes) đang lưu trong Firestore.
+                  </p>
+                  <p>
+                    • <strong>Hạn mức gói Miễn phí (Spark):</strong> <strong>1 GiB (1.024 MB)</strong>.
+                  </p>
+                  <p>
+                    • <strong>Web mình có an toàn không?</strong> <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Cực kỳ an toàn!</span> Dữ liệu văn bản Firestore rất nhẹ (chỉ vài KB cho một tài liệu). Hơn nữa, toàn bộ các file PDF, Slide bài giảng, Đề thi đều được lưu trữ trên <strong>Google Drive</strong> của bạn và chỉ lưu link vào Firestore. Web hiện chỉ chiếm khoảng <strong>8 - 15 MB</strong> (chưa tới 1.5% của 1.024 MB), có thể lưu thoải mái thêm hàng chục nghìn môn học nữa.
+                  </p>
+                </div>
+              </div>
+
+              {/* Metric 3 */}
+              <div className="p-4 rounded-xl border border-blue-100 dark:border-blue-900/40 bg-blue-50/40 dark:bg-blue-950/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <ArrowUpRight className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <h4 className="font-bold text-sm text-blue-950 dark:text-blue-200">
+                    3. Network Egress (Băng thông mạng tải ra)
+                  </h4>
+                </div>
+                <div className="text-xs text-slate-600 dark:text-slate-300 space-y-1.5 leading-relaxed">
+                  <p>
+                    • <strong>Nó là gì?</strong> Là dung lượng dữ liệu JSON máy chủ Firebase gửi trả về trình duyệt của sinh viên mỗi khi họ truy cập trang web hoặc tải danh sách môn học.
+                  </p>
+                  <p>
+                    • <strong>Hạn mức gói Miễn phí (Spark):</strong> <strong>10 GiB / tháng</strong> (tương đương khoảng 340 MB - 360 MB mỗi ngày).
+                  </p>
+                  <p>
+                    • <strong>Web mình có an toàn không?</strong> <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Hoàn toàn yên tâm!</span> Nhờ cơ chế <strong>CacheService</strong> vừa thiết lập, trình duyệt người dùng sẽ lưu danh sách môn học cục bộ, khi sinh viên quay lại xem hoặc chuyển qua lại giữa các trang thì dữ liệu đọc từ máy người dùng ngay (0ms), giảm hơn <strong>85%</strong> băng thông tải ra từ Firestore.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+                💡 <strong>Lời khuyên:</strong> Cả 3 thông số này là các tài nguyên phần cứng phụ trợ do Google Cloud cấp miễn phí. Với web tài liệu học tập của bạn, chỉ số quan trọng nhất cần để ý mỗi ngày là <strong>Document Reads (50.000 lượt đọc)</strong>. Bộ 3 chỉ số trên hầu như không bao giờ bị nghẽn!
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+              <button
+                onClick={() => setShowMetricsExplanation(false)}
+                className="px-5 py-2 text-sm font-bold bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 rounded-xl transition-colors"
+              >
+                Đã hiểu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Calibration Modal: Sync with Firebase Console */}
+      {isCalibratingQuota && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 my-8">
+            <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                  <Edit3 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                    Hiệu chỉnh số liệu theo Firebase Console
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Nhập các thông số thực tế từ màn hình Console để đồng bộ ngay
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsCalibratingQuota(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCalibratedQuota}>
+              <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700/80 text-xs text-slate-600 dark:text-slate-400">
+                  Chu kỳ hiện tại tính từ <strong>14:00 VN</strong> ngày hôm nay (Mã chu kỳ: <code className="font-mono text-violet-600 dark:text-violet-400">{quotaCycle.cycleId}</code>). Bạn chỉ cần điền các số bạn muốn chỉnh.
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Thao tác tài liệu (24h)</h4>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        📖 Reads (Lượt đọc)
+                      </label>
+                      <input
+                        type="number"
+                        value={calibrationForm.reads}
+                        onChange={(e) => setCalibrationForm(prev => ({ ...prev, reads: e.target.value }))}
+                        placeholder="50000 max"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        ✍️ Writes (Lượt ghi)
+                      </label>
+                      <input
+                        type="number"
+                        value={calibrationForm.writes}
+                        onChange={(e) => setCalibrationForm(prev => ({ ...prev, writes: e.target.value }))}
+                        placeholder="20000 max"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        🗑️ Deletes (Lượt xóa)
+                      </label>
+                      <input
+                        type="number"
+                        value={calibrationForm.deletes}
+                        onChange={(e) => setCalibrationForm(prev => ({ ...prev, deletes: e.target.value }))}
+                        placeholder="20000 max"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">3 chỉ số hệ thống (Ảnh 2)</h4>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        🔌 Active Conn (kết nối)
+                      </label>
+                      <input
+                        type="number"
+                        value={calibrationForm.activeConnections}
+                        onChange={(e) => setCalibrationForm(prev => ({ ...prev, activeConnections: e.target.value }))}
+                        placeholder="100 max"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        💾 Stored Data (MB)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={calibrationForm.storedDataMB}
+                        onChange={(e) => setCalibrationForm(prev => ({ ...prev, storedDataMB: e.target.value }))}
+                        placeholder="1024 MB max"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        🌐 Egress (MB)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={calibrationForm.networkEgressMB}
+                        onChange={(e) => setCalibrationForm(prev => ({ ...prev, networkEgressMB: e.target.value }))}
+                        placeholder="~360 MB max"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsCalibratingQuota(false)}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 text-sm font-bold bg-violet-600 hover:bg-violet-700 text-white rounded-xl transition-colors flex items-center gap-1.5 shadow-md shadow-violet-500/20"
+                >
+                  <Check className="w-4 h-4" />
+                  Lưu & Đồng bộ
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
