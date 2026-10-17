@@ -5,7 +5,7 @@ import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink,
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { logActivityEvent, logSubjectDocumentView } from '../useActivityLogger';
-import { getVietnamDateString } from '../services/analyticsService';
+import { getVietnamDateString, logFirestoreWrite, logFirestoreDelete } from '../services/analyticsService';
 import { getCachedData, setCachedData, invalidateCache, CacheTTL } from '../services/cacheService';
 
 const typeIcons: Record<string, React.ElementType> = {
@@ -458,6 +458,7 @@ export default function SubjectDetail() {
         invalidateCache(`subject_docs_${id}`);
         loadSubjectAndDocs(true);
       }
+      logFirestoreWrite(1);
 
       setIsAddModalOpen(false);
       setEditingDocId(null);
@@ -472,6 +473,7 @@ export default function SubjectDetail() {
   const handleDeleteDocument = async (docId: string, docTitle: string) => {
     try {
       await deleteDoc(doc(db, 'documents', docId));
+      logFirestoreDelete(1);
       if (isAdmin && user) {
         await addDoc(collection(db, 'system_updates'), {
           action: 'Xóa',
