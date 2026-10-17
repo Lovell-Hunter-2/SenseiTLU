@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { collection, addDoc, doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
-import { logGlobalPageView, logSubjectView, logDocumentView } from './services/analyticsService';
+import { logGlobalPageView, logSubjectView, logDocumentView, updatePresence } from './services/analyticsService';
 import { getCachedData } from './services/cacheService';
 
 const routeNames: Record<string, string> = {
@@ -81,7 +81,12 @@ export function useActivityLogger() {
   useEffect(() => {
     // Chỉ đếm 1 truy cập mỗi lần người dùng mở hoặc tải lại trang web
     logGlobalPageView();
-  }, []);
+    updatePresence(user?.uid);
+    const interval = setInterval(() => {
+      updatePresence(user?.uid);
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [user?.uid]);
 
   useEffect(() => {
     console.log("ActivityTracker route change:", location.pathname, user?.uid);
