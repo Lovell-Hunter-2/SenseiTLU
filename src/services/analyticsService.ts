@@ -9,10 +9,91 @@ export function getVietnamDateString() {
          String(vnTime.getUTCDate()).padStart(2, '0');
 }
 
+/**
+ * Returns info about Google's 24-hour quota period.
+ * Firestore resets its 50,000 free daily reads at 00:00 US Pacific Time (14:00 Vietnam Time in summer PDT, 15:00 in PST).
+ */
+export function getQuotaCycleInfo() {
+  const now = new Date();
+  const ptDateStr = now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
+  const ptDate = new Date(ptDateStr);
+  
+  const year = ptDate.getFullYear();
+  const month = String(ptDate.getMonth() + 1).padStart(2, '0');
+  const day = String(ptDate.getDate()).padStart(2, '0');
+  const cycleId = `${year}-${month}-${day}`;
+
+  const nextReset = new Date(ptDate);
+  nextReset.setDate(nextReset.getDate() + 1);
+  nextReset.setHours(0, 0, 0, 0);
+
+  const diffMs = Math.max(0, nextReset.getTime() - ptDate.getTime());
+  const hoursRemaining = Math.floor(diffMs / (1000 * 60 * 60));
+  const minutesRemaining = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  return {
+    cycleId,
+    hoursRemaining,
+    minutesRemaining,
+    resetTimeVN: '14:00'
+  };
+}
+
+export async function logFirestoreWrite(count = 1) {
+  try {
+    const { cycleId } = getQuotaCycleInfo();
+    const quotaRef = doc(db, 'analytics', `quota_cycle_${cycleId}`);
+    await setDoc(quotaRef, {
+      cycleId,
+      estimatedWrites: increment(count),
+      lastUpdated: serverTimestamp()
+    }, { merge: true });
+  } catch (err) {
+    console.error('Error logging firestore write:', err);
+  }
+}
+
+export async function logFirestoreDelete(count = 1) {
+  try {
+    const { cycleId } = getQuotaCycleInfo();
+    const quotaRef = doc(db, 'analytics', `quota_cycle_${cycleId}`);
+    await setDoc(quotaRef, {
+      cycleId,
+      estimatedDeletes: increment(count),
+      lastUpdated: serverTimestamp()
+    }, { merge: true });
+  } catch (err) {
+    console.error('Error logging firestore delete:', err);
+  }
+}
+
+export async function calibrateQuotaCycle(data: Partial<{
+  estimatedReads: number;
+  estimatedWrites: number;
+  estimatedDeletes: number;
+  activeConnections: number;
+  storedDataMB: number;
+  networkEgressMB: number;
+}>) {
+  try {
+    const { cycleId } = getQuotaCycleInfo();
+    const quotaRef = doc(db, 'analytics', `quota_cycle_${cycleId}`);
+    await setDoc(quotaRef, {
+      cycleId,
+      ...data,
+      lastUpdated: serverTimestamp()
+    }, { merge: true });
+  } catch (err) {
+    console.error('Error calibrating quota cycle:', err);
+    throw err;
+  }
+}
+
 export async function logGlobalPageView() {
   try {
     const now = new Date();
     const today = getVietnamDateString();
+    const { cycleId } = getQuotaCycleInfo();
     
     // Convert to VN time for hourly tracking too
     const vnTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
@@ -39,6 +120,17 @@ export async function logGlobalPageView() {
     const totalRef = doc(db, 'analytics', 'total_visits');
     await setDoc(totalRef, {
       visits: increment(1),
+      lastUpdated: serverTimestamp()
+    }, { merge: true });
+
+    // Quota Cycle Tracker (Tracks estimated Firestore reads in current 24h reset cycle)
+    const quotaRef = doc(db, 'analytics', `quota_cycle_${cycleId}`);
+    await setDoc(quotaRef, {
+      cycleId,
+      estimatedReads: increment(6),
+      estimatedWrites: increment(3),
+      realtimeReads: increment(1),
+      pageViews: increment(1),
       lastUpdated: serverTimestamp()
     }, { merge: true });
   } catch (error) {
@@ -77,6 +169,18 @@ export async function logSubjectView(subjectId: string, subjectName: string) {
     await setDoc(dailyTotalSubRef, {
       visits: increment(1),
       date: today,
+      lastUpdated: serverTimestamp()
+    }, { merge: true });
+
+    // Quota Cycle Tracker
+    const { cycleId } = getQuotaCycleInfo();
+    const quotaRef = doc(db, 'analytics', `quota_cycle_${cycleId}`);
+    await setDoc(quotaRef, {
+      cycleId,
+      estimatedReads: increment(12),
+      estimatedWrites: increment(2),
+      realtimeReads: increment(2),
+      subjectViews: increment(1),
       lastUpdated: serverTimestamp()
     }, { merge: true });
   } catch (error) {
@@ -120,6 +224,18 @@ export async function logDocumentView(docTitle: string, subjectName: string) {
     await setDoc(dailyTotalDocRef, {
       visits: increment(1),
       date: today,
+      lastUpdated: serverTimestamp()
+    }, { merge: true });
+
+    // Quota Cycle Tracker
+    const { cycleId } = getQuotaCycleInfo();
+    const quotaRef = doc(db, 'analytics', `quota_cycle_${cycleId}`);
+    await setDoc(quotaRef, {
+      cycleId,
+      estimatedReads: increment(2),
+      estimatedWrites: increment(1),
+      realtimeReads: increment(1),
+      docViews: increment(1),
       lastUpdated: serverTimestamp()
     }, { merge: true });
   } catch (error) {
