@@ -290,44 +290,40 @@ export default function SubjectDetail() {
     };
   }, [isAdmin, id]);
 
-  // Real-time Document View Stats (for Admin)
+  // Document View Stats (for Admin) - One-time efficient fetch
   useEffect(() => {
     if (!isAdmin || documents.length === 0) return;
     const today = getVietnamDateString();
-    const unsubs: (() => void)[] = [];
 
-    documents.forEach((d) => {
-      if (!d.title) return;
-      const docId = d.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      if (!docId) return;
+    const fetchStats = async () => {
+      try {
+        const stats: Record<string, { today: number; total: number }> = {};
+        await Promise.all(
+          documents.map(async (d) => {
+            if (!d.title) return;
+            const docId = d.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            if (!docId) return;
 
-      const unsubTotal = onSnapshot(doc(db, 'analytics_documents', docId), (snap) => {
-        if (snap.exists()) {
-          const total = snap.data().views || 0;
-          setDocStatsMap(prev => ({
-            ...prev,
-            [d.id]: { today: prev[d.id]?.today || 0, total }
-          }));
-        }
-      }, (err) => console.error(err));
-      unsubs.push(unsubTotal);
-
-      const unsubToday = onSnapshot(doc(db, 'analytics', `doc_today_${today}_${docId}`), (snap) => {
-        if (snap.exists()) {
-          const todayVisits = snap.data().visits || 0;
-          setDocStatsMap(prev => ({
-            ...prev,
-            [d.id]: { today: todayVisits, total: prev[d.id]?.total || 0 }
-          }));
-        }
-      }, (err) => console.error(err));
-      unsubs.push(unsubToday);
-    });
-
-    return () => {
-      unsubs.forEach(u => u());
+            try {
+              const snap = await getDoc(doc(db, 'analytics_documents', docId));
+              if (snap.exists()) {
+                const data = snap.data();
+                stats[d.id] = {
+                  today: data[`daily_${today}`] || data.today || 0,
+                  total: data.views || 0,
+                };
+              }
+            } catch (e) {}
+          })
+        );
+        setDocStatsMap(stats);
+      } catch (err) {
+        console.warn("Could not fetch doc stats:", err);
+      }
     };
-  }, [isAdmin, documents]);
+
+    fetchStats();
+  }, [isAdmin, documents.length]);
 
   const handleSaveDocument = async (e: React.FormEvent) => {
     e.preventDefault();
