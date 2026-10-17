@@ -12,6 +12,7 @@ import {
   deleteDoc,
   doc,
   updateDoc,
+  getDoc,
   getDocs,
   limit,
   startAfter,
@@ -89,9 +90,11 @@ import {
   Lock,
   LogIn,
   Pin,
+  RefreshCw,
 } from "lucide-react";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
+import { getCachedData, setCachedData, invalidateCache, CacheTTL } from "../services/cacheService";
 
 // Icon mapping helper
 const iconLabels: Record<string, string> = {
@@ -292,19 +295,23 @@ export default function Home() {
   const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [subjects, setSubjects] = useState<any[]>(() => {
+    const cached = getCachedData<any[]>("home_subjects_list");
+    if (cached && Array.isArray(cached) && cached.length > 0) return cached;
     try {
-      const cached = localStorage.getItem("sensei_cached_subjects");
-      if (cached) {
-        const parsed = JSON.parse(cached);
+      const legacy = localStorage.getItem("sensei_cached_subjects");
+      if (legacy) {
+        const parsed = JSON.parse(legacy);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch (e) {}
     return [];
   });
   const [totalSubjectsCount, setTotalSubjectsCount] = useState<number>(() => {
+    const cachedCount = getCachedData<number>("home_subjects_count");
+    if (cachedCount) return cachedCount;
     try {
-      const cached = localStorage.getItem("sensei_cached_subjects_count");
-      if (cached) return Number(cached);
+      const legacy = localStorage.getItem("sensei_cached_subjects_count");
+      if (legacy) return Number(legacy);
     } catch (e) {}
     return 0;
   });
@@ -313,6 +320,7 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [initialLoading, setInitialLoading] = useState(false);
+  const [isHomeRefreshing, setIsHomeRefreshing] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const isFetchingRef = useRef(false);
   const PAGE_SIZE = 12;
@@ -369,94 +377,122 @@ export default function Home() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    document.title = "SenseiTLU";
+  const fetchInitial = async (forceRefresh: boolean = false) => {
+    // If not forcing refresh and valid cache exists, skip network requests!
+    if (!forceRefresh) {
+      const cached = getCachedData<any[]>("home_subjects_list");
+      if (cached && cached.length > 0) {
+        setSubjects(cached);
+        const cachedCount = getCachedData<number>("home_subjects_count");
+        if (cachedCount) setTotalSubjectsCount(cachedCount);
+        setInitialLoading(false);
+        return;
+      }
+    }
 
-    // Fetch hero images
-    const unsubImages = onSnapshot(
-      doc(db, "settings", "heroImages"),
-      (docsnap) => {
-        if (docsnap.exists()) {
-          setHeroImages(
-            docsnap.data() as { leftUrl: string; rightUrl: string },
-          );
-        }
-      },
-    );
+    if (forceRefresh) setIsHomeRefreshing(true);
 
-    // Initial page fetch
-    const fetchInitial = async () => {
+    try {
+      setInitialLoading(true);
+
+      // Fetch total count of subjects
       try {
-        setInitialLoading(true);
+        const countSnap = await getCountFromServer(collection(db, "subjects"));
+        const countVal = countSnap.data().count;
+        setTotalSubjectsCount(countVal);
+        setCachedData("home_subjects_count", countVal, CacheTTL.MEDIUM);
+      } catch (countErr) {
+        console.warn("Could not fetch total subjects count:", countErr);
+      }
 
-        // Fetch total count of subjects
-        try {
-          const countSnap = await getCountFromServer(collection(db, "subjects"));
-          setTotalSubjectsCount(countSnap.data().count);
-        } catch (countErr) {
-          console.warn("Could not fetch total subjects count:", countErr);
-        }
-
-        // Fetch priority subjects first to ensure they are available immediately
-        let prioritySubs: any[] = [];
-        try {
-          const priorityQ = query(
-            collection(db, "subjects"),
-            where("isPriority", "==", true)
-          );
-          const prioritySnap = await getDocs(priorityQ);
-          prioritySubs = prioritySnap.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-        } catch (pErr) {
-          console.warn("Could not fetch priority subjects:", pErr);
-        }
-
-        const q = query(
+      // Fetch priority subjects first to ensure they are available immediately
+      let prioritySubs: any[] = [];
+      try {
+        const priorityQ = query(
           collection(db, "subjects"),
-          orderBy("name", "asc"),
-          limit(PAGE_SIZE),
+          where("isPriority", "==", true)
         );
-        const snapshot = await getDocs(q);
-        const normalSubs = snapshot.docs.map((doc) => ({
+        const prioritySnap = await getDocs(priorityQ);
+        prioritySubs = prioritySnap.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-
-        const subsMap = new Map<string, any>();
-        prioritySubs.forEach((s) => subsMap.set(s.id, s));
-        normalSubs.forEach((s) => subsMap.set(s.id, s));
-
-        const finalSubs = Array.from(subsMap.values());
-        if (finalSubs.length > 0) {
-          setSubjects(finalSubs);
-          try {
-            localStorage.setItem("sensei_cached_subjects", JSON.stringify(finalSubs));
-            localStorage.setItem("sensei_cached_subjects_count", String(finalSubs.length));
-          } catch (e) {}
-        }
-        setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-        setHasMore(snapshot.docs.length === PAGE_SIZE);
-      } catch (err: any) {
-        console.error("Error loading subjects:", err);
-        if (
-          err?.code === "resource-exhausted" ||
-          err?.message?.includes("Quota") ||
-          err?.message?.includes("resource-exhausted")
-        ) {
-          setQuotaExceeded(true);
-        }
-      } finally {
-        setInitialLoading(false);
+      } catch (pErr) {
+        console.warn("Could not fetch priority subjects:", pErr);
       }
-    };
 
-    fetchInitial();
+      const q = query(
+        collection(db, "subjects"),
+        orderBy("name", "asc"),
+        limit(PAGE_SIZE),
+      );
+      const snapshot = await getDocs(q);
+      const normalSubs = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
-    return () => {
-      unsubImages();
-    };
+      const subsMap = new Map<string, any>();
+      prioritySubs.forEach((s) => subsMap.set(s.id, s));
+      normalSubs.forEach((s) => subsMap.set(s.id, s));
+
+      const finalSubs = Array.from(subsMap.values());
+      if (finalSubs.length > 0) {
+        setSubjects(finalSubs);
+        setCachedData("home_subjects_list", finalSubs, CacheTTL.MEDIUM);
+        try {
+          localStorage.setItem("sensei_cached_subjects", JSON.stringify(finalSubs));
+          localStorage.setItem("sensei_cached_subjects_count", String(finalSubs.length));
+        } catch (e) {}
+      }
+      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+      setHasMore(snapshot.docs.length === PAGE_SIZE);
+      setQuotaExceeded(false);
+    } catch (err: any) {
+      console.error("Error loading subjects:", err);
+      const isQuota =
+        err?.code === "resource-exhausted" ||
+        err?.message?.includes("Quota") ||
+        err?.message?.includes("resource-exhausted");
+
+      if (isQuota) {
+        setQuotaExceeded(true);
+      }
+
+      // Graceful fallback to stale cache
+      const staleSubs = getCachedData<any[]>("home_subjects_list", true);
+      if (staleSubs && staleSubs.length > 0) {
+        setSubjects(staleSubs);
+      }
+    } finally {
+      setInitialLoading(false);
+      if (forceRefresh) {
+        setTimeout(() => setIsHomeRefreshing(false), 400);
+      }
+    }
+  };
+
+  useEffect(() => {
+    document.title = "SenseiTLU";
+
+    // Fetch hero images (Cache-First)
+    const cachedHero = getCachedData<{ leftUrl: string; rightUrl: string }>("hero_images_settings");
+    if (cachedHero) {
+      setHeroImages(cachedHero);
+    } else {
+      getDoc(doc(db, "settings", "heroImages")).then((docsnap) => {
+        if (docsnap.exists()) {
+          const data = docsnap.data() as { leftUrl: string; rightUrl: string };
+          setHeroImages(data);
+          setCachedData("hero_images_settings", data, CacheTTL.VERY_LONG);
+        }
+      }).catch(err => {
+        const staleHero = getCachedData<{ leftUrl: string; rightUrl: string }>("hero_images_settings", true);
+        if (staleHero) setHeroImages(staleHero);
+      });
+    }
+
+    fetchInitial(false);
   }, []);
 
   const loadMoreSubjects = async () => {
@@ -773,15 +809,26 @@ export default function Home() {
       {/* Subjects Section */}
       <div className="space-y-4 relative z-10">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
-            <div className="w-2 h-4 bg-blue-500 rounded-sm"></div>
-            Danh sách môn học
-            <span className="ml-2 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 py-0.5 px-2 rounded-full text-xs font-semibold">
-              {searchQuery.trim()
-                ? `${filteredSubjects.length}${totalSubjectsCount > 0 ? ` / ${totalSubjectsCount}` : ""}`
-                : (totalSubjectsCount > 0 ? totalSubjectsCount : subjects.length)}
-            </span>
-          </h2>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+              <div className="w-2 h-4 bg-blue-500 rounded-sm"></div>
+              Danh sách môn học
+              <span className="ml-1 sm:ml-2 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 py-0.5 px-2 rounded-full text-xs font-semibold">
+                {searchQuery.trim()
+                  ? `${filteredSubjects.length}${totalSubjectsCount > 0 ? ` / ${totalSubjectsCount}` : ""}`
+                  : (totalSubjectsCount > 0 ? totalSubjectsCount : subjects.length)}
+              </span>
+            </h2>
+            <button
+              onClick={() => fetchInitial(true)}
+              disabled={isHomeRefreshing}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg transition-all active:scale-95 disabled:opacity-60"
+              title="Làm mới danh sách môn học từ máy chủ"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isHomeRefreshing ? 'animate-spin text-blue-500' : ''}`} />
+              <span className="hidden sm:inline">{isHomeRefreshing ? 'Đang cập nhật...' : 'Làm mới'}</span>
+            </button>
+          </div>
           {isAdmin && (
             <button
               onClick={() => setIsAddModalOpen(true)}
@@ -791,6 +838,16 @@ export default function Home() {
             </button>
           )}
         </div>
+
+        {/* Quota Exceeded Cache Notification Banner */}
+        {quotaExceeded && subjects.length > 0 && (
+          <div className="flex items-center gap-2.5 p-3 sm:p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 rounded-xl text-amber-800 dark:text-amber-200 text-xs sm:text-sm shadow-xs">
+            <span className="text-lg">⚡</span>
+            <p className="flex-1 leading-snug">
+              <strong>Đang hiển thị từ bộ nhớ đệm:</strong> Máy chủ đang ghi nhận lượng truy cập cao, hệ thống tự động nạp từ bộ nhớ đệm để bạn tiếp tục ôn luyện mà không bị gián đoạn.
+            </p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {initialLoading ? (
