@@ -291,12 +291,28 @@ export default function Home() {
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
   const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const [subjects, setSubjects] = useState<any[]>([]);
-  const [totalSubjectsCount, setTotalSubjectsCount] = useState<number>(0);
+  const [subjects, setSubjects] = useState<any[]>(() => {
+    try {
+      const cached = localStorage.getItem("sensei_cached_subjects");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [];
+  });
+  const [totalSubjectsCount, setTotalSubjectsCount] = useState<number>(() => {
+    try {
+      const cached = localStorage.getItem("sensei_cached_subjects_count");
+      if (cached) return Number(cached);
+    } catch (e) {}
+    return 0;
+  });
+  const [quotaExceeded, setQuotaExceeded] = useState(false);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const isFetchingRef = useRef(false);
   const PAGE_SIZE = 12;
@@ -412,11 +428,25 @@ export default function Home() {
         prioritySubs.forEach((s) => subsMap.set(s.id, s));
         normalSubs.forEach((s) => subsMap.set(s.id, s));
 
-        setSubjects(Array.from(subsMap.values()));
+        const finalSubs = Array.from(subsMap.values());
+        if (finalSubs.length > 0) {
+          setSubjects(finalSubs);
+          try {
+            localStorage.setItem("sensei_cached_subjects", JSON.stringify(finalSubs));
+            localStorage.setItem("sensei_cached_subjects_count", String(finalSubs.length));
+          } catch (e) {}
+        }
         setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
         setHasMore(snapshot.docs.length === PAGE_SIZE);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error loading subjects:", err);
+        if (
+          err?.code === "resource-exhausted" ||
+          err?.message?.includes("Quota") ||
+          err?.message?.includes("resource-exhausted")
+        ) {
+          setQuotaExceeded(true);
+        }
       } finally {
         setInitialLoading(false);
       }
@@ -771,14 +801,15 @@ export default function Home() {
           ) : filteredSubjects.length === 0 ? (
             <div className="col-span-full py-16 flex flex-col items-center justify-center text-center">
               <div className="w-32 h-32 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 animate-bounce shadow-lg mt-8">
-                <span className="text-6xl">👻</span>
+                <span className="text-6xl">{quotaExceeded ? "⚡" : "👻"}</span>
               </div>
               <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">
-                Trống trơn rồi!
+                {quotaExceeded ? "Hệ thống hiện đang quá tải!" : "Trống trơn rồi!"}
               </h3>
-              <p className="text-slate-500 max-w-md">
-                Không tìm thấy môn học nào. Có vẻ chúng đang đi trốn đâu đó
-                quanh đây... 🐾
+              <p className="text-slate-500 max-w-md text-sm leading-relaxed">
+                {quotaExceeded
+                  ? "Website hiện đang ghi nhận lượng truy cập quá lớn. Bạn vui lòng quay lại sau nhé!"
+                  : "Không tìm thấy môn học nào. Có vẻ chúng đang đi trốn đâu đó quanh đây... 🐾"}
               </p>
             </div>
           ) : (
