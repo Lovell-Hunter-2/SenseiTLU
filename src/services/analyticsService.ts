@@ -10,33 +10,89 @@ export function getVietnamDateString() {
 }
 
 /**
- * Returns info about Google's 24-hour quota period.
- * Firestore resets its 50,000 free daily reads at 00:00 US Pacific Time (14:00 Vietnam Time in summer PDT, 15:00 in PST).
+ * Returns accurate info about Google Firestore's 24-hour quota reset cycle.
+ * Google Cloud / Firestore daily free quotas reset at 00:00:00 US Pacific Time (America/Los_Angeles):
+ * - Daylight Saving Time (PDT, Summer): 00:00 PDT = 07:00 UTC = 14:00:00 Vietnam Time (UTC+7)
+ * - Standard Time (PST, Winter): 00:00 PST = 08:00 UTC = 15:00:00 Vietnam Time (UTC+7)
  */
 export function getQuotaCycleInfo() {
   const now = new Date();
-  const ptDateStr = now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
-  const ptDate = new Date(ptDateStr);
-  
-  const year = ptDate.getFullYear();
-  const month = String(ptDate.getMonth() + 1).padStart(2, '0');
-  const day = String(ptDate.getDate()).padStart(2, '0');
+
+  // Robustly extract timezone components in America/Los_Angeles
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+    timeZoneName: 'short'
+  });
+
+  const parts = formatter.formatToParts(now);
+  const partMap: Record<string, string> = {};
+  parts.forEach(p => { partMap[p.type] = p.value; });
+
+  const year = partMap.year || String(now.getFullYear());
+  const month = partMap.month || String(now.getMonth() + 1).padStart(2, '0');
+  const day = partMap.day || String(now.getDate()).padStart(2, '0');
+  const hour = parseInt(partMap.hour || '0', 10);
+  const minute = parseInt(partMap.minute || '0', 10);
+  const second = parseInt(partMap.second || '0', 10);
+  const tzName = partMap.timeZoneName || 'PDT';
+
+  // PDT (Summer time, UTC-7) -> 14:00 VN | PST (Winter time, UTC-8) -> 15:00 VN
+  const isPDT = tzName === 'PDT';
+  const resetHourVN = isPDT ? 14 : 15;
+  const resetTimeShortVN = isPDT ? '14:00' : '15:00';
+  const resetTimeVN = isPDT ? '14:00 (Mùa hè PDT)' : '15:00 (Mùa đông PST)';
+
+  // The cycle ID corresponds to the date in Pacific Time: YYYY-MM-DD
   const cycleId = `${year}-${month}-${day}`;
 
-  const nextReset = new Date(ptDate);
-  nextReset.setDate(nextReset.getDate() + 1);
-  nextReset.setHours(0, 0, 0, 0);
+  // Next reset happens at 24:00:00 (00:00:00 of the next day) in Pacific Time
+  const secondsSinceMidnightPT = hour * 3600 + minute * 60 + second;
+  const secondsInDay = 86400;
+  const secondsRemaining = Math.max(0, secondsInDay - secondsSinceMidnightPT);
 
-  const diffMs = Math.max(0, nextReset.getTime() - ptDate.getTime());
-  const hoursRemaining = Math.floor(diffMs / (1000 * 60 * 60));
-  const minutesRemaining = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  const hoursRemaining = Math.floor(secondsRemaining / 3600);
+  const minutesRemaining = Math.floor((secondsRemaining % 3600) / 60);
 
   return {
     cycleId,
     hoursRemaining,
     minutesRemaining,
-    resetTimeVN: '14:00'
+    secondsRemaining,
+    resetHourVN,
+    resetTimeShortVN,
+    resetTimeVN,
+    isPDT,
+    tzName,
+    currentPTHour: hour,
+    currentPTMinute: minute
   };
+}
+
+export async function resetCurrentQuotaToZero() {
+  try {
+    const { cycleId, resetTimeVN } = getQuotaCycleInfo();
+    const quotaRef = doc(db, 'analytics', `quota_cycle_${cycleId}`);
+    await setDoc(quotaRef, {
+      cycleId,
+      estimatedReads: 0,
+      estimatedWrites: 0,
+      estimatedDeletes: 0,
+      realtimeReads: 0,
+      resetTimeVN,
+      lastResetAt: serverTimestamp(),
+      lastUpdated: serverTimestamp()
+    });
+  } catch (err) {
+    console.error('Error resetting current quota cycle:', err);
+    throw err;
+  }
 }
 
 export async function logFirestoreRead(count = 1) {
