@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Globe } from 'lucide-react';
 import { ECOSYSTEM_ICONS, ECOSYSTEM_COLORS } from './EcosystemManagerModal';
-import { useEcosystemApps } from '../hooks/useEcosystemApps';
+import { useEcosystemApps, EcosystemAppItem } from '../hooks/useEcosystemApps';
+import { toggleAIAssistant, pingAIAssistant } from './AIAssistantWidget';
 
 export default function EcosystemDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const { apps } = useEcosystemApps();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -17,6 +20,23 @@ export default function EcosystemDropdown() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleItemClick = (e: React.MouseEvent, app: EcosystemAppItem) => {
+    if (app.isSpecialAction === 'ai-assistant') {
+      e.preventDefault();
+      setIsOpen(false);
+      toggleAIAssistant();
+      pingAIAssistant();
+      return;
+    }
+    if (app.path) {
+      e.preventDefault();
+      setIsOpen(false);
+      navigate(app.path);
+      return;
+    }
+    setIsOpen(false);
+  };
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -51,9 +71,10 @@ export default function EcosystemDropdown() {
                 return (
                   <a
                     key={app.id}
-                    href={app.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={app.path || app.url || '#'}
+                    onClick={(e) => handleItemClick(e, app)}
+                    target={app.path || app.isSpecialAction ? undefined : "_blank"}
+                    rel={app.path || app.isSpecialAction ? undefined : "noopener noreferrer"}
                     className={`group block p-4 rounded-xl border transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${theme.classes} hover:shadow-md relative overflow-hidden`}
                   >
                     {/* Pattern Overlay */}
