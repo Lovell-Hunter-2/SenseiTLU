@@ -32,6 +32,7 @@ import { NotificationBell } from "./NotificationBell";
 import avtTlu from "../assets/avt_tlu.jpg";
 import { InstallAppModal } from "./InstallAppModal";
 import EcosystemDropdown from "./EcosystemDropdown";
+import { AnimatedBrandLogo } from "./AnimatedBrandLogo";
 
 export default function Layout() {
   const { theme, setTheme } = useTheme();
@@ -125,9 +126,13 @@ export default function Layout() {
             )}
             <Link
               to="/"
-              className="text-xl md:text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5 md:gap-2 whitespace-nowrap"
+              className="flex items-center gap-1.5 md:gap-2 whitespace-nowrap focus:outline-hidden group"
+              aria-label="SenseiTLU Trang chủ"
             >
-              <span className="text-2xl md:text-3xl">🎓</span> SenseiTLU
+              <span className="text-2xl md:text-3xl transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">
+                🎓
+              </span>
+              <AnimatedBrandLogo size="nav" interactive={true} />
             </Link>
 
             {/* Desktop Nav */}
