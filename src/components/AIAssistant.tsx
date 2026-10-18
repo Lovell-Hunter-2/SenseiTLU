@@ -449,7 +449,7 @@ ${subjectsStr}
         initial={{ opacity: 0, scale: 0.8, y: 50 }}
         animate={{ opacity: isCapturing ? 0 : 1, scale: 1, y: 0, pointerEvents: isCapturing ? 'none' : 'auto' }}
         exit={{ opacity: 0, scale: 0.8, y: 50 }}
-        className="fixed z-50 bottom-4 right-4 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col"
+        className="fixed z-50 bottom-24 md:bottom-4 right-4 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col"
         style={{ height: '500px', maxHeight: '80vh' }}
       >
       {/* Header (Drag Handle) */}
