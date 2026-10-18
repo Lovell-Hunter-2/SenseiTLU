@@ -705,7 +705,8 @@ export default function Home() {
 
   return (
     <div className="space-y-8 relative min-h-screen">
-      <div className="md:hidden absolute -top-6 inset-x-2 z-20">
+      {/* Mobile Clock Widgets (in flow below header, not covered by sticky layout) */}
+      <div className="md:hidden relative w-full pt-1 px-1 z-20">
         <ClockWidget isMobileView={true} />
       </div>
       {/* Background Capybara Watermark */}
@@ -1249,10 +1250,10 @@ export default function Home() {
         </div>
       )}
 
-      {/* Floating Workspace Button (elevated on mobile) */}
+      {/* Floating Workspace Button (Desktop only >= 768px; mobile uses Ecosystem drawer) */}
       <Link
         to="/workspace"
-        className="fixed bottom-24 md:bottom-6 left-4 sm:left-6 z-40 flex items-center justify-center p-3 sm:p-4 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
+        className="hidden md:flex fixed bottom-6 left-6 z-40 items-center justify-center p-3 sm:p-4 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
         title="Vào Study Space"
       >
         <div className="flex items-center justify-center gap-2">
