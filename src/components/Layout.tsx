@@ -296,33 +296,16 @@ export default function Layout() {
           </div>
         </div>
 
-        {/* Mobile Nav */}
+        {/* Mobile Utility Drawer */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-4 shadow-inner">
-            <div className="flex flex-col space-y-3">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`block text-sm font-medium py-2 ${
-                    location.pathname === link.path
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-slate-600 dark:text-slate-300"
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              ))}
-              <div className="py-2 border-t border-slate-100 dark:border-slate-800">
-                <EcosystemDropdown />
-              </div>
+            <div className="flex flex-col space-y-2">
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
                   setIsDonateModalOpen(true);
                 }}
-                className="flex items-center gap-1.5 w-full text-left text-sm font-bold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors py-2"
+                className="flex items-center gap-2 w-full text-left text-sm font-bold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors py-2 px-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20"
               >
                 <Heart className="w-4 h-4 fill-current" />
                 Ủng hộ Web
@@ -478,9 +461,9 @@ export default function Layout() {
         onClose={() => setIsInstallModalOpen(false)}
       />
 
-      {/* Floating Mascot & Support Button (elevated above bottom nav on mobile) */}
+      {/* Floating Mascot & Support Button (Desktop only: hidden on mobile, placed inside Ecosystem drawer instead) */}
       {location.pathname === "/" && (
-        <div className="fixed bottom-24 md:bottom-6 right-4 sm:right-6 z-40 flex flex-col items-end gap-3">
+        <div className="hidden md:flex fixed bottom-6 right-6 z-40 flex-col items-end gap-3">
           {/* Mascot Popover */}
           {showSupportPopover && (
             <div className="relative group animate-in fade-in slide-in-from-bottom-4 duration-300">
