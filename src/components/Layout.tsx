@@ -33,6 +33,8 @@ import avtTlu from "../assets/avt_tlu.jpg";
 import { InstallAppModal } from "./InstallAppModal";
 import EcosystemDropdown from "./EcosystemDropdown";
 import { AnimatedBrandLogo } from "./AnimatedBrandLogo";
+import { HEADER_NAV_ROUTES } from "./navigationConfig";
+import { MobileBottomNav } from "./MobileBottomNav";
 
 export default function Layout() {
   const { theme, setTheme } = useTheme();
@@ -102,12 +104,7 @@ export default function Layout() {
     // it stays dismissed unless hard refresh.
   }, [location.pathname]);
 
-  const navLinks = [
-    { name: "Trang chủ", path: "/" },
-    { name: "Blog", path: "/blog" },
-    { name: "About", path: "/about" },
-    { name: "Đóng góp tài liệu", path: "/contribute" },
-  ];
+  const navLinks = HEADER_NAV_ROUTES;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 flex flex-col font-sans transition-colors duration-300 overflow-x-hidden">
@@ -135,8 +132,8 @@ export default function Layout() {
               <AnimatedBrandLogo size="nav" interactive={true} />
             </Link>
 
-            {/* Desktop Nav */}
-            <nav className="hidden lg:flex items-center gap-4 xl:gap-6">
+            {/* Desktop Nav (from 768px md:flex) */}
+            <nav className="hidden md:flex items-center gap-3 lg:gap-5 xl:gap-6">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
@@ -447,7 +444,7 @@ export default function Layout() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-2 sm:px-4 py-3 sm:py-5">
+      <main className="flex-1 container mx-auto px-2 sm:px-4 py-3 sm:py-5 pb-24 md:pb-5">
         <Outlet />
       </main>
 
@@ -481,9 +478,9 @@ export default function Layout() {
         onClose={() => setIsInstallModalOpen(false)}
       />
 
-      {/* Floating Mascot & Support Button */}
+      {/* Floating Mascot & Support Button (elevated above bottom nav on mobile) */}
       {location.pathname === "/" && (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+        <div className="fixed bottom-24 md:bottom-6 right-4 sm:right-6 z-40 flex flex-col items-end gap-3">
           {/* Mascot Popover */}
           {showSupportPopover && (
             <div className="relative group animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -530,6 +527,9 @@ export default function Layout() {
 
       <TextSelectionHelper />
       <AIAssistantWidget />
+
+      {/* Mobile Bottom Navigation Bar (below 768px) */}
+      <MobileBottomNav />
     </div>
   );
 }
