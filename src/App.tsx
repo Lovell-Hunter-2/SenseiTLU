@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect, Suspense, lazy } from 'react';
 import 'katex/dist/katex.min.css';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -19,6 +19,18 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 
 import { useActivityLogger } from './useActivityLogger';
 import { logErrorToFirestore } from './services/errorLogger';
+
+function ScrollToTopOnRouteChange() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+    document.documentElement.scrollTo?.({ top: 0, behavior: 'instant' as ScrollBehavior });
+    document.body.scrollTo?.({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, [pathname]);
+
+  return null;
+}
 
 function ActivityTracker() {
   useActivityLogger();
@@ -84,6 +96,7 @@ export default function App() {
     <ThemeProvider defaultTheme="dark">
       <AuthProvider>
         <BrowserRouter>
+          <ScrollToTopOnRouteChange />
           <ActivityTracker />
           <ErrorTracker />
           <Suspense fallback={<PageLoadingFallback />}>
