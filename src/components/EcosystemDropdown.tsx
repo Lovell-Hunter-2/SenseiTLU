@@ -1,41 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Globe } from 'lucide-react';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '../firebase';
 import { ECOSYSTEM_ICONS, ECOSYSTEM_COLORS } from './EcosystemManagerModal';
-import { getCachedData, setCachedData, CacheTTL } from '../services/cacheService';
+import { useEcosystemApps } from '../hooks/useEcosystemApps';
 
 export default function EcosystemDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const [apps, setApps] = useState<any[]>(() => {
-    return getCachedData<any[]>('ecosystem_apps') || [];
-  });
+  const { apps } = useEcosystemApps();
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const cached = getCachedData<any[]>('ecosystem_apps');
-    if (cached && cached.length > 0) {
-      setApps(cached);
-      return;
-    }
-
-    const fetchEcosystem = async () => {
-      try {
-        const q = query(collection(db, "ecosystem"), orderBy("createdAt", "asc"));
-        const snapshot = await getDocs(q);
-        const appsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        if (appsData.length > 0) {
-          setApps(appsData);
-          setCachedData('ecosystem_apps', appsData, CacheTTL.VERY_LONG);
-        }
-      } catch (err) {
-        const stale = getCachedData<any[]>('ecosystem_apps', true);
-        if (stale) setApps(stale);
-      }
-    };
-
-    fetchEcosystem();
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
