@@ -123,7 +123,12 @@ export default function Layout() {
             )}
             <Link
               to="/"
-              className="flex items-center gap-1.5 md:gap-2 whitespace-nowrap focus:outline-hidden group"
+              onClick={() => {
+                window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+                document.documentElement.scrollTo?.({ top: 0, behavior: 'smooth' });
+                document.body.scrollTo?.({ top: 0, behavior: 'smooth' });
+              }}
+              className="flex items-center gap-1.5 md:gap-2 whitespace-nowrap focus:outline-hidden group cursor-pointer"
               aria-label="SenseiTLU Trang chủ"
             >
               <span className="text-2xl md:text-3xl transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">
@@ -138,6 +143,13 @@ export default function Layout() {
                 <Link
                   key={link.path}
                   to={link.path}
+                  onClick={() => {
+                    if (link.path === '/') {
+                      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+                      document.documentElement.scrollTo?.({ top: 0, behavior: 'smooth' });
+                      document.body.scrollTo?.({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
                   className={`text-sm font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 whitespace-nowrap ${
                     location.pathname === link.path
                       ? "text-blue-600 dark:text-blue-400"
