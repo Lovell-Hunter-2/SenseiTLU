@@ -39,16 +39,6 @@ const APP_STYLE_MAP: Record<
     iconColor: 'text-amber-400',
     iconComponent: MessageCircle,
   },
-  'thi-online-ai': {
-    bgClass: 'bg-rose-950/60 border-rose-500/30 text-rose-400',
-    iconColor: 'text-rose-400',
-    iconComponent: Brain,
-  },
-  'lich-hoc': {
-    bgClass: 'bg-purple-950/60 border-purple-500/30 text-purple-400',
-    iconColor: 'text-purple-400',
-    iconComponent: Calendar,
-  },
 };
 
 export const MobileBottomNav: React.FC = () => {
@@ -140,10 +130,9 @@ export const MobileBottomNav: React.FC = () => {
     return location.pathname.startsWith(path);
   };
 
-  // Order items so closest to button is first (Hỏi AI -> Lịch học -> Thi online AI -> Study Space)
   // When rendering with flex-col-reverse, index 0 is at the bottom, closest to the button
   const orderedApps = [...apps].sort((a, b) => {
-    const priority = ['hoi-ai', 'study-space', 'ho-tro', 'thi-online-ai', 'lich-hoc'];
+    const priority = ['hoi-ai', 'study-space', 'ho-tro'];
     const indexA = priority.indexOf(a.id);
     const indexB = priority.indexOf(b.id);
     if (indexA !== -1 && indexB !== -1) return indexA - indexB;
