@@ -95,6 +95,7 @@ import {
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 import { getCachedData, setCachedData, invalidateCache, CacheTTL } from "../services/cacheService";
+import { AnimatedHeroTitle } from "../components/AnimatedHeroTitle";
 
 // Icon mapping helper
 const iconLabels: Record<string, string> = {
@@ -730,10 +731,7 @@ export default function Home() {
 
         {/* Main Center Content */}
         <div className="flex flex-col items-center justify-center space-y-6 text-center z-10 w-full max-w-xl">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-            📚 Tài liệu{" "}
-            <span className="text-blue-600 dark:text-blue-400">SenseiTLU</span>
-          </h1>
+          <AnimatedHeroTitle />
           <p className="text-slate-600 dark:text-slate-400">
             Nền tảng chia sẻ tài liệu học tập, giáo trình, đề cương và thi thử
             trực tuyến dành cho sinh viên Trường Đại học Thủy lợi.
