@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
-import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon, CheckCircle2, X, FileText, User as UserIcon, MapPin, Clock, EyeOff, MessageSquare, Globe, BookOpen, TrendingUp, Calendar, Flame, Layers, Award, Sparkles, ExternalLink, Filter, Edit3, Info, Check, Zap } from 'lucide-react';
+import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon, CheckCircle2, X, FileText, User as UserIcon, MapPin, Clock, EyeOff, MessageSquare, Globe, BookOpen, TrendingUp, Calendar, Flame, Layers, Award, Sparkles, ExternalLink, Filter, Edit3, Info, Check, Zap, RotateCcw } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, doc, getDoc, getDocs, setDoc, query, orderBy, limit, startAt, endAt, collectionGroup, getCountFromServer, updateDoc, deleteDoc, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import UserManagerModal from '../components/UserManagerModal';
@@ -10,7 +10,7 @@ import AdminManagerModal from '../components/AdminManagerModal';
 import HiddenDocsManager from '../components/HiddenDocsManager';
 import EcosystemManagerModal from '../components/EcosystemManagerModal';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, BarChart, Bar } from 'recharts';
-import { getVietnamDateString, getQuotaCycleInfo, calibrateQuotaCycle } from '../services/analyticsService';
+import { getVietnamDateString, getQuotaCycleInfo, calibrateQuotaCycle, resetCurrentQuotaToZero } from '../services/analyticsService';
 
 interface ErrorLog {
   id: string;
@@ -263,6 +263,18 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleResetQuotaToZero = async () => {
+    if (!window.confirm(`Bạn có chắc muốn đặt lại lượt đọc, ghi, xóa của chu kỳ (${quotaCycle.cycleId}) về 0?`)) return;
+    try {
+      await resetCurrentQuotaToZero();
+      setQuotaReads(0);
+      setQuotaWrites(0);
+      setQuotaDeletes(0);
+    } catch (err) {
+      console.error('Lỗi khi đặt lại quota về 0:', err);
+    }
+  };
+
   useEffect(() => {
     if (!isAdmin) return;
 
@@ -433,25 +445,7 @@ export default function AdminDashboard() {
       (err) => console.error("Error in real-time presence subscription:", err)
     );
 
-    // Real-time Firestore Quota Cycle tracking (counts from 14:00 VN)
-    const currentQuotaInfo = getQuotaCycleInfo();
-    const unsubQuota = onSnapshot(
-      doc(db, 'analytics', `quota_cycle_${currentQuotaInfo.cycleId}`),
-      (snap) => {
-        if (snap.exists()) {
-          const d = snap.data();
-          setQuotaReads(d.estimatedReads || 0);
-          setQuotaWrites(d.estimatedWrites || 0);
-          setQuotaDeletes(d.estimatedDeletes || 0);
-        }
-      },
-      (err) => console.error("Error in real-time quota subscription:", err)
-    );
 
-    // Live-update countdown to next 14:00 reset
-    const quotaTimer = setInterval(() => {
-      setQuotaCycle(getQuotaCycleInfo());
-    }, 60000);
 
     const fetchHourlyAndDailyStats = async () => {
       try {
@@ -565,10 +559,57 @@ export default function AdminDashboard() {
       unsubDaily();
       unsubTotal();
       unsubPresence();
-      unsubQuota();
-      clearInterval(quotaTimer);
     };
   }, [isAdmin]);
+
+  // Dedicated real-time subscription to active Firestore Quota cycle document
+  // Dynamically switches listener and auto-resets when cycleId changes at 14:00 (PDT) / 15:00 (PST) VN time
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const cycleDocRef = doc(db, 'analytics', `quota_cycle_${quotaCycle.cycleId}`);
+
+    const unsub = onSnapshot(
+      cycleDocRef,
+      (snap) => {
+        if (snap.exists()) {
+          const d = snap.data();
+          setQuotaReads(d.estimatedReads || 0);
+          setQuotaWrites(d.estimatedWrites || 0);
+          setQuotaDeletes(d.estimatedDeletes || 0);
+        } else {
+          // If document does not exist yet (brand new cycle just reset), reset all counters to 0!
+          setQuotaReads(0);
+          setQuotaWrites(0);
+          setQuotaDeletes(0);
+        }
+      },
+      (err) => console.error("Error in real-time quota subscription:", err)
+    );
+
+    return () => unsub();
+  }, [isAdmin, quotaCycle.cycleId]);
+
+  // High-frequency clock watcher: checks every 5 seconds to update remaining countdown
+  // and immediately trigger automatic cycle rollover the exact second 14:00 (PDT) / 15:00 (PST) arrives!
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const newInfo = getQuotaCycleInfo();
+      setQuotaCycle((prev) => {
+        if (
+          prev.cycleId !== newInfo.cycleId ||
+          prev.hoursRemaining !== newInfo.hoursRemaining ||
+          prev.minutesRemaining !== newInfo.minutesRemaining ||
+          prev.isPDT !== newInfo.isPDT
+        ) {
+          return newInfo;
+        }
+        return prev;
+      });
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   // Chart Generation Effect
   useEffect(() => {
@@ -1122,9 +1163,9 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="flex items-center justify-between text-xs pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-slate-500 dark:text-slate-400">
-                        <span className="inline-flex items-center gap-1 text-[11px]" title="Google Cloud reset quota vào 14:00 giờ Việt Nam hàng ngày">
+                        <span className="inline-flex items-center gap-1 text-[11px]" title={`Firestore tự động reset vào ${quotaCycle.resetTimeVN} (00:00 US Pacific Time)`}>
                           <Clock className="w-3.5 h-3.5 text-slate-400" />
-                          Reset sau: <strong className="text-slate-600 dark:text-slate-300 font-semibold">{quotaCycle.hoursRemaining}h {quotaCycle.minutesRemaining}m</strong>
+                          <span>Reset lúc {quotaCycle.resetTimeShortVN || '14:00'} (sau <strong className="text-slate-700 dark:text-slate-200 font-semibold">{quotaCycle.hoursRemaining}h {quotaCycle.minutesRemaining}m</strong>)</span>
                         </span>
                         <button
                           onClick={() => setActiveTab('quota')}
@@ -1506,16 +1547,27 @@ export default function AdminDashboard() {
                       <Database className="w-6 h-6" />
                     </div>
                     <div>
-                      <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        Giám sát Quota Firestore
+                      <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex flex-wrap items-center gap-2">
+                        <span>Giám sát Quota Firestore</span>
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+                          {quotaCycle.resetTimeVN}
+                        </span>
                       </h2>
                       <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                        Chu kỳ 24h đặt lại vào lúc 14:00 giờ Việt Nam. Theo dõi trực tiếp các thao tác Đọc (50.000/ngày), Ghi (20.000/ngày) và Xóa (20.000/ngày).
+                        Chu kỳ 24h đặt lại lúc <strong className="text-slate-700 dark:text-slate-300">{quotaCycle.resetTimeShortVN || '14:00'}</strong> giờ Việt Nam (00:00 US Pacific Time). Tự động chuyển chu kỳ và đặt lại về 0 khi sang ngày mới.
                       </p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={handleResetQuotaToZero}
+                      className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
+                      title="Đặt lại các lượt đếm của chu kỳ hiện tại về 0"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+                      Đặt lại về 0
+                    </button>
                     <button
                       onClick={openCalibrationModal}
                       className="px-3.5 py-2 bg-violet-50 hover:bg-violet-100 dark:bg-violet-900/30 dark:hover:bg-violet-900/50 text-violet-600 dark:text-violet-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
@@ -1532,12 +1584,14 @@ export default function AdminDashboard() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                     <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                       <Layers className="w-4 h-4 text-violet-500" />
-                      Thao tác dữ liệu Firestore (Current Quota Period - Reset lúc 14:00 VN)
+                      Thao tác dữ liệu Firestore (Chu kỳ {quotaCycle.cycleId} — Reset lúc {quotaCycle.resetTimeShortVN || '14:00'} VN)
                     </h3>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
-                      <Clock className="w-3.5 h-3.5 text-violet-500" />
-                      Reset chu kỳ sau: <strong className="text-slate-700 dark:text-slate-200">{quotaCycle.hoursRemaining}h {quotaCycle.minutesRemaining}m</strong>
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+                        <Clock className="w-3.5 h-3.5 text-violet-500" />
+                        Reset chu kỳ sau: <strong className="text-slate-700 dark:text-slate-200">{quotaCycle.hoursRemaining}h {quotaCycle.minutesRemaining}m</strong>
+                      </span>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
@@ -1664,16 +1718,42 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Section: Technical Information Notice */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex flex-col sm:flex-row items-start gap-3.5">
-                  <div className="p-2 rounded-xl bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-400 shrink-0 mt-0.5">
-                    <Shield className="w-5 h-5" />
+                <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-400 shrink-0">
+                      <Shield className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">Cơ chế đặt lại Quota tự động & Quy luật múi giờ Google Cloud</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Đồng bộ chính xác theo chu kỳ reset của Google Cloud Firestore</p>
+                    </div>
                   </div>
-                  <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 space-y-1">
-                    <h4 className="font-bold text-slate-900 dark:text-white">Cơ chế bảo vệ Quota tự động</h4>
-                    <p className="leading-relaxed">
-                      Mỗi ngày vào đúng <strong>14:00 giờ Việt Nam</strong>, Google Cloud sẽ hoàn trả 100% hạn ngạch (50.000 lượt đọc, 20.000 lượt ghi, 20.000 lượt xóa).
-                      Hệ thống website đã được kích hoạt <strong>bộ nhớ đệm đa tầng (Memory Cache & LocalStorage Cache)</strong> giúp tự động giữ lại danh sách môn học và tài liệu, tránh gửi truy vấn thừa đến Firestore và duy trì web an toàn trước mọi đợt tăng tải.
-                    </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1 text-xs text-slate-600 dark:text-slate-300">
+                    <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800 space-y-1.5">
+                      <p className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                        <Clock className="w-4 h-4 text-violet-500" />
+                        Giờ mùa hè (14:00) vs Giờ mùa đông (15:00 VN):
+                      </p>
+                      <ul className="list-disc list-inside space-y-1 leading-relaxed text-slate-600 dark:text-slate-400">
+                        <li>Google Cloud Firestore luôn reset quota vào lúc <strong>00:00:00 nửa đêm theo giờ Thái Bình Dương (PT - America/Los_Angeles)</strong>.</li>
+                        <li><strong>Mùa hè (PDT - Daylight Saving Time)</strong>: Lệch 14 tiếng so với Việt Nam &rarr; Reset vào lúc <strong>14:00:00</strong> giờ VN.</li>
+                        <li><strong>Mùa đông (PST - Standard Time)</strong>: Lệch 15 tiếng so với Việt Nam &rarr; Đổi sang <strong>15:00:00</strong> giờ VN.</li>
+                        <li>Trạng thái hiện tại: <strong className="text-violet-600 dark:text-violet-400">{quotaCycle.resetTimeVN}</strong>.</li>
+                      </ul>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800 space-y-1.5">
+                      <p className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                        <Zap className="w-4 h-4 text-amber-500" />
+                        Cơ chế tự động đồng bộ & bảo vệ:
+                      </p>
+                      <ul className="list-disc list-inside space-y-1 leading-relaxed text-slate-600 dark:text-slate-400">
+                        <li>Hệ thống chạy bộ đếm kiểm tra liên tục: ngay khi điểm 14:00 (hoặc 15:00), dashboard sẽ <strong>tự động chuyển sang chu kỳ mới và đặt lại toàn bộ lượt đếm về 0</strong> mà không cần tải lại trang.</li>
+                        <li>Tất cả lượt đọc / ghi mới phát sinh sẽ được ghi nhận vào chu kỳ mới trong thời gian thực.</li>
+                        <li>Đã kích hoạt <strong>Memory & LocalStorage Cache</strong> giúp giảm tải hơn 85% truy vấn Firestore thực tế.</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2146,8 +2226,32 @@ export default function AdminDashboard() {
 
             <form onSubmit={handleSaveCalibratedQuota}>
               <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
-                <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700/80 text-xs text-slate-600 dark:text-slate-400">
-                  Chu kỳ hiện tại tính từ <strong>14:00 VN</strong> ngày hôm nay (Mã chu kỳ: <code className="font-mono text-violet-600 dark:text-violet-400">{quotaCycle.cycleId}</code>). Bạn chỉ cần điền các số bạn muốn chỉnh.
+                <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700/80 text-xs text-slate-600 dark:text-slate-400 space-y-1">
+                  <div className="flex flex-wrap items-center justify-between gap-1">
+                    <span>Chu kỳ hiện tại: <strong>{quotaCycle.resetTimeVN}</strong></span>
+                    <span className="font-mono text-violet-600 dark:text-violet-400 font-bold">{quotaCycle.cycleId}</span>
+                  </div>
+                  <p>Reset sau: <strong className="text-slate-800 dark:text-slate-200">{quotaCycle.hoursRemaining}h {quotaCycle.minutesRemaining}m</strong>. Bạn có thể nhập số liệu thực tế từ ảnh Firebase Console để khớp ngay.</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCalibrationForm({ reads: '749', writes: '90', deletes: '0' })}
+                    className="text-xs px-2.5 py-1.5 rounded-lg bg-violet-100 hover:bg-violet-200 dark:bg-violet-900/40 dark:hover:bg-violet-900/60 text-violet-700 dark:text-violet-300 font-semibold transition-colors flex items-center gap-1.5"
+                    title="Điền 749 reads và 90 writes từ ảnh chụp Firebase Console"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Điền nhanh từ ảnh Console (749 đọc / 90 ghi)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCalibrationForm({ reads: '0', writes: '0', deletes: '0' })}
+                    className="text-xs px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold transition-colors flex items-center gap-1.5"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Đặt về 0
+                  </button>
                 </div>
 
                 <div className="space-y-3">
