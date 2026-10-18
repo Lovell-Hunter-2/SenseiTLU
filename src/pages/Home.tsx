@@ -1249,10 +1249,10 @@ export default function Home() {
         </div>
       )}
 
-      {/* Floating Workspace Button */}
+      {/* Floating Workspace Button (elevated on mobile) */}
       <Link
         to="/workspace"
-        className="fixed bottom-6 left-6 z-40 flex items-center justify-center p-3 sm:p-4 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
+        className="fixed bottom-24 md:bottom-6 left-4 sm:left-6 z-40 flex items-center justify-center p-3 sm:p-4 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
         title="Vào Study Space"
       >
         <div className="flex items-center justify-center gap-2">
