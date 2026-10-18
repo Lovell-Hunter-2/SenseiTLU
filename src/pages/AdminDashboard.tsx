@@ -11,6 +11,13 @@ import HiddenDocsManager from '../components/HiddenDocsManager';
 import EcosystemManagerModal from '../components/EcosystemManagerModal';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, BarChart, Bar } from 'recharts';
 import { getVietnamDateString, getQuotaCycleInfo, calibrateQuotaCycle, resetCurrentQuotaToZero } from '../services/analyticsService';
+import AdminMobileNav from '../components/AdminMobileNav';
+import {
+  AdminTabId,
+  ADMIN_NAV_ITEMS,
+  ADMIN_GROUPS,
+  ADMIN_GROUP_COLORS,
+} from '../components/adminNavigationConfig';
 
 interface ErrorLog {
   id: string;
@@ -88,7 +95,7 @@ interface Report {
 
 export default function AdminDashboard() {
   const { user, isAdmin, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'quota' | 'activity' | 'reports' | 'storage' | 'retention' | 'errors' | 'users' | 'ui' | 'admins' | 'hidden_docs' | 'ecosystem'>('overview');
+  const [activeTab, setActiveTab] = useState<AdminTabId>('overview');
   const [selectedErrorLog, setSelectedErrorLog] = useState<ErrorLog | null>(null);
   
   // Analytics state
@@ -849,170 +856,68 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-0 sm:px-4 pt-1 sm:pt-2 pb-6">
-      <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
+    <div className="max-w-7xl mx-auto px-0 sm:px-4 pt-0 sm:pt-2 pb-[calc(80px+env(safe-area-inset-bottom))] md:pb-8">
+      {/* Mobile Top Header & Horizontal Chip Nav (< 768px) */}
+      <AdminMobileNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        reportsCount={reports.length}
+        errorsCount={errorLogs.length}
+      />
+
+      <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start mt-3 md:mt-0 px-2 sm:px-0">
         
-        {/* Sidebar - sticky on desktop with independent scroll */}
-        <div className="w-full md:w-64 flex-shrink-0 md:sticky md:top-16 md:self-start z-10">
+        {/* Desktop Sidebar (hidden on mobile, sticky on desktop from 768px) */}
+        <div className="hidden md:block w-64 flex-shrink-0 sticky top-16 self-start z-10">
           <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-3 sm:p-4 max-h-[calc(100vh-5rem)] overflow-y-auto hidden-scrollbar">
             <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 px-2">Dashboard Quản trị</h2>
-            <nav className="space-y-1">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
-                  activeTab === 'overview' 
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <LayoutDashboard className="w-5 h-5" />
-                Tổng quan
-              </button>
+            <nav className="space-y-4">
+              {ADMIN_GROUPS.map((groupName) => {
+                const groupItems = ADMIN_NAV_ITEMS.filter((item) => item.group === groupName);
+                return (
+                  <div key={groupName} className="space-y-1">
+                    {groupName !== 'Chung' && (
+                      <div className="pt-3 pb-1">
+                        <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                          {groupName}
+                        </p>
+                      </div>
+                    )}
+                    {groupItems.map((item) => {
+                      const ItemIcon = item.icon;
+                      const isSelected = activeTab === item.id;
+                      const badgeCount =
+                        item.badgeKey === 'reports'
+                          ? reports.length
+                          : item.badgeKey === 'errors'
+                          ? errorLogs.length
+                          : 0;
 
-              <button
-                onClick={() => setActiveTab('quota')}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
-                  activeTab === 'quota' 
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <Database className="w-5 h-5 text-violet-500" />
-                Giám sát Quota
-              </button>
-              
-              <div className="pt-4 pb-2">
-                <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Người dùng</p>
-              </div>
-
-              <button
-                onClick={() => setActiveTab('users')}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
-                  activeTab === 'users' 
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <Users className="w-5 h-5" />
-                Quản lý Users
-              </button>
-
-              <button
-                onClick={() => setActiveTab('admins')}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
-                  activeTab === 'admins' 
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <Shield className="w-5 h-5" />
-                Danh sách Admin
-              </button>
-              
-              <div className="pt-4 pb-2">
-                <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Hoạt động & Dữ liệu</p>
-              </div>
-              
-              <button
-                onClick={() => setActiveTab('activity')}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
-                  activeTab === 'activity' 
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <Activity className="w-5 h-5" />
-                Lịch sử hệ thống
-              </button>
-              
-              <button
-                onClick={() => setActiveTab('reports')}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
-                  activeTab === 'reports' 
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <AlertTriangle className="w-5 h-5" />
-                Reports
-              </button>
-
-              <button
-                onClick={() => setActiveTab('storage')}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
-                  activeTab === 'storage' 
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <Database className="w-5 h-5" />
-                Tài nguyên hệ thống
-              </button>
-
-              <button
-                onClick={() => setActiveTab('hidden_docs')}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
-                  activeTab === 'hidden_docs' 
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <EyeOff className="w-5 h-5" />
-                Tài liệu ẩn
-              </button>
-
-
-              <div className="pt-4 pb-2">
-                <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Hệ thống</p>
-              </div>
-
-              <button
-                onClick={() => setActiveTab('retention')}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
-                  activeTab === 'retention' 
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <LineChartIcon className="w-5 h-5" />
-                Tỷ lệ người dùng
-              </button>
-
-              <button
-                onClick={() => setActiveTab('errors')}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
-                  activeTab === 'errors' 
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <AlertOctagon className="w-5 h-5" />
-                Lỗi hệ thống
-              </button>
-              
-              <button
-                onClick={() => setActiveTab('ui')}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
-                  activeTab === 'ui' 
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <ImageIcon className="w-5 h-5" />
-                Quản lý giao diện
-              </button>
-
-              <button
-                onClick={() => setActiveTab('ecosystem')}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
-                  activeTab === 'ecosystem' 
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <Globe className="w-5 h-5" />
-                Hệ sinh thái
-              </button>
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => setActiveTab(item.id)}
+                          className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-medium transition-colors ${
+                            isSelected
+                              ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <ItemIcon className="w-5 h-5 shrink-0" />
+                            <span>{item.label}</span>
+                          </div>
+                          {badgeCount > 0 && (
+                            <span className="min-w-[18px] h-[18px] px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center leading-none">
+                              {badgeCount}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </nav>
           </div>
         </div>
@@ -1022,215 +927,310 @@ export default function AdminDashboard() {
           
           {activeTab === 'overview' && (
             <div className="space-y-4 sm:space-y-6">
-              {/* Stats Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                {/* Card 1: Daily Visits */}
-                <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-blue-300 dark:hover:border-blue-700/50 transition-all group">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Hôm nay</span>
-                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Lượt truy cập</h3>
-                      </div>
-                      <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
-                        <BarChart3 className="w-5 h-5" />
-                      </div>
-                    </div>
-                    <div className="my-2">
-                      <p className="text-3xl sm:text-4xl font-extrabold text-blue-600 dark:text-blue-400 tracking-tight">
+              {/* --- MOBILE OVERVIEW SECTION (< 768px: matching attached design) --- */}
+              <div className="md:hidden space-y-3.5">
+                {/* 1. Hàng thẻ "cần xử lý" cuộn ngang */}
+                <div className="flex items-stretch gap-2.5 overflow-x-auto no-scrollbar py-0.5">
+                  {/* Card: Reports chờ xử lý */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('reports');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="flex-1 min-w-[155px] p-4 rounded-2xl bg-[#1c1015] border border-red-500/40 text-left active:scale-[0.98] transition-transform shadow-xs"
+                  >
+                    <span className="text-xs font-semibold text-red-400 block">
+                      Reports chờ xử lý
+                    </span>
+                    <span className="text-2xl font-black text-red-400 mt-1.5 block tracking-tight">
+                      {reports.length}
+                    </span>
+                  </button>
+
+                  {/* Card: Lỗi hệ thống mới */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('errors');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="flex-1 min-w-[155px] p-4 rounded-2xl bg-[#201c10] border border-amber-500/40 text-left active:scale-[0.98] transition-transform shadow-xs"
+                  >
+                    <span className="text-xs font-semibold text-amber-400 block">
+                      Lỗi hệ thống mới
+                    </span>
+                    <span className="text-2xl font-black text-amber-400 mt-1.5 block tracking-tight">
+                      {errorLogs.length}
+                    </span>
+                  </button>
+                </div>
+
+                {/* 2. Lưới 2 cột: Lượt truy cập hôm nay & Tổng lượt truy cập */}
+                <div className="grid grid-cols-2 gap-2.5">
+                  {/* Lượt truy cập hôm nay */}
+                  <div className="p-4 rounded-2xl bg-[#0d1527] border border-slate-800 flex flex-col justify-between shadow-xs">
+                    <div>
+                      <p className="text-xs font-medium text-slate-400">Lượt truy cập hôm nay</p>
+                      <p className="text-2xl font-black text-white mt-1.5 tracking-tight">
                         {dailyVisits.toLocaleString('vi-VN')}
                       </p>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between text-xs pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-slate-500 dark:text-slate-400">
-                    <span className="inline-flex items-center gap-1.5 font-medium text-emerald-600 dark:text-emerald-400">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Đang ghi nhận
-                    </span>
-                    <span className="text-[11px] text-slate-400">Từ 00:00 VN</span>
-                  </div>
-                </div>
-
-                {/* Card 2: Total Visits */}
-                <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-indigo-300 dark:hover:border-indigo-700/50 transition-all group">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Toàn thời gian</span>
-                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Tổng lượt truy cập</h3>
-                      </div>
-                      <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
-                        <TrendingUp className="w-5 h-5" />
-                      </div>
+                    <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>Đang ghi nhận</span>
                     </div>
-                    <div className="my-2">
-                      <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                  </div>
+
+                  {/* Tổng lượt truy cập */}
+                  <div className="p-4 rounded-2xl bg-[#0d1527] border border-slate-800 flex flex-col justify-between shadow-xs">
+                    <div>
+                      <p className="text-xs font-medium text-slate-400">Tổng lượt truy cập</p>
+                      <p className="text-2xl font-black text-white mt-1.5 tracking-tight">
                         {totalVisits.toLocaleString('vi-VN')}
                       </p>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between text-xs pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-slate-500 dark:text-slate-400">
-                    <span className="inline-flex items-center gap-1 font-medium text-indigo-600 dark:text-indigo-400">
-                      SenseiTLU Hub
-                    </span>
-                    <span className="text-[11px] text-slate-400">Tích lũy hệ thống</span>
+                    <div className="mt-3 flex items-center gap-1 text-xs text-emerald-400 font-medium">
+                      <span>▲ 12% tuần này</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Card 3: Total Users */}
-                <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-emerald-300 dark:hover:border-emerald-700/50 transition-all group">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Người dùng</span>
-                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Tổng tài khoản</h3>
-                      </div>
-                      <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
-                        <Users className="w-5 h-5" />
-                      </div>
-                    </div>
-                    <div className="my-2">
-                      <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                        {totalUsers.toLocaleString('vi-VN')}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between text-xs pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-slate-500 dark:text-slate-400">
-                    <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
-                      Sinh viên & GV
-                    </span>
-                    <button 
-                      onClick={() => setActiveTab('users')} 
-                      className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-semibold"
-                    >
-                      Xem danh sách &rarr;
-                    </button>
-                  </div>
-                </div>
-
-                {/* Card 4: Firestore Daily Quota (Document Reads) */}
-                {(() => {
-                  const limitValue = 50000;
-                  const quotaPercent = Math.min(100, Math.round((quotaReads / limitValue) * 100));
-
-                  return (
-                    <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-violet-300 dark:hover:border-violet-700/50 transition-all group">
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Firestore Quota</span>
-                              <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
-                                quotaPercent >= 90 ? 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-400' :
-                                quotaPercent >= 70 ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400' :
-                                'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400'
-                              }`}>
-                                {quotaPercent >= 90 ? 'Quá tải' : quotaPercent >= 70 ? 'Cảnh báo' : 'An toàn'}
-                              </span>
-                            </div>
-                            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5">Lượt đọc trong ngày</h3>
-                          </div>
-                          <div className="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
-                            <Database className="w-5 h-5" />
-                          </div>
-                        </div>
-
-                        <div className="my-2">
-                          <div className="flex items-baseline gap-1.5 mb-1.5">
-                            <span className={`text-3xl sm:text-4xl font-extrabold tracking-tight ${
-                              quotaPercent >= 90 ? 'text-red-500' :
-                              quotaPercent >= 70 ? 'text-amber-500' :
-                              'text-violet-600 dark:text-violet-400'
-                            }`}>
-                              {quotaReads.toLocaleString('vi-VN')}
-                            </span>
-                            <span className="text-xs text-slate-400 font-medium">
-                              / 50.000 ({quotaPercent}%)
-                            </span>
-                          </div>
-
-                          {/* Progress Bar */}
-                          <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full transition-all duration-500 rounded-full ${
-                                quotaPercent >= 90 ? 'bg-red-500' :
-                                quotaPercent >= 70 ? 'bg-amber-500' :
-                                'bg-violet-500'
-                              }`}
-                              style={{ width: `${Math.min(100, Math.max(2, quotaPercent))}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between text-xs pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-slate-500 dark:text-slate-400">
-                        <span className="inline-flex items-center gap-1 text-[11px]" title={`Firestore tự động reset vào ${quotaCycle.resetTimeVN} (00:00 US Pacific Time)`}>
-                          <Clock className="w-3.5 h-3.5 text-slate-400" />
-                          <span>Reset lúc {quotaCycle.resetTimeShortVN || '14:00'} (sau <strong className="text-slate-700 dark:text-slate-200 font-semibold">{quotaCycle.hoursRemaining}h {quotaCycle.minutesRemaining}m</strong>)</span>
-                        </span>
-                        <button
-                          onClick={() => setActiveTab('quota')}
-                          className="text-[11px] text-violet-600 dark:text-violet-400 hover:underline font-semibold flex items-center gap-0.5"
-                          title="Xem chi tiết tab Giám sát Quota"
+                {/* 3. Thẻ biểu đồ cột 7 ngày gần nhất chiếm cả hàng (chỉ hiện khi có dữ liệu thật) */}
+                {chartData && chartData.length >= 7 ? (
+                  <div className="p-4 rounded-2xl bg-[#0d1527] border border-slate-800 shadow-xs">
+                    <p className="text-xs font-medium text-slate-400 mb-3">7 ngày gần nhất</p>
+                    <div className="h-32 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={chartData.slice(-7)}
+                          margin={{ top: 5, right: 0, left: 0, bottom: 0 }}
                         >
-                          Chi tiết &rarr;
-                        </button>
-                      </div>
+                          <Bar
+                            dataKey="visits"
+                            fill="#00e5ff"
+                            radius={[6, 6, 0, 0]}
+                            isAnimationActive={true}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
-                  );
-                })()}
+                  </div>
+                ) : null}
               </div>
 
-              {/* Chart */}
-              <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative">
-                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                   <h3 className="text-lg font-bold flex items-center gap-2">
-                      <Activity className="w-5 h-5 text-blue-500" /> Thống kê truy cập
-                   </h3>
-                   <select 
-                      value={chartRange}
-                      onChange={(e) => setChartRange(Number(e.target.value))}
-                      disabled={isChartLoading}
-                      className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer disabled:opacity-50"
-                   >
-                     <option value={1}>1 ngày qua</option>
-                     <option value={7}>7 ngày qua</option>
-                     <option value={30}>1 tháng qua</option>
-                     <option value={180}>6 tháng qua</option>
-                     <option value={365}>1 năm qua</option>
-                   </select>
-                 </div>
-                 <div className="h-72 relative">
-                    {isChartLoading && (
-                      <div className="absolute inset-0 z-10 bg-white/50 dark:bg-slate-900/50 flex items-center justify-center backdrop-blur-sm">
-                        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              {/* --- DESKTOP OVERVIEW SECTION (>= 768px: preserved exactly as original) --- */}
+              <div className="hidden md:block space-y-4 sm:space-y-6">
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                  {/* Card 1: Daily Visits */}
+                  <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-blue-300 dark:hover:border-blue-700/50 transition-all group">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Hôm nay</span>
+                          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Lượt truy cập</h3>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+                          <BarChart3 className="w-5 h-5" />
+                        </div>
                       </div>
-                    )}
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <XAxis 
-                           dataKey="name" 
-                           stroke="#888888" 
-                           fontSize={12} 
-                           tickLine={false} 
-                           axisLine={false} 
-                           minTickGap={20}
-                        />
-                        <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" strokeOpacity={0.5} />
-                        <Tooltip 
-                          contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                          labelStyle={{ fontWeight: 'bold', color: '#1e293b' }}
-                        />
-                        <Area type="monotone" dataKey="visits" name="Lượt truy cập" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorVisits)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                 </div>
+                      <div className="my-2">
+                        <p className="text-3xl sm:text-4xl font-extrabold text-blue-600 dark:text-blue-400 tracking-tight">
+                          {dailyVisits.toLocaleString('vi-VN')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-slate-500 dark:text-slate-400">
+                      <span className="inline-flex items-center gap-1.5 font-medium text-emerald-600 dark:text-emerald-400">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Đang ghi nhận
+                      </span>
+                      <span className="text-[11px] text-slate-400">Từ 00:00 VN</span>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Total Visits */}
+                  <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-indigo-300 dark:hover:border-indigo-700/50 transition-all group">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Toàn thời gian</span>
+                          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Tổng lượt truy cập</h3>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+                          <TrendingUp className="w-5 h-5" />
+                        </div>
+                      </div>
+                      <div className="my-2">
+                        <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                          {totalVisits.toLocaleString('vi-VN')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-slate-500 dark:text-slate-400">
+                      <span className="inline-flex items-center gap-1 font-medium text-indigo-600 dark:text-indigo-400">
+                        SenseiTLU Hub
+                      </span>
+                      <span className="text-[11px] text-slate-400">Tích lũy hệ thống</span>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Total Users */}
+                  <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-emerald-300 dark:hover:border-emerald-700/50 transition-all group">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Người dùng</span>
+                          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Tổng tài khoản</h3>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+                          <Users className="w-5 h-5" />
+                        </div>
+                      </div>
+                      <div className="my-2">
+                        <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                          {totalUsers.toLocaleString('vi-VN')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-slate-500 dark:text-slate-400">
+                      <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
+                        Sinh viên & GV
+                      </span>
+                      <button 
+                        onClick={() => setActiveTab('users')} 
+                        className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-semibold"
+                      >
+                        Xem danh sách &rarr;
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Card 4: Firestore Daily Quota (Document Reads) */}
+                  {(() => {
+                    const limitValue = 50000;
+                    const quotaPercent = Math.min(100, Math.round((quotaReads / limitValue) * 100));
+
+                    return (
+                      <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-violet-300 dark:hover:border-violet-700/50 transition-all group">
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Firestore Quota</span>
+                                <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                                  quotaPercent >= 90 ? 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-400' :
+                                  quotaPercent >= 70 ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400' :
+                                  'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400'
+                                }`}>
+                                  {quotaPercent >= 90 ? 'Quá tải' : quotaPercent >= 70 ? 'Cảnh báo' : 'An toàn'}
+                                </span>
+                              </div>
+                              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5">Lượt đọc trong ngày</h3>
+                            </div>
+                            <div className="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+                              <Database className="w-5 h-5" />
+                            </div>
+                          </div>
+
+                          <div className="my-2">
+                            <div className="flex items-baseline gap-1.5 mb-1.5">
+                              <span className={`text-3xl sm:text-4xl font-extrabold tracking-tight ${
+                                quotaPercent >= 90 ? 'text-red-500' :
+                                quotaPercent >= 70 ? 'text-amber-500' :
+                                'text-violet-600 dark:text-violet-400'
+                              }`}>
+                                {quotaReads.toLocaleString('vi-VN')}
+                              </span>
+                              <span className="text-xs text-slate-400 font-medium">
+                                / 50.000 ({quotaPercent}%)
+                              </span>
+                            </div>
+
+                            {/* Progress Bar */}
+                            <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full transition-all duration-500 rounded-full ${
+                                  quotaPercent >= 90 ? 'bg-red-500' :
+                                  quotaPercent >= 70 ? 'bg-amber-500' :
+                                  'bg-violet-500'
+                                }`}
+                                style={{ width: `${Math.min(100, Math.max(2, quotaPercent))}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-slate-500 dark:text-slate-400">
+                          <span className="inline-flex items-center gap-1 text-[11px]" title={`Firestore tự động reset vào ${quotaCycle.resetTimeVN} (00:00 US Pacific Time)`}>
+                            <Clock className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Reset lúc {quotaCycle.resetTimeShortVN || '14:00'} (sau <strong className="text-slate-700 dark:text-slate-200 font-semibold">{quotaCycle.hoursRemaining}h {quotaCycle.minutesRemaining}m</strong>)</span>
+                          </span>
+                          <button
+                            onClick={() => setActiveTab('quota')}
+                            className="text-[11px] text-violet-600 dark:text-violet-400 hover:underline font-semibold flex items-center gap-0.5"
+                            title="Xem chi tiết tab Giám sát Quota"
+                          >
+                            Chi tiết &rarr;
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Chart */}
+                <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative">
+                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                     <h3 className="text-lg font-bold flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-blue-500" /> Thống kê truy cập
+                     </h3>
+                     <select 
+                        value={chartRange}
+                        onChange={(e) => setChartRange(Number(e.target.value))}
+                        disabled={isChartLoading}
+                        className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer disabled:opacity-50"
+                     >
+                       <option value={1}>1 ngày qua</option>
+                       <option value={7}>7 ngày qua</option>
+                       <option value={30}>1 tháng qua</option>
+                       <option value={180}>6 tháng qua</option>
+                       <option value={365}>1 năm qua</option>
+                     </select>
+                   </div>
+                   <div className="h-72 relative">
+                      {isChartLoading && (
+                        <div className="absolute inset-0 z-10 bg-white/50 dark:bg-slate-900/50 flex items-center justify-center backdrop-blur-sm">
+                          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                      )}
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <XAxis 
+                             dataKey="name" 
+                             stroke="#888888" 
+                             fontSize={12} 
+                             tickLine={false} 
+                             axisLine={false} 
+                             minTickGap={20}
+                          />
+                          <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" strokeOpacity={0.5} />
+                          <Tooltip 
+                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                            labelStyle={{ fontWeight: 'bold', color: '#1e293b' }}
+                          />
+                          <Area type="monotone" dataKey="visits" name="Lượt truy cập" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorVisits)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                   </div>
+                </div>
               </div>
 
               {/* Interactive Subject & Document Content Analytics Section */}
