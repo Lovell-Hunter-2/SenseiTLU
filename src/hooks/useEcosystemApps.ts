@@ -24,22 +24,6 @@ export const DEFAULT_ECOSYSTEM_APPS: EcosystemAppItem[] = [
     colorTheme: 'blue',
   },
   {
-    id: 'thi-online-ai',
-    name: 'Thi online AI',
-    description: 'Luyện đề thi trắc nghiệm AI',
-    path: '/mock-exam',
-    iconName: 'Brain',
-    colorTheme: 'rose',
-  },
-  {
-    id: 'lich-hoc',
-    name: 'Lịch học',
-    description: 'Xem thời khóa biểu & lịch thi',
-    url: 'http://dangkyhoc.tlu.edu.vn/',
-    iconName: 'Calendar',
-    colorTheme: 'violet',
-  },
-  {
     id: 'hoi-ai',
     name: 'Hỏi AI',
     description: 'Trợ lý thông minh hỗ trợ giải đáp',
@@ -57,13 +41,24 @@ export const DEFAULT_ECOSYSTEM_APPS: EcosystemAppItem[] = [
   },
 ];
 
+// Helper to filter out removed/obsolete apps
+const isAllowedApp = (app: EcosystemAppItem) => {
+  return (
+    app.id !== 'lich-hoc' &&
+    app.id !== 'thi-online-ai' &&
+    app.name !== 'Lịch học' &&
+    app.name !== 'Thi online AI'
+  );
+};
+
 export function useEcosystemApps() {
   const [apps, setApps] = useState<EcosystemAppItem[]>(() => {
     const cached = getCachedData<EcosystemAppItem[]>('ecosystem_apps');
     if (cached && cached.length > 0) {
-      const merged = [...cached];
+      const validCached = cached.filter(isAllowedApp);
+      const merged = [...validCached];
       for (const def of DEFAULT_ECOSYSTEM_APPS) {
-        if (!merged.some(a => a.id === def.id)) {
+        if (!merged.some((a) => a.id === def.id)) {
           merged.push(def);
         }
       }
@@ -79,16 +74,20 @@ export function useEcosystemApps() {
         setLoading(true);
         const q = query(collection(db, 'ecosystem'), orderBy('createdAt', 'asc'));
         const snapshot = await getDocs(q);
-        const appsData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as EcosystemAppItem[];
+        const appsData = snapshot.docs
+          .map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as EcosystemAppItem[];
 
-        if (appsData.length > 0) {
-          // Ensure essential apps (study-space, ho-tro) are always included
-          const merged = [...appsData];
+        // Filter out any duplicate or unwanted apps
+        const validFetched = appsData.filter(isAllowedApp);
+
+        if (validFetched.length > 0) {
+          // Ensure essential apps (study-space, ho-tro, hoi-ai) are present
+          const merged = [...validFetched];
           for (const def of DEFAULT_ECOSYSTEM_APPS) {
-            if (!merged.some(a => a.id === def.id)) {
+            if (!merged.some((a) => a.id === def.id)) {
               merged.push(def);
             }
           }
@@ -96,14 +95,16 @@ export function useEcosystemApps() {
           setCachedData('ecosystem_apps', merged, CacheTTL.VERY_LONG);
         } else {
           setApps(DEFAULT_ECOSYSTEM_APPS);
+          setCachedData('ecosystem_apps', DEFAULT_ECOSYSTEM_APPS, CacheTTL.VERY_LONG);
         }
       } catch (err) {
         console.warn('Error fetching ecosystem apps from Firestore, using fallback:', err);
         const stale = getCachedData<EcosystemAppItem[]>('ecosystem_apps', true);
         if (stale && stale.length > 0) {
-          const merged = [...stale];
+          const validStale = stale.filter(isAllowedApp);
+          const merged = [...validStale];
           for (const def of DEFAULT_ECOSYSTEM_APPS) {
-            if (!merged.some(a => a.id === def.id)) {
+            if (!merged.some((a) => a.id === def.id)) {
               merged.push(def);
             }
           }
