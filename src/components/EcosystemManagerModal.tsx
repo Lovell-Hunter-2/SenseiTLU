@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { X, Plus, Edit2, Trash2, Calendar, Calculator, Users, Briefcase, LineChart, Monitor, Smartphone, Globe, Cloud, Code, Brain, Bot, Layers, BookOpen } from "lucide-react";
+import { X, Plus, Edit2, Trash2, Calendar, Calculator, Users, Briefcase, LineChart, Monitor, Smartphone, Globe, Cloud, Code, Brain, Bot, Layers, BookOpen, MessageCircle } from "lucide-react";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 
 export const ECOSYSTEM_ICONS: Record<string, React.FC<any>> = {
-  Calendar, Calculator, Users, Briefcase, LineChart, Monitor, Smartphone, Globe, Cloud, Code, Brain, Bot, Layers, BookOpen
+  Calendar, Calculator, Users, Briefcase, LineChart, Monitor, Smartphone, Globe, Cloud, Code, Brain, Bot, Layers, BookOpen, MessageCircle
 };
 
 export const ECOSYSTEM_COLORS = [
