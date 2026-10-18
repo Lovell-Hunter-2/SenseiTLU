@@ -66,3 +66,42 @@
     100% { transform: translateY(40px) rotate(360deg) translateX(20px); opacity: 0; }
   }
 }
+
+/* Authentic Font-Preserving Handwriting Stroke Animation (Single-layer, zero blur, exact native font) */
+@keyframes svgTextHandwriting {
+  0% {
+    stroke-dashoffset: 160;
+    fill-opacity: 0;
+    stroke-opacity: 0;
+  }
+  10% {
+    stroke-opacity: 1;
+  }
+  65% {
+    stroke-dashoffset: 0;
+    fill-opacity: 0.15;
+    stroke-opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    fill-opacity: 1;
+    stroke-opacity: 0;
+  }
+}
+
+.handwriting-char {
+  stroke-dasharray: 160;
+  stroke-dashoffset: 160;
+  animation: svgTextHandwriting 0.38s cubic-bezier(0.3, 0, 0.2, 1) forwards;
+  animation-delay: var(--hw-delay, 0s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .handwriting-char {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+    fill-opacity: 1 !important;
+    stroke-opacity: 0 !important;
+  }
+}
+
