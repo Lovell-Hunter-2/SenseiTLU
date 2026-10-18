@@ -46,6 +46,7 @@ export const DEFAULT_ECOSYSTEM_APPS: EcosystemAppItem[] = [
     iconName: 'Bot',
     colorTheme: 'emerald',
     isSpecialAction: 'ai-assistant',
+  },
   {
     id: 'ho-tro',
     name: 'Hỗ trợ',
