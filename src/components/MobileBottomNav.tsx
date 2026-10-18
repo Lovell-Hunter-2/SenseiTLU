@@ -120,6 +120,15 @@ export const MobileBottomNav: React.FC = () => {
     }
   };
 
+  const handleHomeClick = () => {
+    if (isOpen || isClosing) {
+      handleClose();
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    document.documentElement.scrollTo?.({ top: 0, behavior: 'smooth' });
+    document.body.scrollTo?.({ top: 0, behavior: 'smooth' });
+  };
+
   // Helper to check active state of bottom tabs
   const isTabActive = (tabId: string, path: string) => {
     if (tabId === 'ecosystem') {
@@ -228,16 +237,21 @@ export const MobileBottomNav: React.FC = () => {
                   {/* Elevated Circle 58px */}
                   <Link
                     to="/"
-                    className="absolute -top-[22px] w-[58px] h-[58px] rounded-full bg-gradient-to-tr from-[#00c6ff] via-[#00e5ff] to-[#22d3ee] flex items-center justify-center border-[3.5px] border-[#0a1120] shadow-[0_0_20px_rgba(0,229,255,0.42)] active:scale-95 transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300"
+                    onClick={handleHomeClick}
+                    className="absolute -top-[22px] w-[58px] h-[58px] rounded-full bg-gradient-to-tr from-[#00c6ff] via-[#00e5ff] to-[#22d3ee] flex items-center justify-center border-[3.5px] border-[#0a1120] shadow-[0_0_20px_rgba(0,229,255,0.42)] active:scale-95 transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cyan-300 cursor-pointer"
                     aria-label="Trang chủ"
                   >
                     <Home className="w-[27px] h-[27px] text-[#090f1d] stroke-[2.3]" />
                   </Link>
 
                   {/* Label "Trang chủ" positioned below elevated button */}
-                  <span className="text-[11px] font-medium text-cyan-400 tracking-tight leading-none mt-auto">
+                  <Link
+                    to="/"
+                    onClick={handleHomeClick}
+                    className="text-[11px] font-medium text-cyan-400 tracking-tight leading-none mt-auto hover:text-cyan-300 active:scale-95 transition-transform cursor-pointer"
+                  >
                     Trang chủ
-                  </span>
+                  </Link>
                 </div>
               );
             }
