@@ -91,6 +91,8 @@ import {
   LogIn,
   Pin,
   RefreshCw,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
@@ -325,6 +327,7 @@ export default function Home() {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const isFetchingRef = useRef(false);
   const PAGE_SIZE = 12;
+  const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchingRemote, setSearchingRemote] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -440,7 +443,7 @@ export default function Home() {
       const finalSubs = Array.from(subsMap.values());
       if (finalSubs.length > 0) {
         setSubjects(finalSubs);
-        setCachedData("home_subjects_list", finalSubs, CacheTTL.MEDIUM);
+        setCachedData("home_subjects_list", finalSubs, CacheTTL.VERY_LONG);
         try {
           localStorage.setItem("sensei_cached_subjects", JSON.stringify(finalSubs));
           localStorage.setItem("sensei_cached_subjects_count", String(finalSubs.length));
@@ -496,8 +499,8 @@ export default function Home() {
     fetchInitial(false);
   }, []);
 
-  const loadMoreSubjects = async () => {
-    if (isFetchingRef.current || !hasMore || !lastDoc || searchQuery.trim()) return;
+  const loadMoreSubjects = async (): Promise<boolean> => {
+    if (isFetchingRef.current || !hasMore || !lastDoc) return false;
     try {
       isFetchingRef.current = true;
       setIsLoadingMore(true);
@@ -513,68 +516,53 @@ export default function Home() {
         ...doc.data(),
       }));
 
+      let hasMoreItems = snapshot.docs.length === PAGE_SIZE;
+
       setSubjects((prev) => {
         const existingIds = new Set(prev.map((s) => s.id));
         const filteredNew = newSubs.filter((s) => !existingIds.has(s.id));
-        return [...prev, ...filteredNew];
+        const updated = [...prev, ...filteredNew];
+        setCachedData("home_subjects_list", updated, CacheTTL.VERY_LONG);
+        try {
+          localStorage.setItem("sensei_cached_subjects", JSON.stringify(updated));
+        } catch (e) {}
+        return updated;
       });
 
       setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-      setHasMore(snapshot.docs.length === PAGE_SIZE);
+      setHasMore(hasMoreItems);
+      return true;
     } catch (err) {
       console.error("Error loading more subjects:", err);
+      return false;
     } finally {
       setIsLoadingMore(false);
       isFetchingRef.current = false;
     }
   };
 
-  // IntersectionObserver for pre-fetching: triggers ~350px before reaching the end
+  // Reset to page 1 whenever user searches
   useEffect(() => {
-    const target = loadMoreRef.current;
-    if (!target) return;
+    setCurrentPage(1);
+  }, [searchQuery]);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMoreSubjects();
-        }
-      },
-      {
-        rootMargin: "350px", // Pre-fetch 350px before entering viewport (so the next row is ready)
-        threshold: 0,
-      }
-    );
+  const handlePageChange = async (targetPage: number) => {
+    if (targetPage < 1 || targetPage === currentPage) return;
 
-    observer.observe(target);
-    return () => {
-      observer.disconnect();
-    };
-  }, [lastDoc, hasMore, searchQuery]);
+    // Check if target page needs more items loaded from server
+    const neededCount = targetPage * PAGE_SIZE;
+    if (subjects.length < neededCount && hasMore && !searchQuery.trim()) {
+      await loadMoreSubjects();
+    }
 
-  // When searching, fetch all subjects once if not already fetched all, so search doesn't miss subjects
-  useEffect(() => {
-    if (!searchQuery.trim()) return;
+    setCurrentPage(targetPage);
 
-    const fetchAllForSearch = async () => {
-      if (!hasMore || searchingRemote) return;
-      try {
-        setSearchingRemote(true);
-        const q = query(collection(db, "subjects"), orderBy("name", "asc"));
-        const snapshot = await getDocs(q);
-        const allSubs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setSubjects(allSubs);
-        setHasMore(false);
-      } catch (e) {
-        console.error("Search fetch all error:", e);
-      } finally {
-        setSearchingRemote(false);
-      }
-    };
-
-    const timer = setTimeout(fetchAllForSearch, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery, hasMore, searchingRemote]);
+    // Smoothly scroll to the top of the subjects section
+    const elem = document.getElementById("subjects-section");
+    if (elem) {
+      elem.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   const filteredSubjects = subjects
     .filter(
@@ -599,6 +587,23 @@ export default function Home() {
       // 3. Alphabetical order by name
       return (a.name || "").localeCompare(b.name || "", "vi");
     });
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(
+      (searchQuery.trim()
+        ? filteredSubjects.length
+        : totalSubjectsCount > 0
+        ? totalSubjectsCount
+        : subjects.length) / PAGE_SIZE
+    )
+  );
+
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const endIndex = startIndex + PAGE_SIZE;
+  const displayedSubjects = searchQuery.trim()
+    ? filteredSubjects
+    : filteredSubjects.slice(startIndex, endIndex);
 
   const toggleFavorite = (subjectId: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -806,7 +811,7 @@ export default function Home() {
       </div>
 
       {/* Subjects Section */}
-      <div className="space-y-4 relative z-10">
+      <div id="subjects-section" className="space-y-4 relative z-10 scroll-mt-20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
@@ -854,7 +859,7 @@ export default function Home() {
               <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-3" />
               <p className="text-slate-500 text-sm">Đang tải danh sách môn học...</p>
             </div>
-          ) : filteredSubjects.length === 0 ? (
+          ) : displayedSubjects.length === 0 ? (
             <div className="col-span-full py-16 flex flex-col items-center justify-center text-center">
               <div className="w-32 h-32 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 animate-bounce shadow-lg mt-8">
                 <span className="text-6xl">{quotaExceeded ? "⚡" : "👻"}</span>
@@ -869,7 +874,7 @@ export default function Home() {
               </p>
             </div>
           ) : (
-            filteredSubjects.map((subject) => {
+            displayedSubjects.map((subject) => {
               const Icon = iconMap[subject.iconName] || Book;
               const isFav = favorites.includes(subject.id);
               const isPriority = Boolean(subject.isPriority);
@@ -975,17 +980,82 @@ export default function Home() {
           )}
         </div>
 
-        {/* Infinite Scroll Sentinel & Pre-fetch Status */}
-        {hasMore && !searchQuery.trim() && (
-          <div
-            ref={loadMoreRef}
-            className="w-full py-8 flex flex-col items-center justify-center text-slate-400"
-          >
-            {isLoadingMore && (
-              <div className="flex items-center gap-2 text-sm text-blue-500 font-medium animate-pulse">
-                <Loader2 className="w-4 h-4 animate-spin" /> Đang tải thêm môn học...
+        {/* Pagination & Load More Controls */}
+        {!searchQuery.trim() && (
+          <div className="pt-6 pb-4 border-t border-slate-200/60 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Range info */}
+            <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+              Đang xem <strong className="text-slate-800 dark:text-slate-200">{filteredSubjects.length > 0 ? (currentPage - 1) * PAGE_SIZE + 1 : 0} - {Math.min(filteredSubjects.length, currentPage * PAGE_SIZE)}</strong> trên tổng số <strong className="text-slate-800 dark:text-slate-200">{totalSubjectsCount > 0 ? totalSubjectsCount : subjects.length}</strong> môn học
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage <= 1 || isLoadingMore}
+                className="px-3 py-2 rounded-xl text-xs sm:text-sm font-medium border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
+                title="Trang trước"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Trang trước</span>
+              </button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                  .map((p, idx, arr) => {
+                    const prevP = arr[idx - 1];
+                    const showEllipsis = prevP && p - prevP > 1;
+                    return (
+                      <React.Fragment key={p}>
+                        {showEllipsis && (
+                          <span className="px-1 text-xs text-slate-400">...</span>
+                        )}
+                        <button
+                          onClick={() => handlePageChange(p)}
+                          disabled={isLoadingMore}
+                          className={`w-9 h-9 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                            currentPage === p
+                              ? "bg-cyan-400 hover:bg-cyan-500 text-slate-950 font-bold shadow-xs"
+                              : "border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      </React.Fragment>
+                    );
+                  })}
               </div>
-            )}
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={(currentPage >= totalPages && !hasMore) || isLoadingMore}
+                className="px-3 py-2 rounded-xl text-xs sm:text-sm font-medium border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
+                title="Trang sau"
+              >
+                <span className="hidden sm:inline">Trang sau</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              {/* Explicit Load More option if more items exist on server */}
+              {hasMore && (
+                <button
+                  onClick={() => loadMoreSubjects()}
+                  disabled={isLoadingMore}
+                  className="ml-2 px-3 py-2 rounded-xl text-xs font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800 transition-all flex items-center gap-1.5 cursor-pointer"
+                  title="Tải thêm 12 môn học tiếp theo từ máy chủ"
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Đang tải...</span>
+                    </>
+                  ) : (
+                    <span>+ Tải thêm 12 môn</span>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
