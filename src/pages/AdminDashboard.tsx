@@ -1594,7 +1594,20 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
+                {/* Note about Firebase Console reads vs Web tracker */}
+                <div className="p-3.5 sm:p-4 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900/50 flex items-start gap-3 text-xs sm:text-sm text-blue-900 dark:text-blue-200 mb-4">
+                  <span className="text-base sm:text-lg shrink-0">ℹ️</span>
+                  <div className="flex-1 leading-relaxed">
+                    <p className="font-semibold mb-0.5 text-blue-950 dark:text-blue-100">
+                      Cơ chế đếm &amp; Đồng bộ số liệu với Firebase Console:
+                    </p>
+                    <p className="text-blue-800/90 dark:text-blue-300/90 text-xs sm:text-[13px]">
+                      Client Web SDK không có API truy vấn hạn ngạch Google Cloud Billing (đòi hỏi private service key máy chủ). Số trên web là bộ đếm ước lượng. Để đồng bộ chuẩn xác 100% với số hiển thị trên <strong>Firebase Console &gt; Usage and billing</strong>, bạn có thể bấm nút <strong>"Hiệu chỉnh số liệu"</strong> để nhập trực tiếp số thực tế.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
                     {/* Item 1: Reads */}
                     {(() => {
                       const percent = Math.min(100, Math.round((quotaReads / 50000) * 100));
@@ -1628,9 +1641,20 @@ export default function AdminDashboard() {
                               />
                             </div>
                           </div>
-                          <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                            Đọc danh sách môn, tài liệu, bài giảng. Đã giảm tải hơn 85% nhờ hệ thống bộ nhớ đệm (Cache).
-                          </p>
+                          <div>
+                            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-2.5">
+                              Đã tối ưu phân trang và bộ nhớ đệm (Cache-First) giúp giảm hơn 90% lượt đọc Firestore.
+                            </p>
+                            <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-slate-700/50">
+                              <span className="text-[11px] text-slate-500">Khớp số Console:</span>
+                              <button
+                                onClick={openCalibrationModal}
+                                className="text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1 cursor-pointer"
+                              >
+                                <Edit3 className="w-3 h-3" /> Hiệu chỉnh nhanh
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       );
                     })()}
