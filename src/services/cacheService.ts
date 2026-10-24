@@ -19,9 +19,10 @@ const CACHE_PREFIX = 'sensei_cache_v1_';
 
 export const CacheTTL = {
   SHORT: 5 * 60 * 1000,          // 5 minutes (rapidly changing)
-  MEDIUM: 15 * 60 * 1000,       // 15 minutes (documents, home subjects)
-  LONG: 30 * 60 * 1000,         // 30 minutes (subject detail, search index)
-  VERY_LONG: 2 * 60 * 60 * 1000 // 2 hours (ecosystem, hero settings)
+  MEDIUM: 30 * 60 * 1000,        // 30 minutes (documents, lists)
+  LONG: 2 * 60 * 60 * 1000,      // 2 hours (subject detail, search index)
+  VERY_LONG: 6 * 60 * 60 * 1000, // 6 hours (home subjects, ecosystem)
+  DAY: 24 * 60 * 60 * 1000       // 24 hours (system settings, catalog index)
 };
 
 /**
