@@ -11,6 +11,7 @@ import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { ScreenshotHelper } from './ScreenshotHelper';
 import { AIPersonalizeModal } from './AIPersonalizeModal';
+import { getCachedData, setCachedData, CacheTTL } from '../services/cacheService';
 
 // Dynamically import PDF.js via CDN to avoid package size
 const loadPdfJs = (): Promise<any> => {
@@ -116,51 +117,60 @@ export function AIAssistant({ isVisible, onClose, onMinimize }: AIAssistantProps
   }, [user, isVisible]);
 
   useEffect(() => {
-    const fetchSubjectsAndDocs = async () => {
-      try {
-        const subjectsSnapshot = await getDocs(collection(db, 'subjects'));
-        const docsSnapshot = await getDocs(collection(db, 'documents'));
-        
-        const docsBySubject: Record<string, any[]> = {};
-        docsSnapshot.docs.forEach(docSnap => {
-          const data = docSnap.data();
-          if (data.subjectId) {
-            if (!docsBySubject[data.subjectId]) {
-              docsBySubject[data.subjectId] = [];
-            }
-            docsBySubject[data.subjectId].push(data);
-          }
-        });
+    // Only fetch when user actually opens AI Assistant
+    if (!isVisible) return;
 
+    const fetchSubjectsContext = async () => {
+      try {
+        // 1. Try memory/localStorage cache first (0 Firestore reads!)
+        const cached = getCachedData<any[]>('ai_assistant_subjects');
+        if (cached && Array.isArray(cached) && cached.length > 0) {
+          setSubjectsList(cached);
+          const listStr = cached.map(item => `- ${item.name} (Link: /subject/${item.id})`).join('\n');
+          setSubjectsStr(listStr);
+          return;
+        }
+
+        // 2. Try reusing subjects list already cached by Home.tsx
+        try {
+          const homeCached = localStorage.getItem('sensei_cached_subjects');
+          if (homeCached) {
+            const parsed = JSON.parse(homeCached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const list = parsed.map((item: any) => ({
+                id: item.id,
+                name: item.name,
+                documents: []
+              }));
+              setSubjectsList(list);
+              setCachedData('ai_assistant_subjects', list, CacheTTL.DAY);
+              const listStr = list.map(item => `- ${item.name} (Link: /subject/${item.id})`).join('\n');
+              setSubjectsStr(listStr);
+              return;
+            }
+          }
+        } catch (e) {}
+
+        // 3. Fallback: Query ONLY subjects collection once (NEVER query entire documents collection!)
+        const subjectsSnapshot = await getDocs(collection(db, 'subjects'));
         const list = subjectsSnapshot.docs.map(docSnap => ({
           id: docSnap.id,
           name: docSnap.data().name,
-          documents: docsBySubject[docSnap.id] || []
+          documents: []
         }));
         
         setSubjectsList(list);
+        setCachedData('ai_assistant_subjects', list, CacheTTL.DAY);
         
-        let listStr = "";
-        list.forEach(item => {
-          listStr += `- ${item.name} (Link: /subject/${item.id})\n`;
-          if (item.documents.length > 0) {
-            listStr += `  Các tài liệu trong môn này:\n`;
-            item.documents.forEach(doc => {
-              // Dùng link dẫn tới môn học như user mong muốn
-              listStr += `  + [${doc.type || 'Khác'}] ${doc.title} (Link: /subject/${item.id})\n`;
-            });
-          } else {
-            listStr += `  (Chưa có tài liệu)\n`;
-          }
-        });
-        
+        const listStr = list.map(item => `- ${item.name} (Link: /subject/${item.id})`).join('\n');
         setSubjectsStr(listStr);
       } catch (error) {
-        console.error("Lỗi khi fetch subject và docs cho AI", error);
+        console.error("Lỗi khi tải danh sách môn học cho AI:", error);
       }
     };
-    fetchSubjectsAndDocs();
-  }, []);
+
+    fetchSubjectsContext();
+  }, [isVisible]);
 
   const handleSend = async (textOverride?: string) => {
     // If the event object from React is passed accidentally, we don't want to use it
