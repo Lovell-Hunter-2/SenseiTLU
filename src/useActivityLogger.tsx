@@ -32,7 +32,7 @@ export async function logActivityEvent(userUid: string | undefined, action: stri
   }
 }
 
-// Hàm log riêng cho việc xem tài liệu để gom nhóm chung theo môn học trong ngày
+// Hàm log riêng cho việc xem tài liệu để gom nhóm chung theo môn học trong ngày (0 Firestore reads!)
 export async function logSubjectDocumentView(userUid: string | undefined, subjectId: string, subjectName: string, docTitle: string, path: string = '') {
   if (!userUid || !subjectId) return;
   try {
@@ -40,34 +40,18 @@ export async function logSubjectDocumentView(userUid: string | undefined, subjec
     const actDocId = `doc_view_${subjectId}_${today}`;
     const activityRef = doc(db, 'users', userUid, 'activities', actDocId);
     
-    // Log document globally
+    // Log document globally (increment counter)
     logDocumentView(docTitle, subjectName);
 
-    const docSnap = await getDoc(activityRef);
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      const existingDocs: string[] = data.viewedDocs || [];
-      if (!existingDocs.includes(docTitle)) {
-         const newDocs = [...existingDocs, docTitle];
-         await setDoc(activityRef, {
-           viewedDocs: newDocs,
-           action: `Xem ${newDocs.length} tài liệu`,
-           details: `Môn: ${subjectName} (${newDocs.join(', ')})`,
-           timestamp: Timestamp.now()
-         }, { merge: true });
-      } else {
-         await setDoc(activityRef, { timestamp: Timestamp.now() }, { merge: true });
-      }
-    } else {
-      await setDoc(activityRef, {
-        type: 'document_view',
-        action: 'Xem 1 tài liệu',
-        details: `Môn: ${subjectName} (${docTitle})`,
-        viewedDocs: [docTitle],
-        path,
-        timestamp: Timestamp.now()
-      });
-    }
+    // Write with merge - ZERO document reads required!
+    await setDoc(activityRef, {
+      type: 'document_view',
+      action: 'Xem tài liệu ôn thi',
+      details: `Môn: ${subjectName}`,
+      subjectId,
+      path,
+      timestamp: Timestamp.now()
+    }, { merge: true });
   } catch (error) {
     console.error("Failed to log document view activity:", error);
   }
@@ -113,18 +97,37 @@ export function useActivityLogger() {
 
           if (subjectId) {
             try {
-              // 1. Check cache first to avoid extra Firestore reads on navigation
+              // 1. Check direct subject cache
               const cachedSub = getCachedData<any>(`subject_${subjectId}`);
               if (cachedSub && cachedSub.name) {
                 detailStr = cachedSub.name;
                 logSubjectView(subjectId, detailStr);
               } else {
-                const subjectDoc = await getDoc(doc(db, 'subjects', subjectId));
-                if (subjectDoc.exists()) {
-                  detailStr = subjectDoc.data().name;
+                // 2. Check full subjects list cache
+                const allSubs = getCachedData<any[]>('home_subjects_list_v2');
+                const found = allSubs?.find(s => s.id === subjectId);
+                if (found && found.name) {
+                  detailStr = found.name;
                   logSubjectView(subjectId, detailStr);
                 } else {
-                  detailStr = `Môn học (ID: ${subjectId})`;
+                  // 3. Fallback to localStorage legacy list
+                  let foundInLocal = false;
+                  try {
+                    const localRaw = localStorage.getItem('sensei_cached_subjects');
+                    if (localRaw) {
+                      const list = JSON.parse(localRaw);
+                      const m = list.find((s: any) => s.id === subjectId);
+                      if (m && m.name) {
+                        detailStr = m.name;
+                        logSubjectView(subjectId, detailStr);
+                        foundInLocal = true;
+                      }
+                    }
+                  } catch (e) {}
+
+                  if (!foundInLocal) {
+                    detailStr = `Môn học (ID: ${subjectId})`;
+                  }
                 }
               }
             } catch (e) {
