@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Maximize, Volume2, VolumeX, Plus, X, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import { PomodoroWidget } from '../components/PomodoroWidget';
 import { useAuth } from '../contexts/AuthContext';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { logActivityEvent } from '../useActivityLogger';
+import { getCachedData, setCachedData, CacheTTL } from '../services/cacheService';
 
 const DEFAULT_VIDEOS = [
   { id: 'bCFhyL0N82A', name: 'Sunset on the beach' },
@@ -37,14 +38,27 @@ export default function StudyWorkspace() {
   const safeIndex = activeVideoIndex < videos.length ? activeVideoIndex : 0;
   const activeVideo = videos[safeIndex];
 
-  // Fetch workspaces from Firestore
+  // Fetch workspaces from Cache / Firestore (Cache-first: 0 reads on repeated visits)
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'settings', 'studyWorkspaces'), (docSnap) => {
-      if (docSnap.exists() && docSnap.data().videos) {
-        setVideos(docSnap.data().videos);
+    const cached = getCachedData<any[]>('study_workspaces_videos');
+    if (cached && Array.isArray(cached) && cached.length > 0) {
+      setVideos(cached);
+      return;
+    }
+
+    const fetchWorkspaces = async () => {
+      try {
+        const docSnap = await getDoc(doc(db, 'settings', 'studyWorkspaces'));
+        if (docSnap.exists() && docSnap.data().videos) {
+          const v = docSnap.data().videos;
+          setVideos(v);
+          setCachedData('study_workspaces_videos', v, CacheTTL.VERY_LONG);
+        }
+      } catch (err) {
+        console.warn("[StudyWorkspace] Fetch error, using default videos:", err);
       }
-    });
-    return () => unsub();
+    };
+    fetchWorkspaces();
   }, []);
 
   // Update volume in iframe
@@ -105,6 +119,8 @@ export default function StudyWorkspace() {
     const updatedVideos = [...videos, { id, name: newVideoName }];
     try {
       await setDoc(doc(db, 'settings', 'studyWorkspaces'), { videos: updatedVideos }, { merge: true });
+      setVideos(updatedVideos);
+      setCachedData('study_workspaces_videos', updatedVideos, CacheTTL.VERY_LONG);
       setShowAddModal(false);
       setNewVideoName('');
       setNewVideoUrl('');
