@@ -14,9 +14,6 @@ import {
   updateDoc,
   getDoc,
   getDocs,
-  limit,
-  startAfter,
-  QueryDocumentSnapshot,
   getCountFromServer,
 } from "firebase/firestore";
 import { Loader2 } from "lucide-react";
@@ -319,17 +316,11 @@ export default function Home() {
     return 0;
   });
   const [quotaExceeded, setQuotaExceeded] = useState(false);
-  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [initialLoading, setInitialLoading] = useState(false);
   const [isHomeRefreshing, setIsHomeRefreshing] = useState(false);
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
-  const isFetchingRef = useRef(false);
   const PAGE_SIZE = 12;
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchingRemote, setSearchingRemote] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const [favorites, setFavorites] = useState<string[]>(() => {
@@ -382,13 +373,15 @@ export default function Home() {
   }, []);
 
   const fetchInitial = async (forceRefresh: boolean = false) => {
-    // If not forcing refresh and valid cache exists, skip network requests!
+    const CACHE_KEY = "home_subjects_list_v2";
+
+    // If not forcing refresh and valid complete cache exists, skip network requests!
     if (!forceRefresh) {
-      const cached = getCachedData<any[]>("home_subjects_list");
-      if (cached && cached.length > 0) {
+      const cached = getCachedData<any[]>(CACHE_KEY);
+      // Validate cached data has full subjects (more than 30 items)
+      if (cached && Array.isArray(cached) && cached.length > 30) {
         setSubjects(cached);
-        const cachedCount = getCachedData<number>("home_subjects_count");
-        if (cachedCount) setTotalSubjectsCount(cachedCount);
+        setTotalSubjectsCount(cached.length);
         setInitialLoading(false);
         return;
       }
@@ -399,58 +392,25 @@ export default function Home() {
     try {
       setInitialLoading(true);
 
-      // Fetch total count of subjects
-      try {
-        const countSnap = await getCountFromServer(collection(db, "subjects"));
-        const countVal = countSnap.data().count;
-        setTotalSubjectsCount(countVal);
-        setCachedData("home_subjects_count", countVal, CacheTTL.MEDIUM);
-      } catch (countErr) {
-        console.warn("Could not fetch total subjects count:", countErr);
-      }
-
-      // Fetch priority subjects first to ensure they are available immediately
-      let prioritySubs: any[] = [];
-      try {
-        const priorityQ = query(
-          collection(db, "subjects"),
-          where("isPriority", "==", true)
-        );
-        const prioritySnap = await getDocs(priorityQ);
-        prioritySubs = prioritySnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-      } catch (pErr) {
-        console.warn("Could not fetch priority subjects:", pErr);
-      }
-
-      const q = query(
-        collection(db, "subjects"),
-        orderBy("name", "asc"),
-        limit(PAGE_SIZE),
-      );
+      // Fetch all subjects in one single query (87 docs = 87 reads once, cached for 6 hours)
+      const q = query(collection(db, "subjects"), orderBy("name", "asc"));
       const snapshot = await getDocs(q);
-      const normalSubs = snapshot.docs.map((doc) => ({
+      const allSubs = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
 
-      const subsMap = new Map<string, any>();
-      prioritySubs.forEach((s) => subsMap.set(s.id, s));
-      normalSubs.forEach((s) => subsMap.set(s.id, s));
-
-      const finalSubs = Array.from(subsMap.values());
-      if (finalSubs.length > 0) {
-        setSubjects(finalSubs);
-        setCachedData("home_subjects_list", finalSubs, CacheTTL.VERY_LONG);
+      if (allSubs.length > 0) {
+        setSubjects(allSubs);
+        setTotalSubjectsCount(allSubs.length);
+        setCachedData(CACHE_KEY, allSubs, CacheTTL.VERY_LONG);
         try {
-          localStorage.setItem("sensei_cached_subjects", JSON.stringify(finalSubs));
-          localStorage.setItem("sensei_cached_subjects_count", String(finalSubs.length));
+          localStorage.setItem("sensei_cached_subjects", JSON.stringify(allSubs));
+          localStorage.setItem("sensei_cached_subjects_count", String(allSubs.length));
+          // Clean up legacy stale 14-item cache
+          localStorage.removeItem("sensei_cache_v1_home_subjects_list");
         } catch (e) {}
       }
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-      setHasMore(snapshot.docs.length === PAGE_SIZE);
       setQuotaExceeded(false);
     } catch (err: any) {
       console.error("Error loading subjects:", err);
@@ -463,10 +423,11 @@ export default function Home() {
         setQuotaExceeded(true);
       }
 
-      // Graceful fallback to stale cache
-      const staleSubs = getCachedData<any[]>("home_subjects_list", true);
+      // Graceful fallback to any existing cache
+      const staleSubs = getCachedData<any[]>(CACHE_KEY, true) || getCachedData<any[]>("home_subjects_list", true);
       if (staleSubs && staleSubs.length > 0) {
         setSubjects(staleSubs);
+        setTotalSubjectsCount(staleSubs.length);
       }
     } finally {
       setInitialLoading(false);
@@ -499,70 +460,10 @@ export default function Home() {
     fetchInitial(false);
   }, []);
 
-  const loadMoreSubjects = async (): Promise<boolean> => {
-    if (isFetchingRef.current || !hasMore || !lastDoc) return false;
-    try {
-      isFetchingRef.current = true;
-      setIsLoadingMore(true);
-      const q = query(
-        collection(db, "subjects"),
-        orderBy("name", "asc"),
-        startAfter(lastDoc),
-        limit(PAGE_SIZE),
-      );
-      const snapshot = await getDocs(q);
-      const newSubs = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      let hasMoreItems = snapshot.docs.length === PAGE_SIZE;
-
-      setSubjects((prev) => {
-        const existingIds = new Set(prev.map((s) => s.id));
-        const filteredNew = newSubs.filter((s) => !existingIds.has(s.id));
-        const updated = [...prev, ...filteredNew];
-        setCachedData("home_subjects_list", updated, CacheTTL.VERY_LONG);
-        try {
-          localStorage.setItem("sensei_cached_subjects", JSON.stringify(updated));
-        } catch (e) {}
-        return updated;
-      });
-
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-      setHasMore(hasMoreItems);
-      return true;
-    } catch (err) {
-      console.error("Error loading more subjects:", err);
-      return false;
-    } finally {
-      setIsLoadingMore(false);
-      isFetchingRef.current = false;
-    }
-  };
-
   // Reset to page 1 whenever user searches
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
-
-  const handlePageChange = async (targetPage: number) => {
-    if (targetPage < 1 || targetPage === currentPage) return;
-
-    // Check if target page needs more items loaded from server
-    const neededCount = targetPage * PAGE_SIZE;
-    if (subjects.length < neededCount && hasMore && !searchQuery.trim()) {
-      await loadMoreSubjects();
-    }
-
-    setCurrentPage(targetPage);
-
-    // Smoothly scroll to the top of the subjects section
-    const elem = document.getElementById("subjects-section");
-    if (elem) {
-      elem.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
 
   const filteredSubjects = subjects
     .filter(
@@ -590,20 +491,23 @@ export default function Home() {
 
   const totalPages = Math.max(
     1,
-    Math.ceil(
-      (searchQuery.trim()
-        ? filteredSubjects.length
-        : totalSubjectsCount > 0
-        ? totalSubjectsCount
-        : subjects.length) / PAGE_SIZE
-    )
+    Math.ceil(filteredSubjects.length / PAGE_SIZE)
   );
 
   const startIndex = (currentPage - 1) * PAGE_SIZE;
   const endIndex = startIndex + PAGE_SIZE;
-  const displayedSubjects = searchQuery.trim()
-    ? filteredSubjects
-    : filteredSubjects.slice(startIndex, endIndex);
+  const displayedSubjects = filteredSubjects.slice(startIndex, endIndex);
+
+  const handlePageChange = (targetPage: number) => {
+    if (targetPage < 1 || targetPage > totalPages || targetPage === currentPage) return;
+    setCurrentPage(targetPage);
+
+    // Smoothly scroll to the top of the subjects section
+    const elem = document.getElementById("subjects-section");
+    if (elem) {
+      elem.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   const toggleFavorite = (subjectId: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -985,14 +889,14 @@ export default function Home() {
           <div className="pt-6 pb-4 border-t border-slate-200/60 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
             {/* Range info */}
             <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Đang xem <strong className="text-slate-800 dark:text-slate-200">{filteredSubjects.length > 0 ? (currentPage - 1) * PAGE_SIZE + 1 : 0} - {Math.min(filteredSubjects.length, currentPage * PAGE_SIZE)}</strong> trên tổng số <strong className="text-slate-800 dark:text-slate-200">{totalSubjectsCount > 0 ? totalSubjectsCount : subjects.length}</strong> môn học
+              Đang xem <strong className="text-slate-800 dark:text-slate-200">{filteredSubjects.length > 0 ? (currentPage - 1) * PAGE_SIZE + 1 : 0} - {Math.min(filteredSubjects.length, currentPage * PAGE_SIZE)}</strong> trên tổng số <strong className="text-slate-800 dark:text-slate-200">{filteredSubjects.length}</strong> môn học {filteredSubjects.length !== subjects.length && `(tìm kiếm trong ${subjects.length} môn)`}
             </div>
 
             {/* Pagination Controls */}
             <div className="flex flex-wrap items-center justify-center gap-1.5">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage <= 1 || isLoadingMore}
+                disabled={currentPage <= 1}
                 className="px-3 py-2 rounded-xl text-xs sm:text-sm font-medium border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
                 title="Trang trước"
               >
@@ -1013,7 +917,6 @@ export default function Home() {
                         )}
                         <button
                           onClick={() => handlePageChange(p)}
-                          disabled={isLoadingMore}
                           className={`w-9 h-9 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                             currentPage === p
                               ? "bg-cyan-400 hover:bg-cyan-500 text-slate-950 font-bold shadow-xs"
@@ -1029,32 +932,13 @@ export default function Home() {
 
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
-                disabled={(currentPage >= totalPages && !hasMore) || isLoadingMore}
+                disabled={currentPage >= totalPages}
                 className="px-3 py-2 rounded-xl text-xs sm:text-sm font-medium border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
                 title="Trang sau"
               >
                 <span className="hidden sm:inline">Trang sau</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
-
-              {/* Explicit Load More option if more items exist on server */}
-              {hasMore && (
-                <button
-                  onClick={() => loadMoreSubjects()}
-                  disabled={isLoadingMore}
-                  className="ml-2 px-3 py-2 rounded-xl text-xs font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800 transition-all flex items-center gap-1.5 cursor-pointer"
-                  title="Tải thêm 12 môn học tiếp theo từ máy chủ"
-                >
-                  {isLoadingMore ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Đang tải...</span>
-                    </>
-                  ) : (
-                    <span>+ Tải thêm 12 môn</span>
-                  )}
-                </button>
-              )}
             </div>
           </div>
         )}
