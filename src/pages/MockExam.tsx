@@ -10,6 +10,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { logActivityEvent } from '../useActivityLogger';
 import ThemeEffects from '../components/ThemeEffects';
+import { getCachedData, setCachedData, CacheTTL } from '../services/cacheService';
 
 const loadPdfJs = async (): Promise<any> => {
   if ((window as any).pdfjsLib) {
@@ -392,23 +393,90 @@ ${questionsSummary}`;
     if (!id) return;
 
     const fetchData = async () => {
-      const docRef = doc(db, 'subjects', id);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setSubject({ id: docSnap.id, ...docSnap.data() });
+      // 1. Subject info (Cache-first: 0 reads if already loaded on Home or SubjectDetail)
+      const cacheKeySub = `subject_${id}`;
+      let cachedSub = getCachedData<any>(cacheKeySub);
+
+      if (!cachedSub) {
+        const allSubs = getCachedData<any[]>('home_subjects_list_v2');
+        const match = allSubs?.find(s => s.id === id);
+        if (match) {
+          cachedSub = match;
+          setCachedData(cacheKeySub, match, CacheTTL.VERY_LONG);
+        } else {
+          try {
+            const raw = localStorage.getItem('sensei_cached_subjects');
+            if (raw) {
+              const list = JSON.parse(raw);
+              const m = list.find((s: any) => s.id === id);
+              if (m) {
+                cachedSub = m;
+                setCachedData(cacheKeySub, m, CacheTTL.VERY_LONG);
+              }
+            }
+          } catch (e) {}
+        }
       }
 
-      const q = query(collection(db, 'documents'), where('subjectId', '==', id));
-      const querySnapshot = await getDocs(q);
+      if (cachedSub) {
+        setSubject(cachedSub);
+      } else {
+        try {
+          const docRef = doc(db, 'subjects', id);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = { id: docSnap.id, ...docSnap.data() };
+            setSubject(data);
+            setCachedData(cacheKeySub, data, CacheTTL.VERY_LONG);
+          }
+        } catch (e) {
+          console.warn("[MockExam] Subject fetch error, using stale cache:", e);
+          const stale = getCachedData<any>(cacheKeySub, true);
+          if (stale) setSubject(stale);
+        }
+      }
+
+      // 2. Documents (Cache-first: reuse docs from SubjectDetail or local storage - 0 reads!)
+      const cacheKeyDocs = `subject_docs_${id}_50`;
+      let docsList: any[] | null = getCachedData<any[]>(cacheKeyDocs);
+
+      if (!docsList) {
+        try {
+          const localRaw = localStorage.getItem(`sensei_docs_${id}`);
+          if (localRaw) {
+            const parsed = JSON.parse(localRaw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              docsList = parsed;
+              setCachedData(cacheKeyDocs, parsed, CacheTTL.VERY_LONG);
+            }
+          }
+        } catch (e) {}
+      }
+
+      // If still not cached, fetch once from Firestore
+      if (!docsList) {
+        try {
+          const q = query(collection(db, 'documents'), where('subjectId', '==', id));
+          const querySnapshot = await getDocs(q);
+          docsList = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          setCachedData(cacheKeyDocs, docsList, CacheTTL.VERY_LONG);
+          try {
+            localStorage.setItem(`sensei_docs_${id}`, JSON.stringify(docsList));
+          } catch (e) {}
+        } catch (err) {
+          console.warn("[MockExam] Docs fetch error, using stale cache:", err);
+          docsList = getCachedData<any[]>(cacheKeyDocs, true) || [];
+        }
+      }
+
       const chapters = new Set<string>();
       const titles = new Set<string>();
       const docsArr: {id: string, title: string, url?: string}[] = [];
-      
-      querySnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
+
+      (docsList || []).forEach((data: any) => {
         if (data.title) titles.add(data.title.trim());
         if (data.title && data.url) {
-          docsArr.push({ id: docSnap.id, title: data.title, url: data.url });
+          docsArr.push({ id: data.id || `${Math.random()}`, title: data.title, url: data.url });
         }
         if (data.isFolder && data.items) {
           data.items.forEach((item: any) => {
@@ -425,14 +493,14 @@ ${questionsSummary}`;
           });
         }
       });
-      
+
       const chapterList = Array.from(chapters).sort();
       setAvailableChapters(chapterList);
       setSelectedChapters(chapterList);
       setDocumentTitles(Array.from(titles));
       setSubjectDocs(docsArr);
     };
-    
+
     fetchData();
   }, [id]);
 
