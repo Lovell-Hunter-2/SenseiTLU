@@ -103,25 +103,25 @@ export default function SubjectDetail() {
 
   // Load all subjects for search (Cache-First: saves 50-100 reads per view)
   useEffect(() => {
-    // 1. Try cache first
-    const cachedSubs = getCachedData<any[]>('all_subjects_search');
+    // 1. Try home_subjects_list_v2 or all_subjects_search first (0 reads!)
+    const cachedSubs = getCachedData<any[]>('home_subjects_list_v2') || getCachedData<any[]>('all_subjects_search');
     if (cachedSubs && Array.isArray(cachedSubs) && cachedSubs.length > 0) {
       setAllSubjects(cachedSubs);
       return;
     }
 
-    // 2. Fallback to localStorage legacy key if available
-    let legacyStr = localStorage.getItem("cachedSubjects");
-    if (legacyStr) {
-      try {
-        const parsed = JSON.parse(legacyStr);
+    // 2. Fallback to localStorage sensei_cached_subjects
+    try {
+      const localSubs = localStorage.getItem("sensei_cached_subjects") || localStorage.getItem("cachedSubjects");
+      if (localSubs) {
+        const parsed = JSON.parse(localSubs);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setAllSubjects(parsed);
-          setCachedData('all_subjects_search', parsed, CacheTTL.LONG);
+          setCachedData('home_subjects_list_v2', parsed, CacheTTL.VERY_LONG);
           return;
         }
-      } catch (e) {}
-    }
+      }
+    } catch (e) {}
 
     // 3. Cache miss: fetch once with getDocs (no continuous onSnapshot listener)
     const fetchSearchSubjects = async () => {
@@ -281,7 +281,29 @@ export default function SubjectDetail() {
     try {
       // 1. Subject info
       const cacheKeySub = `subject_${id}`;
-      const cachedSub = forceRefresh ? null : getCachedData<any>(cacheKeySub);
+      let cachedSub = forceRefresh ? null : getCachedData<any>(cacheKeySub);
+
+      // Check home subjects list cache before network call (0 reads!)
+      if (!cachedSub && !forceRefresh) {
+        const allSubs = getCachedData<any[]>('home_subjects_list_v2');
+        const match = allSubs?.find(s => s.id === id);
+        if (match) {
+          cachedSub = match;
+          setCachedData(cacheKeySub, match, CacheTTL.VERY_LONG);
+        } else {
+          try {
+            const raw = localStorage.getItem('sensei_cached_subjects');
+            if (raw) {
+              const list = JSON.parse(raw);
+              const m = list.find((s: any) => s.id === id);
+              if (m) {
+                cachedSub = m;
+                setCachedData(cacheKeySub, m, CacheTTL.VERY_LONG);
+              }
+            }
+          } catch (e) {}
+        }
+      }
 
       if (cachedSub) {
         setSubject(cachedSub);
@@ -295,7 +317,7 @@ export default function SubjectDetail() {
             const data: any = { id: docSnap.id, ...docSnap.data() };
             setSubject(data);
             document.title = `Tài liệu ${data.name || ''} TLU`;
-            setCachedData(cacheKeySub, data, CacheTTL.LONG);
+            setCachedData(cacheKeySub, data, CacheTTL.VERY_LONG);
           }
         } catch (subErr) {
           console.warn("[Cache] Subject fetch failed, using stale cache:", subErr);
@@ -308,9 +330,22 @@ export default function SubjectDetail() {
         }
       }
 
-      // 2. Documents
+      // 2. Documents (Cache-First with 6h TTL + LocalStorage persistence)
       const cacheKeyDocs = `subject_docs_${id}_${docLimit}`;
-      const cachedDocs = forceRefresh ? null : getCachedData<any[]>(cacheKeyDocs);
+      let cachedDocs = forceRefresh ? null : getCachedData<any[]>(cacheKeyDocs);
+
+      if (!cachedDocs && !forceRefresh) {
+        try {
+          const localRaw = localStorage.getItem(`sensei_docs_${id}`);
+          if (localRaw) {
+            const parsed = JSON.parse(localRaw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              cachedDocs = parsed;
+              setCachedData(cacheKeyDocs, parsed, CacheTTL.VERY_LONG);
+            }
+          }
+        } catch (e) {}
+      }
 
       if (cachedDocs && cachedDocs.length > 0) {
         setDocuments(cachedDocs);
@@ -321,7 +356,10 @@ export default function SubjectDetail() {
           const snapshot = await getDocs(q);
           const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
           setDocuments(docs);
-          setCachedData(cacheKeyDocs, docs, CacheTTL.MEDIUM);
+          setCachedData(cacheKeyDocs, docs, CacheTTL.VERY_LONG);
+          try {
+            localStorage.setItem(`sensei_docs_${id}`, JSON.stringify(docs));
+          } catch (e) {}
         } catch (docErr) {
           console.warn("[Cache] Documents fetch failed, using stale cache:", docErr);
           const staleDocs = getCachedData<any[]>(cacheKeyDocs, true);
@@ -456,6 +494,9 @@ export default function SubjectDetail() {
       // Invalidate cache and reload
       if (id) {
         invalidateCache(`subject_docs_${id}`);
+        try {
+          localStorage.removeItem(`sensei_docs_${id}`);
+        } catch (e) {}
         loadSubjectAndDocs(true);
       }
       logFirestoreWrite(1);
@@ -486,6 +527,9 @@ export default function SubjectDetail() {
       }
       if (id) {
         invalidateCache(`subject_docs_${id}`);
+        try {
+          localStorage.removeItem(`sensei_docs_${id}`);
+        } catch (e) {}
         loadSubjectAndDocs(true);
       }
       setDeleteConfirmId(null);
