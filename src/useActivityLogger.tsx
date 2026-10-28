@@ -57,18 +57,35 @@ export async function logSubjectDocumentView(userUid: string | undefined, subjec
   }
 }
 
+// Phát hiện bot / crawler tự động (Googlebot, Bing, Baidu, Ahrefs, Semrush, ByteSpider, tool cào dữ liệu, v.v.)
+export function isLikelyBot(): boolean {
+  if (typeof navigator === 'undefined') return true;
+  const ua = navigator.userAgent || '';
+  if (!ua) return true;
+  return /bot|crawler|spider|crawling|googlebot|bingbot|yandex|baidu|slurp|duckduckbot|ahrefs|semrush|petalbot|bytespider|mj12bot|dotbot|rogerbot|exabot|facebookexternalhit|feedfetcher|lighthouse|headlesschrome/i.test(ua);
+}
+
 export function useActivityLogger() {
   const { user } = useAuth();
   const location = useLocation();
   const lastPathRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // Chỉ đếm 1 truy cập mỗi lần người dùng mở hoặc tải lại trang web
+    // Không ghi log nếu là bot / crawler tự động để tránh spam Firestore
+    if (isLikelyBot()) return;
+
+    // Chỉ đếm 1 truy cập mỗi lần người dùng thật mở hoặc tải lại trang web
     logGlobalPageView();
     updatePresence(user?.uid);
+
+    // Heartbeat chỉ gửi khi tab đang được người dùng xem (không gửi ngầm khi tab ẩn)
+    // Tăng chu kỳ lên 3 phút thay vì 60s để giảm 66% số lượt ghi
     const interval = setInterval(() => {
-      updatePresence(user?.uid);
-    }, 60000);
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        updatePresence(user?.uid);
+      }
+    }, 180000);
+
     return () => clearInterval(interval);
   }, [user?.uid]);
 
