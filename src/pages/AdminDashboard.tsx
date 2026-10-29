@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
-import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon, CheckCircle2, X, FileText, User as UserIcon, MapPin, Clock, EyeOff, MessageSquare, Globe, BookOpen, TrendingUp, Calendar, Flame, Layers, Award, Sparkles, ExternalLink, Filter, Edit3, Info, Check, Zap, RotateCcw } from 'lucide-react';
+import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon, CheckCircle2, X, FileText, User as UserIcon, MapPin, Clock, EyeOff, MessageSquare, Globe, BookOpen, TrendingUp, Calendar, Flame, Layers, Award, Sparkles, ExternalLink, Filter, Edit3, Info, Check, Zap, RotateCcw, RefreshCw, Download, FileCode } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, doc, getDoc, getDocs, setDoc, query, orderBy, limit, startAt, endAt, collectionGroup, getCountFromServer, updateDoc, deleteDoc, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import UserManagerModal from '../components/UserManagerModal';
@@ -279,6 +279,101 @@ export default function AdminDashboard() {
       setQuotaDeletes(0);
     } catch (err) {
       console.error('Lỗi khi đặt lại quota về 0:', err);
+    }
+  };
+
+  const [isSyncingCatalog, setIsSyncingCatalog] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ success?: boolean; message?: string; stats?: any } | null>(null);
+
+  const handleSyncCatalog = async () => {
+    if (!user) return;
+    setIsSyncingCatalog(true);
+    setSyncResult(null);
+
+    try {
+      // 1. Fetch subjects
+      const subjectsSnap = await getDocs(query(collection(db, 'subjects'), orderBy('name', 'asc')));
+      const subjects = subjectsSnap.docs.map(d => ({
+        id: d.id,
+        name: d.data().name || '',
+        iconName: d.data().iconName || 'Book',
+        description: d.data().description || '',
+        isPriority: Boolean(d.data().isPriority),
+        createdAt: d.data().createdAt?.toDate ? d.data().createdAt.toDate().toISOString() : d.data().createdAt || null
+      }));
+
+      // 2. Fetch documents
+      const docsSnap = await getDocs(collection(db, 'documents'));
+      const documentsBySubject: Record<string, any[]> = {};
+      let totalDocsCount = 0;
+
+      docsSnap.docs.forEach(docSnap => {
+        const d = docSnap.data();
+        const subId = d.subjectId;
+        if (!subId) return;
+        if (!documentsBySubject[subId]) documentsBySubject[subId] = [];
+        documentsBySubject[subId].push({
+          id: docSnap.id,
+          subjectId: d.subjectId,
+          title: d.title || '',
+          type: d.type || 'Khác',
+          url: d.url || '',
+          chapter: d.chapter || '',
+          isHidden: Boolean(d.isHidden),
+          isFolder: Boolean(d.isFolder),
+          items: Array.isArray(d.items) ? d.items : [],
+          createdAt: d.createdAt?.toDate ? d.createdAt.toDate().toISOString() : d.createdAt || null
+        });
+        totalDocsCount++;
+      });
+
+      const catalogData = {
+        lastUpdated: new Date().toISOString(),
+        version: 1,
+        totalSubjects: subjects.length,
+        totalDocuments: totalDocsCount,
+        subjects,
+        documents: documentsBySubject
+      };
+
+      // 3. Post to /api/sync-catalog
+      const idToken = await user.getIdToken();
+      const res = await fetch('/api/sync-catalog', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify(catalogData)
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Lỗi từ máy chủ: ${errorText}`);
+      }
+
+      // Also persist to localStorage
+      try {
+        localStorage.setItem('sensei_static_catalog_v1', JSON.stringify(catalogData));
+        localStorage.setItem('sensei_cached_subjects', JSON.stringify(subjects));
+      } catch (e) {}
+
+      setSyncResult({
+        success: true,
+        message: `Đồng bộ thành công ${subjects.length} môn học và ${totalDocsCount} tài liệu!`,
+        stats: { subjects: subjects.length, docs: totalDocsCount, time: new Date().toLocaleTimeString('vi-VN') }
+      });
+    } catch (err: any) {
+      console.error('Error syncing catalog:', err);
+      const isQuota = err?.code === 'resource-exhausted' || err?.message?.includes('Quota') || err?.message?.includes('resource-exhausted');
+      setSyncResult({
+        success: false,
+        message: isQuota 
+          ? 'Hạn ngạch Firestore (Quota) hôm nay đang bị Google tạm khóa. Vui lòng chờ đến 14:00 ngày mai khi Google reset 50.000 reads và bấm lại nút này!'
+          : `Lỗi: ${err.message || 'Không thể đồng bộ'}`
+      });
+    } finally {
+      setIsSyncingCatalog(false);
     }
   };
 
@@ -1778,6 +1873,65 @@ export default function AdminDashboard() {
                         <li>Đã kích hoạt <strong>Memory & LocalStorage Cache</strong> giúp giảm tải hơn 85% truy vấn Firestore thực tế.</li>
                       </ul>
                     </div>
+                  </div>
+                </div>
+
+                {/* Section: Zero-Firestore-Read Mode & Static Catalog Hub */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-cyan-500/10 border border-emerald-500/30 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2.5 rounded-xl bg-emerald-500 text-white shrink-0 shadow-sm shadow-emerald-500/30">
+                        <FileCode className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-slate-900 dark:text-white text-base">
+                            Chế độ Tiết kiệm 0-Read (Zero-Firestore-Read Mode)
+                          </h4>
+                          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                            Đang kích hoạt
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                          Toàn bộ sinh viên lướt xem 87 môn học và tài liệu được nạp trực tiếp từ file tĩnh <code className="px-1.5 py-0.5 rounded bg-emerald-100/70 dark:bg-emerald-950/60 font-mono text-emerald-800 dark:text-emerald-300 text-xs">public/data/catalog.json</code> qua CDN Vercel. 
+                          <strong> Tiêu tốn đúng 0 lượt đọc Firestore</strong> cho mọi sinh viên (kể cả F5 hoặc xem tài liệu cả ngày).
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleSyncCatalog}
+                      disabled={isSyncingCatalog}
+                      className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 transition-all active:scale-95 disabled:opacity-60 shrink-0 cursor-pointer"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${isSyncingCatalog ? 'animate-spin' : ''}`} />
+                      {isSyncingCatalog ? 'Đang đồng bộ từ Firestore...' : '🔄 Đồng bộ dữ liệu sang File tĩnh'}
+                    </button>
+                  </div>
+
+                  {syncResult && (
+                    <div className={`p-3.5 rounded-xl border text-xs sm:text-sm leading-relaxed ${
+                      syncResult.success 
+                        ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
+                        : 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200'
+                    }`}>
+                      <div className="flex items-start gap-2">
+                        <span className="text-base">{syncResult.success ? '🎉' : '⚠️'}</span>
+                        <div className="flex-1">
+                          <p className="font-semibold">{syncResult.message}</p>
+                          {syncResult.stats && (
+                            <p className="text-xs opacity-90 mt-1">
+                              Thời gian: {syncResult.stats.time} • Môn học: {syncResult.stats.subjects} • Tài liệu: {syncResult.stats.docs}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-2 border-t border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 gap-2">
+                    <span>💡 <strong>Hướng dẫn:</strong> Bấm nút trên lúc 14:00 (khi Google mở lại Quota) để đồng bộ dữ liệu tĩnh lần đầu tiên, hoặc mỗi khi bạn vừa đăng thêm tài liệu mới.</span>
+                    <span className="font-mono text-slate-600 dark:text-slate-300">Lệnh terminal: npm run sync-catalog</span>
                   </div>
                 </div>
               </div>
