@@ -94,6 +94,7 @@ import {
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 import { getCachedData, setCachedData, invalidateCache, CacheTTL } from "../services/cacheService";
+import { getStaticSubjects } from "../services/catalogService";
 import { AnimatedHeroTitle } from "../components/AnimatedHeroTitle";
 
 // Icon mapping helper
@@ -392,7 +393,23 @@ export default function Home() {
     try {
       setInitialLoading(true);
 
-      // Fetch all subjects in one single query (87 docs = 87 reads once, cached for 6 hours)
+      // 1. Prioritize Zero-Firestore-Read static catalog from CDN / public /data/catalog.json
+      const staticSubs = await getStaticSubjects(forceRefresh);
+      if (staticSubs && Array.isArray(staticSubs) && staticSubs.length > 0) {
+        setSubjects(staticSubs);
+        setTotalSubjectsCount(staticSubs.length);
+        setCachedData(CACHE_KEY, staticSubs, CacheTTL.VERY_LONG);
+        try {
+          localStorage.setItem("sensei_cached_subjects", JSON.stringify(staticSubs));
+          localStorage.setItem("sensei_cached_subjects_count", String(staticSubs.length));
+        } catch (e) {}
+        setQuotaExceeded(false);
+        setInitialLoading(false);
+        if (forceRefresh) setTimeout(() => setIsHomeRefreshing(false), 400);
+        return;
+      }
+
+      // 2. Fallback to Firestore if static catalog is not yet populated
       const q = query(collection(db, "subjects"), orderBy("name", "asc"));
       const snapshot = await getDocs(q);
       const allSubs = snapshot.docs.map((doc) => ({
@@ -407,7 +424,6 @@ export default function Home() {
         try {
           localStorage.setItem("sensei_cached_subjects", JSON.stringify(allSubs));
           localStorage.setItem("sensei_cached_subjects_count", String(allSubs.length));
-          // Clean up legacy stale 14-item cache
           localStorage.removeItem("sensei_cache_v1_home_subjects_list");
         } catch (e) {}
       }
