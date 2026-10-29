@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from '@google/genai';
 import * as dotenv from 'dotenv';
@@ -68,6 +69,79 @@ async function startServer() {
     } catch (error: any) {
       console.error("AI Generation Error:", error);
       res.status(500).json({ error: error.message || "Failed to generate AI response" });
+    }
+  });
+
+  app.post("/api/check-email", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized: Missing or invalid token' });
+      }
+      
+      const token = authHeader.split('Bearer ')[1];
+      await admin.auth().verifyIdToken(token); // verify user/admin
+
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+
+      const apiKey = getEnv('BEHIND_THE_EMAIL_API_KEY');
+      if (!apiKey) {
+        return res.status(500).json({ error: 'BEHIND_THE_EMAIL_API_KEY is not configured in environment variables' });
+      }
+
+      const response = await fetch("https://api.behindtheemail.com/v1/search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ email })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API error: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json();
+      res.json(data);
+    } catch (error: any) {
+      console.error("Check Email Error:", error);
+      res.status(500).json({ error: error.message || "Failed to check email footprint" });
+    }
+  });
+
+  app.post("/api/sync-catalog", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized: Missing or invalid token' });
+      }
+      
+      const token = authHeader.split('Bearer ')[1];
+      await admin.auth().verifyIdToken(token);
+
+      const catalogData = req.body;
+      if (!catalogData || !Array.isArray(catalogData.subjects)) {
+        return res.status(400).json({ error: 'Invalid catalog data' });
+      }
+
+      const publicDir = path.join(process.cwd(), 'public', 'data');
+      if (!fs.existsSync(publicDir)) {
+        fs.mkdirSync(publicDir, { recursive: true });
+      }
+
+      const filePath = path.join(publicDir, 'catalog.json');
+      fs.writeFileSync(filePath, JSON.stringify(catalogData, null, 2), 'utf8');
+
+      console.log(`[API] Synced catalog.json successfully with ${catalogData.subjects.length} subjects.`);
+      res.json({ success: true, count: catalogData.subjects.length, timestamp: new Date().toISOString() });
+    } catch (error: any) {
+      console.error("Sync Catalog Error:", error);
+      res.status(500).json({ error: error.message || "Failed to sync catalog" });
     }
   });
 
