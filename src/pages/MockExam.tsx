@@ -11,6 +11,7 @@ import rehypeKatex from 'rehype-katex';
 import { logActivityEvent } from '../useActivityLogger';
 import ThemeEffects from '../components/ThemeEffects';
 import { getCachedData, setCachedData, CacheTTL } from '../services/cacheService';
+import { getStaticDocuments } from '../services/catalogService';
 
 const loadPdfJs = async (): Promise<any> => {
   if ((window as any).pdfjsLib) {
@@ -436,9 +437,26 @@ ${questionsSummary}`;
         }
       }
 
-      // 2. Documents (Cache-first: reuse docs from SubjectDetail or local storage - 0 reads!)
+      // 2. Documents (Zero-Firestore-Read Mode: Static Catalog + Cache-first - 0 reads!)
       const cacheKeyDocs = `subject_docs_${id}_50`;
-      let docsList: any[] | null = getCachedData<any[]>(cacheKeyDocs);
+      let docsList: any[] | null = null;
+
+      // 1. Try static catalog first (0 reads!)
+      try {
+        const staticDocs = await getStaticDocuments(id);
+        if (staticDocs && Array.isArray(staticDocs)) {
+          docsList = staticDocs;
+          setCachedData(cacheKeyDocs, staticDocs, CacheTTL.VERY_LONG);
+          try {
+            localStorage.setItem(`sensei_docs_${id}`, JSON.stringify(staticDocs));
+          } catch (e) {}
+        }
+      } catch (e) {}
+
+      // 2. Try cache / localStorage
+      if (!docsList) {
+        docsList = getCachedData<any[]>(cacheKeyDocs);
+      }
 
       if (!docsList) {
         try {
@@ -453,7 +471,7 @@ ${questionsSummary}`;
         } catch (e) {}
       }
 
-      // If still not cached, fetch once from Firestore
+      // 3. Fallback to Firestore only if not found anywhere else
       if (!docsList) {
         try {
           const q = query(collection(db, 'documents'), where('subjectId', '==', id));
