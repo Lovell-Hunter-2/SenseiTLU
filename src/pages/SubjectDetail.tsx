@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { logActivityEvent, logSubjectDocumentView } from '../useActivityLogger';
 import { getVietnamDateString, logFirestoreWrite, logFirestoreDelete } from '../services/analyticsService';
 import { getCachedData, setCachedData, invalidateCache, CacheTTL } from '../services/cacheService';
+import { getStaticSubjects, getStaticDocuments } from '../services/catalogService';
 
 const typeIcons: Record<string, React.ElementType> = {
   'Chatbot': Bot,
@@ -283,7 +284,7 @@ export default function SubjectDetail() {
       const cacheKeySub = `subject_${id}`;
       let cachedSub = forceRefresh ? null : getCachedData<any>(cacheKeySub);
 
-      // Check home subjects list cache before network call (0 reads!)
+      // Check home subjects list cache or static catalog before network call (0 reads!)
       if (!cachedSub && !forceRefresh) {
         const allSubs = getCachedData<any[]>('home_subjects_list_v2');
         const match = allSubs?.find(s => s.id === id);
@@ -302,6 +303,16 @@ export default function SubjectDetail() {
               }
             }
           } catch (e) {}
+        }
+      }
+
+      // Check static catalog for subject metadata
+      if (!cachedSub) {
+        const staticSubs = await getStaticSubjects(forceRefresh);
+        const match = staticSubs?.find(s => s.id === id);
+        if (match) {
+          cachedSub = match;
+          setCachedData(cacheKeySub, match, CacheTTL.VERY_LONG);
         }
       }
 
@@ -330,7 +341,21 @@ export default function SubjectDetail() {
         }
       }
 
-      // 2. Documents (Cache-First with 6h TTL + LocalStorage persistence)
+      // 2. Documents (Zero-Firestore-Read Mode via Static Catalog + Cache-First)
+      // Check static catalog first (0 reads!)
+      const staticDocs = await getStaticDocuments(id, forceRefresh);
+      if (staticDocs && Array.isArray(staticDocs)) {
+        setDocuments(staticDocs);
+        setIsDataCached(true);
+        const cacheKeyDocs = `subject_docs_${id}_${docLimit}`;
+        setCachedData(cacheKeyDocs, staticDocs, CacheTTL.VERY_LONG);
+        try {
+          localStorage.setItem(`sensei_docs_${id}`, JSON.stringify(staticDocs));
+        } catch (e) {}
+        return;
+      }
+
+      // If static catalog is not yet populated, check local caches
       const cacheKeyDocs = `subject_docs_${id}_${docLimit}`;
       let cachedDocs = forceRefresh ? null : getCachedData<any[]>(cacheKeyDocs);
 
