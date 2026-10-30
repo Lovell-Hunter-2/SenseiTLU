@@ -11,6 +11,7 @@ import HiddenDocsManager from '../components/HiddenDocsManager';
 import EcosystemManagerModal from '../components/EcosystemManagerModal';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, BarChart, Bar } from 'recharts';
 import { getVietnamDateString, getQuotaCycleInfo, calibrateQuotaCycle, resetCurrentQuotaToZero } from '../services/analyticsService';
+import { syncCatalogToGitHub } from '../services/catalogService';
 import AdminMobileNav from '../components/AdminMobileNav';
 import {
   AdminTabId,
@@ -283,7 +284,7 @@ export default function AdminDashboard() {
   };
 
   const [isSyncingCatalog, setIsSyncingCatalog] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ success?: boolean; message?: string; stats?: any } | null>(null);
+  const [syncResult, setSyncResult] = useState<{ success?: boolean; message?: string; stats?: any; catalogData?: any } | null>(null);
 
   const handleSyncCatalog = async () => {
     if (!user) return;
@@ -361,7 +362,8 @@ export default function AdminDashboard() {
       setSyncResult({
         success: true,
         message: `Đồng bộ thành công ${subjects.length} môn học và ${totalDocsCount} tài liệu!`,
-        stats: { subjects: subjects.length, docs: totalDocsCount, time: new Date().toLocaleTimeString('vi-VN') }
+        stats: { subjects: subjects.length, docs: totalDocsCount, time: new Date().toLocaleTimeString('vi-VN') },
+        catalogData
       });
     } catch (err: any) {
       console.error('Error syncing catalog:', err);
@@ -374,6 +376,108 @@ export default function AdminDashboard() {
       });
     } finally {
       setIsSyncingCatalog(false);
+    }
+  };
+
+  const [githubToken, setGithubToken] = useState(() => {
+    try {
+      return localStorage.getItem('sensei_admin_gh_token') || '';
+    } catch (e) {
+      return '';
+    }
+  });
+  const [showGithubTokenInput, setShowGithubTokenInput] = useState(false);
+  const [isSyncingGithub, setIsSyncingGithub] = useState(false);
+  const [githubSyncResult, setGithubSyncResult] = useState<{ success?: boolean; message?: string; commitUrl?: string; sha?: string } | null>(null);
+
+  const handleSyncToGitHub = async () => {
+    if (!githubToken.trim()) {
+      setShowGithubTokenInput(true);
+      alert('Vui lòng nhập GitHub Personal Access Token (PAT) trước khi đồng bộ lên GitHub & Vercel.');
+      return;
+    }
+
+    try {
+      localStorage.setItem('sensei_admin_gh_token', githubToken.trim());
+    } catch (e) {}
+
+    setIsSyncingGithub(true);
+    setGithubSyncResult(null);
+
+    try {
+      let catalogToSync = syncResult?.catalogData;
+
+      // If we don't have compiled catalog in state, compile it now
+      if (!catalogToSync) {
+        // Try reading from localStorage first if quota is limited
+        let cachedCatalog = null;
+        try {
+          const stored = localStorage.getItem('sensei_static_catalog_v1');
+          if (stored) cachedCatalog = JSON.parse(stored);
+        } catch (e) {}
+
+        if (cachedCatalog && cachedCatalog.subjects && cachedCatalog.subjects.length > 0) {
+          catalogToSync = cachedCatalog;
+        } else {
+          // Fetch from Firestore
+          const subjectsSnap = await getDocs(query(collection(db, 'subjects'), orderBy('name', 'asc')));
+          const subjects = subjectsSnap.docs.map(d => ({
+            id: d.id,
+            name: d.data().name || '',
+            iconName: d.data().iconName || 'Book',
+            description: d.data().description || '',
+            isPriority: Boolean(d.data().isPriority),
+            createdAt: d.data().createdAt?.toDate ? d.data().createdAt.toDate().toISOString() : d.data().createdAt || null
+          }));
+
+          const docsSnap = await getDocs(collection(db, 'documents'));
+          const documentsBySubject: Record<string, any[]> = {};
+          let totalDocsCount = 0;
+
+          docsSnap.docs.forEach(docSnap => {
+            const d = docSnap.data();
+            const subId = d.subjectId;
+            if (!subId) return;
+            if (!documentsBySubject[subId]) documentsBySubject[subId] = [];
+            documentsBySubject[subId].push({
+              id: docSnap.id,
+              subjectId: d.subjectId,
+              title: d.title || '',
+              type: d.type || 'Khác',
+              url: d.url || '',
+              chapter: d.chapter || '',
+              isHidden: Boolean(d.isHidden),
+              isFolder: Boolean(d.isFolder),
+              items: Array.isArray(d.items) ? d.items : [],
+              createdAt: d.createdAt?.toDate ? d.createdAt.toDate().toISOString() : d.createdAt || null
+            });
+            totalDocsCount++;
+          });
+
+          catalogToSync = {
+            lastUpdated: new Date().toISOString(),
+            version: Date.now(),
+            totalSubjects: subjects.length,
+            totalDocuments: totalDocsCount,
+            subjects,
+            documents: documentsBySubject
+          };
+        }
+      }
+
+      const res = await syncCatalogToGitHub(catalogToSync, githubToken.trim());
+      setGithubSyncResult(res);
+    } catch (err: any) {
+      console.error('Error syncing to GitHub:', err);
+      const isQuota = err?.code === 'resource-exhausted' || err?.message?.includes('Quota') || err?.message?.includes('resource-exhausted');
+      setGithubSyncResult({
+        success: false,
+        message: isQuota
+          ? 'Hạn ngạch Firestore đang tạm hết để tải danh sách mới nhất. Bạn có thể thử lại sau 14:00 khi Google reset quota!'
+          : `Lỗi: ${err.message || 'Không thể đồng bộ lên GitHub'}`
+      });
+    } finally {
+      setIsSyncingGithub(false);
     }
   };
 
@@ -1899,39 +2003,163 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
-                    <button
-                      onClick={handleSyncCatalog}
-                      disabled={isSyncingCatalog}
-                      className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 transition-all active:scale-95 disabled:opacity-60 shrink-0 cursor-pointer"
-                    >
-                      <RefreshCw className={`w-4 h-4 ${isSyncingCatalog ? 'animate-spin' : ''}`} />
-                      {isSyncingCatalog ? 'Đang đồng bộ từ Firestore...' : '🔄 Đồng bộ dữ liệu sang File tĩnh'}
-                    </button>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <button
+                        onClick={handleSyncToGitHub}
+                        disabled={isSyncingGithub || isSyncingCatalog}
+                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/25 transition-all active:scale-95 disabled:opacity-60 shrink-0 cursor-pointer"
+                        title="Đẩy file tĩnh trực tiếp lên GitHub để Vercel tự động deploy bản mới nhất"
+                      >
+                        <RefreshCw className={`w-4 h-4 ${isSyncingGithub ? 'animate-spin' : ''}`} />
+                        {isSyncingGithub ? 'Đang đẩy lên GitHub...' : '🚀 Đồng bộ & Auto-Deploy Vercel'}
+                      </button>
+
+                      <button
+                        onClick={handleSyncCatalog}
+                        disabled={isSyncingCatalog || isSyncingGithub}
+                        className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all active:scale-95 disabled:opacity-60 shrink-0 cursor-pointer"
+                        title="Đồng bộ vào file trên server nội bộ"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${isSyncingCatalog ? 'animate-spin' : ''}`} />
+                        {isSyncingCatalog ? 'Đang nạp...' : '🔄 Nạp dữ liệu tĩnh'}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowGithubTokenInput(prev => !prev)}
+                        className="px-3 py-2 rounded-xl bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 font-medium text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <span>🔑 {githubToken ? 'Đã cài Token GitHub' : 'Cài đặt Token GitHub'}</span>
+                      </button>
+                    </div>
                   </div>
 
+                  {/* GitHub Token Config Box */}
+                  {showGithubTokenInput && (
+                    <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-900/60 shadow-xs space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                          🔑 GitHub Personal Access Token (PAT)
+                        </span>
+                        <a
+                          href="https://github.com/settings/tokens/new?scopes=repo&description=SenseiTLU+Catalog+Sync"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                        >
+                          Tạo mã Token trên GitHub (1 phút) <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="password"
+                          value={githubToken}
+                          onChange={(e) => setGithubToken(e.target.value)}
+                          placeholder="Dán mã GitHub Token (bắt đầu bằng ghp_...)"
+                          className="flex-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            try {
+                              localStorage.setItem('sensei_admin_gh_token', githubToken.trim());
+                              alert('Đã lưu GitHub Token an toàn trong trình duyệt của bạn!');
+                              setShowGithubTokenInput(false);
+                            } catch (e) {}
+                          }}
+                          className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors shrink-0"
+                        >
+                          Lưu Token
+                        </button>
+                      </div>
+
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                        💡 <strong>Cách hoạt động:</strong> Token được lưu bảo mật trong trình duyệt của Admin. Khi bấm <strong>"Đồng bộ & Auto-Deploy Vercel"</strong>, hệ thống tự động commit file <code className="text-indigo-600 dark:text-indigo-400">public/data/catalog.json</code> vào GitHub repo <code>Lovell-Hunter-2/SenseiTLU</code>. Vercel tự động nhận commit và deploy trong ~30 giây, <strong>bạn không cần tải file về máy tính!</strong>
+                      </p>
+                    </div>
+                  )}
+
+                  {/* GitHub Sync Status Banner */}
+                  {githubSyncResult && (
+                    <div className={`p-3.5 rounded-xl border text-xs sm:text-sm leading-relaxed ${
+                      githubSyncResult.success
+                        ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 text-blue-900 dark:text-blue-200'
+                        : 'bg-red-50 dark:bg-red-950/40 border-red-300 dark:border-red-800 text-red-900 dark:text-red-200'
+                    }`}>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                        <div className="flex items-start gap-2">
+                          <span className="text-base">{githubSyncResult.success ? '🚀' : '❌'}</span>
+                          <div>
+                            <p className="font-semibold">{githubSyncResult.message}</p>
+                            {githubSyncResult.sha && (
+                              <p className="text-[11px] opacity-80 font-mono mt-0.5">Commit: {githubSyncResult.sha.slice(0, 7)}</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {githubSyncResult.commitUrl && (
+                          <a
+                            href={githubSyncResult.commitUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs inline-flex items-center gap-1 shrink-0 transition-colors"
+                          >
+                            Xem commit trên GitHub <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Local / Server Sync Status Banner */}
                   {syncResult && (
                     <div className={`p-3.5 rounded-xl border text-xs sm:text-sm leading-relaxed ${
                       syncResult.success 
                         ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
                         : 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200'
                     }`}>
-                      <div className="flex items-start gap-2">
-                        <span className="text-base">{syncResult.success ? '🎉' : '⚠️'}</span>
-                        <div className="flex-1">
-                          <p className="font-semibold">{syncResult.message}</p>
-                          {syncResult.stats && (
-                            <p className="text-xs opacity-90 mt-1">
-                              Thời gian: {syncResult.stats.time} • Môn học: {syncResult.stats.subjects} • Tài liệu: {syncResult.stats.docs}
-                            </p>
-                          )}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-start gap-2">
+                          <span className="text-base">{syncResult.success ? '🎉' : '⚠️'}</span>
+                          <div className="flex-1">
+                            <p className="font-semibold">{syncResult.message}</p>
+                            {syncResult.stats && (
+                              <p className="text-xs opacity-90 mt-1">
+                                Thời gian: {syncResult.stats.time} • Môn học: {syncResult.stats.subjects} • Tài liệu: {syncResult.stats.docs}
+                              </p>
+                            )}
+                          </div>
                         </div>
+
+                        {syncResult.success && syncResult.catalogData && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const blob = new Blob([JSON.stringify(syncResult.catalogData, null, 2)], { type: 'application/json' });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = 'catalog.json';
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                              URL.revokeObjectURL(url);
+                            }}
+                            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors shrink-0 cursor-pointer"
+                            title="Tải tệp catalog.json về máy để đưa vào GitHub"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            Tải file catalog.json về máy
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}
 
                   <div className="pt-2 border-t border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 gap-2">
-                    <span>💡 <strong>Hướng dẫn:</strong> Bấm nút trên lúc 14:00 (khi Google mở lại Quota) để đồng bộ dữ liệu tĩnh lần đầu tiên, hoặc mỗi khi bạn vừa đăng thêm tài liệu mới.</span>
-                    <span className="font-mono text-slate-600 dark:text-slate-300">Lệnh terminal: npm run sync-catalog</span>
+                    <span>💡 <strong>Mẹo:</strong> Sau khi thêm môn hoặc tài liệu, bấm nút <strong>"🚀 Đồng bộ & Auto-Deploy Vercel"</strong> để Vercel tự cập nhật toàn bộ sinh viên với 0 lượt đọc Firestore.</span>
+                    <span className="font-mono text-slate-600 dark:text-slate-300">Repo: Lovell-Hunter-2/SenseiTLU</span>
                   </div>
                 </div>
               </div>
