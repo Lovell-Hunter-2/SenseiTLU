@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-10-30T17:44:40.502Z",
-  "version": 1793382280502,
+  "lastUpdated": "2026-10-30T18:02:18.336Z",
+  "version": 1793383338336,
   "totalSubjects": 87,
-  "totalDocuments": 283,
+  "totalDocuments": 281,
   "subjects": [
     {
       "id": "b3yvnb7J7pmzeHhIydyd",
@@ -1913,8 +1913,8 @@
         "isFolder": true,
         "items": [
           {
-            "title": "Đề ôn tập các dạng bài thi (with answers) (docx)",
-            "url": "https://docs.google.com/document/d/10ZCisnTdN5yo3K2-HB-AQHJx9G34C2ZB/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/10ZCisnTdN5yo3K2-HB-AQHJx9G34C2ZB/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Đề ôn tập các dạng bài thi (with answers) (docx)"
           },
           {
             "title": "Đề ôn tập các dạng bài thi (with answers) (pdf)",
@@ -1925,8 +1925,8 @@
             "url": "https://docs.google.com/document/d/199yDwcmfYUO769j8LydI-UmSclmG9IGl/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "Đề ôn tập các dạng bài thi (pdf)",
-            "url": "https://drive.google.com/file/d/1Gi1Sd7X0a1jbjUowIQLRCSfCeiWDClJB/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1Gi1Sd7X0a1jbjUowIQLRCSfCeiWDClJB/view?usp=drivesdk",
+            "title": "Đề ôn tập các dạng bài thi (pdf)"
           }
         ],
         "createdAt": "2026-10-30T17:43:33.718Z"
@@ -1982,35 +1982,6 @@
         "createdAt": "2026-09-07T10:38:03.453Z"
       },
       {
-        "id": "jtLUgx1pezK7PCBzKaPV",
-        "subjectId": "eJXPaC8iDK8fioBTg7wr",
-        "title": "Đề ôn tập các dạng bài thi",
-        "type": "Giáo trình",
-        "url": "",
-        "chapter": "",
-        "isHidden": false,
-        "isFolder": true,
-        "items": [
-          {
-            "title": "Đề ôn tập các dạng bài thi (with answers) (docx)",
-            "url": "https://docs.google.com/document/d/10ZCisnTdN5yo3K2-HB-AQHJx9G34C2ZB/edit?usp=drivesdk&rtpof=true&sd=true"
-          },
-          {
-            "title": "Đề ôn tập các dạng bài thi (with answers) (pdf)",
-            "url": "https://drive.google.com/file/d/1iWZi1CU95kIyKxivxcGDpkPkpD-jtfLM/view?usp=drivesdk"
-          },
-          {
-            "title": "Đề ôn tập các dạng bài thi (docx)",
-            "url": "https://docs.google.com/document/d/199yDwcmfYUO769j8LydI-UmSclmG9IGl/edit?usp=drivesdk&rtpof=true&sd=true"
-          },
-          {
-            "title": "Đề ôn tập các dạng bài thi (pdf)",
-            "url": "https://drive.google.com/file/d/1Gi1Sd7X0a1jbjUowIQLRCSfCeiWDClJB/view?usp=drivesdk"
-          }
-        ],
-        "createdAt": "2026-10-30T17:19:20.231Z"
-      },
-      {
         "id": "oiQ7fyYdQO7ICSiCZEbh",
         "subjectId": "eJXPaC8iDK8fioBTg7wr",
         "title": "Compact Preliminary For Schools - Students Book",
@@ -2021,18 +1992,6 @@
         "isFolder": false,
         "items": [],
         "createdAt": "2026-08-22T17:57:57.987Z"
-      },
-      {
-        "id": "wZSct1Rmr7tol4Ld2MNN",
-        "subjectId": "eJXPaC8iDK8fioBTg7wr",
-        "title": "Mini Test U1,2,3,4",
-        "type": "Đề thi mẫu",
-        "url": "https://drive.google.com/file/d/1V39G2nzws_jpCHOfOr9WTRcRrpoSjEr_/view?usp=sharing",
-        "chapter": "",
-        "isHidden": false,
-        "isFolder": false,
-        "items": [],
-        "createdAt": "2026-10-30T17:42:10.794Z"
       },
       {
         "id": "yCq8N7VaLg8ql2uh9Wa5",
