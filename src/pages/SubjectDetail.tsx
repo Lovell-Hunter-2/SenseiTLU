@@ -930,34 +930,6 @@ export default function SubjectDetail() {
         )}
       </div>
 
-      {/* Mock Exam Card (Fixed at top) */}
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-900 border border-slate-700 rounded-xl p-4 sm:p-5 text-white shadow-lg relative overflow-hidden group flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
-          <Zap className="w-24 h-24" />
-        </div>
-        <div className="relative z-10 flex items-center gap-4">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 bg-orange-500/20 rounded-xl flex items-center justify-center border border-orange-500/30">
-            <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-orange-400" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-lg font-bold">Thi online {subject.name}</h3>
-              <span className="inline-flex items-center gap-1 bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full text-[10px] font-bold border border-orange-500/30 uppercase tracking-wider">
-                🔥 Hot
-              </span>
-            </div>
-            <p className="text-slate-400 text-sm max-w-md line-clamp-2 sm:line-clamp-none">
-              Luyện tập với AI - Tự động tạo câu hỏi trắc nghiệm từ tài liệu.
-            </p>
-          </div>
-        </div>
-        <Link
-          to={`/subject/${subject.id}/mock-exam`}
-          className="relative z-10 w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-medium px-5 py-2 rounded-lg transition-colors whitespace-nowrap"
-        >
-          Làm bài ngay <span>→</span>
-        </Link>
-      </div>
 
       {/* Document Categories */}
       <div className="space-y-8">
