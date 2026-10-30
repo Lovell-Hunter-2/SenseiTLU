@@ -144,28 +144,79 @@ export function setCatalogDataLocally(data: CatalogData): void {
 }
 
 /**
- * Sync catalog to server API endpoint (for Admin)
+ * Sync catalog directly to GitHub repository via GitHub REST API
+ * This triggers an automatic Vercel redeployment without any manual downloads or git commands!
  */
-export async function syncCatalogToServer(data: CatalogData, idToken: string): Promise<boolean> {
+export async function syncCatalogToGitHub(
+  data: CatalogData,
+  token: string,
+  owner: string = 'Lovell-Hunter-2',
+  repo: string = 'SenseiTLU',
+  branch: string = 'main'
+): Promise<{ success: boolean; message: string; commitUrl?: string; sha?: string }> {
   try {
-    const res = await fetch('/api/sync-catalog', {
-      method: 'POST',
+    const filePath = 'public/data/catalog.json';
+    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
+
+    // 1. Get current file SHA if exists
+    let sha: string | undefined;
+    const getRes = await fetch(`${apiUrl}?ref=${branch}`, {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${idToken}`
-      },
-      body: JSON.stringify(data)
+        'Authorization': `Bearer ${token.trim()}`,
+        'Accept': 'application/vnd.github+json',
+      }
     });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Sync API failed: ${res.status} ${errText}`);
+    if (getRes.ok) {
+      const existing = await getRes.json();
+      sha = existing.sha;
+    } else if (getRes.status !== 404) {
+      const errText = await getRes.text();
+      throw new Error(`Không thể kết nối GitHub (Mã ${getRes.status}): ${errText}`);
     }
 
-    setCatalogDataLocally(data);
-    return true;
-  } catch (err) {
-    console.error('[CatalogService] Error syncing catalog to server:', err);
-    throw err;
+    // 2. Base64 encode JSON
+    const jsonStr = JSON.stringify(data, null, 2);
+    // Safe utf-8 base64 encoding in browser
+    const base64Content = btoa(
+      encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, (_, p1) =>
+        String.fromCharCode(parseInt(p1, 16))
+      )
+    );
+
+    // 3. Put to GitHub
+    const putRes = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token.trim()}`,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: `Chore: Cập nhật catalog.json (${data.subjects.length} môn học) qua Sensei Admin`,
+        content: base64Content,
+        sha: sha,
+        branch: branch
+      })
+    });
+
+    if (!putRes.ok) {
+      const putErr = await putRes.text();
+      throw new Error(`GitHub từ chối lưu file (${putRes.status}): ${putErr}`);
+    }
+
+    const putData = await putRes.json();
+    return {
+      success: true,
+      message: `Đã đẩy commit lên GitHub thành công! Vercel đang tự động kích hoạt Build & Deploy (~30s).`,
+      commitUrl: putData.commit?.html_url,
+      sha: putData.commit?.sha
+    };
+  } catch (err: any) {
+    console.error('Error syncing catalog to GitHub:', err);
+    return {
+      success: false,
+      message: err.message || 'Lỗi khi đồng bộ lên GitHub'
+    };
   }
 }
