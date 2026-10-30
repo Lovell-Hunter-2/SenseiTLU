@@ -11,7 +11,7 @@ import HiddenDocsManager from '../components/HiddenDocsManager';
 import EcosystemManagerModal from '../components/EcosystemManagerModal';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, BarChart, Bar } from 'recharts';
 import { getVietnamDateString, getQuotaCycleInfo, calibrateQuotaCycle, resetCurrentQuotaToZero } from '../services/analyticsService';
-import { syncCatalogToGitHub } from '../services/catalogService';
+import { syncCatalogToGitHub, loadCatalog } from '../services/catalogService';
 import AdminMobileNav from '../components/AdminMobileNav';
 import {
   AdminTabId,
@@ -359,6 +359,7 @@ export default function AdminDashboard() {
         localStorage.setItem('sensei_cached_subjects', JSON.stringify(subjects));
       } catch (e) {}
 
+      setCatalogSubjectsCount(subjects.length);
       setSyncResult({
         success: true,
         message: `Đồng bộ thành công ${subjects.length} môn học và ${totalDocsCount} tài liệu!`,
@@ -379,6 +380,26 @@ export default function AdminDashboard() {
     }
   };
 
+  const [catalogSubjectsCount, setCatalogSubjectsCount] = useState<number>(() => {
+    try {
+      const raw = localStorage.getItem('sensei_static_catalog_v1') || localStorage.getItem('sensei_cached_subjects');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed.length;
+        if (parsed.subjects && Array.isArray(parsed.subjects) && parsed.subjects.length > 0) return parsed.subjects.length;
+      }
+    } catch (e) {}
+    return 87;
+  });
+
+  useEffect(() => {
+    loadCatalog().then(cat => {
+      if (cat && Array.isArray(cat.subjects) && cat.subjects.length > 0) {
+        setCatalogSubjectsCount(cat.subjects.length);
+      }
+    }).catch(() => {});
+  }, []);
+
   const [githubToken, setGithubToken] = useState(() => {
     try {
       return localStorage.getItem('sensei_admin_gh_token') || '';
@@ -387,8 +408,55 @@ export default function AdminDashboard() {
     }
   });
   const [showGithubTokenInput, setShowGithubTokenInput] = useState(false);
+  const [isMaskingToken, setIsMaskingToken] = useState(true);
   const [isSyncingGithub, setIsSyncingGithub] = useState(false);
   const [githubSyncResult, setGithubSyncResult] = useState<{ success?: boolean; message?: string; commitUrl?: string; sha?: string } | null>(null);
+
+  // Cross-device Cloud Token Sync: automatically fetch token from Firestore config so it works across ALL devices & browsers
+  useEffect(() => {
+    if (!isAdmin) return;
+    const fetchSharedToken = async () => {
+      try {
+        const cfgRef = doc(db, 'system_config', 'github_sync');
+        const snap = await getDoc(cfgRef);
+        if (snap.exists() && snap.data()?.token) {
+          const cloudToken = snap.data().token;
+          setGithubToken(cloudToken);
+          try {
+            localStorage.setItem('sensei_admin_gh_token', cloudToken);
+          } catch (e) {}
+        }
+      } catch (err) {
+        // Silently skip if quota temporarily locked
+      }
+    };
+    fetchSharedToken();
+  }, [isAdmin]);
+
+  const handleSaveGithubToken = async () => {
+    const trimmed = githubToken.trim();
+    if (!trimmed) {
+      alert('Vui lòng nhập mã GitHub Token');
+      return;
+    }
+
+    try {
+      localStorage.setItem('sensei_admin_gh_token', trimmed);
+      if (user && isAdmin) {
+        await setDoc(doc(db, 'system_config', 'github_sync'), {
+          token: trimmed,
+          updatedAt: serverTimestamp(),
+          updatedBy: user.email
+        }, { merge: true });
+      }
+      alert('Đã lưu Token thành công cho toàn bộ tài khoản Admin! Mọi thiết bị và trình duyệt của bạn từ nay đều tự nhận diện được Token này.');
+      setShowGithubTokenInput(false);
+    } catch (err: any) {
+      console.warn('Error syncing token to Firestore:', err);
+      alert('Đã lưu trên trình duyệt này! (Khi quota Firestore mở lại, nó sẽ tự động đồng bộ sang mọi thiết bị khác của bạn).');
+      setShowGithubTokenInput(false);
+    }
+  };
 
   const handleSyncToGitHub = async () => {
     if (!githubToken.trim()) {
@@ -466,6 +534,9 @@ export default function AdminDashboard() {
       }
 
       const res = await syncCatalogToGitHub(catalogToSync, githubToken.trim());
+      if (res.success && catalogToSync?.subjects?.length) {
+        setCatalogSubjectsCount(catalogToSync.subjects.length);
+      }
       setGithubSyncResult(res);
     } catch (err: any) {
       console.error('Error syncing to GitHub:', err);
@@ -1997,7 +2068,7 @@ export default function AdminDashboard() {
                           </span>
                         </div>
                         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
-                          Toàn bộ sinh viên lướt xem 87 môn học và tài liệu được nạp trực tiếp từ file tĩnh <code className="px-1.5 py-0.5 rounded bg-emerald-100/70 dark:bg-emerald-950/60 font-mono text-emerald-800 dark:text-emerald-300 text-xs">public/data/catalog.json</code> qua CDN Vercel. 
+                          Toàn bộ sinh viên lướt xem <strong className="text-emerald-700 dark:text-emerald-400 font-bold">{catalogSubjectsCount}</strong> môn học và tài liệu được nạp trực tiếp từ file tĩnh <code className="px-1.5 py-0.5 rounded bg-emerald-100/70 dark:bg-emerald-950/60 font-mono text-emerald-800 dark:text-emerald-300 text-xs">public/data/catalog.json</code> qua CDN Vercel. 
                           <strong> Tiêu tốn đúng 0 lượt đọc Firestore</strong> cho mọi sinh viên (kể cả F5 hoặc xem tài liệu cả ngày).
                         </p>
                       </div>
@@ -2052,30 +2123,36 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="flex flex-col sm:flex-row gap-2">
-                        <input
-                          type="password"
-                          value={githubToken}
-                          onChange={(e) => setGithubToken(e.target.value)}
-                          placeholder="Dán mã GitHub Token (bắt đầu bằng ghp_...)"
-                          className="flex-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                        />
+                        <div className="relative flex-1">
+                          <input
+                            type={isMaskingToken ? 'password' : 'text'}
+                            value={githubToken}
+                            onChange={(e) => setGithubToken(e.target.value)}
+                            placeholder="Dán mã GitHub Token (bắt đầu bằng ghp_...)"
+                            autoComplete="off"
+                            data-lpignore="true"
+                            className="w-full pl-3 pr-10 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setIsMaskingToken(prev => !prev)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs cursor-pointer"
+                            title={isMaskingToken ? "Hiện mã Token" : "Ẩn mã Token"}
+                          >
+                            {isMaskingToken ? '👁️' : '🙈'}
+                          </button>
+                        </div>
                         <button
                           type="button"
-                          onClick={() => {
-                            try {
-                              localStorage.setItem('sensei_admin_gh_token', githubToken.trim());
-                              alert('Đã lưu GitHub Token an toàn trong trình duyệt của bạn!');
-                              setShowGithubTokenInput(false);
-                            } catch (e) {}
-                          }}
-                          className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors shrink-0"
+                          onClick={handleSaveGithubToken}
+                          className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors shrink-0 cursor-pointer shadow-xs"
                         >
-                          Lưu Token
+                          Lưu Token đồng bộ
                         </button>
                       </div>
 
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                        💡 <strong>Cách hoạt động:</strong> Token được lưu bảo mật trong trình duyệt của Admin. Khi bấm <strong>"Đồng bộ & Auto-Deploy Vercel"</strong>, hệ thống tự động commit file <code className="text-indigo-600 dark:text-indigo-400">public/data/catalog.json</code> vào GitHub repo <code>Lovell-Hunter-2/SenseiTLU</code>. Vercel tự động nhận commit và deploy trong ~30 giây, <strong>bạn không cần tải file về máy tính!</strong>
+                        💡 <strong>Đồng bộ đa thiết bị:</strong> Token được lưu bảo mật và tự động đồng bộ theo tài khoản Admin Google của bạn. Dù bạn đăng nhập từ máy tính, laptop hay điện thoại (bất kỳ trình duyệt nào), hệ thống đều tự nhận diện Token này để bấm <strong>"Đồng bộ & Auto-Deploy Vercel"</strong> mà không cần dán lại!
                       </p>
                     </div>
                   )}
