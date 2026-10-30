@@ -473,69 +473,57 @@ export default function AdminDashboard() {
     setGithubSyncResult(null);
 
     try {
-      let catalogToSync = syncResult?.catalogData;
+      // Always query live Firestore so all new subjects and documents are captured
+      const subjectsSnap = await getDocs(query(collection(db, 'subjects'), orderBy('name', 'asc')));
+      const subjects = subjectsSnap.docs.map(d => ({
+        id: d.id,
+        name: d.data().name || '',
+        iconName: d.data().iconName || 'Book',
+        description: d.data().description || '',
+        isPriority: Boolean(d.data().isPriority),
+        createdAt: d.data().createdAt?.toDate ? d.data().createdAt.toDate().toISOString() : d.data().createdAt || null
+      }));
 
-      // If we don't have compiled catalog in state, compile it now
-      if (!catalogToSync) {
-        // Try reading from localStorage first if quota is limited
-        let cachedCatalog = null;
-        try {
-          const stored = localStorage.getItem('sensei_static_catalog_v1');
-          if (stored) cachedCatalog = JSON.parse(stored);
-        } catch (e) {}
+      const docsSnap = await getDocs(collection(db, 'documents'));
+      const documentsBySubject: Record<string, any[]> = {};
+      let totalDocsCount = 0;
 
-        if (cachedCatalog && cachedCatalog.subjects && cachedCatalog.subjects.length > 0) {
-          catalogToSync = cachedCatalog;
-        } else {
-          // Fetch from Firestore
-          const subjectsSnap = await getDocs(query(collection(db, 'subjects'), orderBy('name', 'asc')));
-          const subjects = subjectsSnap.docs.map(d => ({
-            id: d.id,
-            name: d.data().name || '',
-            iconName: d.data().iconName || 'Book',
-            description: d.data().description || '',
-            isPriority: Boolean(d.data().isPriority),
-            createdAt: d.data().createdAt?.toDate ? d.data().createdAt.toDate().toISOString() : d.data().createdAt || null
-          }));
+      docsSnap.docs.forEach(docSnap => {
+        const d = docSnap.data();
+        const subId = d.subjectId;
+        if (!subId) return;
+        if (!documentsBySubject[subId]) documentsBySubject[subId] = [];
+        documentsBySubject[subId].push({
+          id: docSnap.id,
+          subjectId: d.subjectId,
+          title: d.title || '',
+          type: d.type || 'Khác',
+          url: d.url || '',
+          chapter: d.chapter || '',
+          isHidden: Boolean(d.isHidden),
+          isFolder: Boolean(d.isFolder),
+          items: Array.isArray(d.items) ? d.items : [],
+          createdAt: d.createdAt?.toDate ? d.createdAt.toDate().toISOString() : d.createdAt || null
+        });
+        totalDocsCount++;
+      });
 
-          const docsSnap = await getDocs(collection(db, 'documents'));
-          const documentsBySubject: Record<string, any[]> = {};
-          let totalDocsCount = 0;
-
-          docsSnap.docs.forEach(docSnap => {
-            const d = docSnap.data();
-            const subId = d.subjectId;
-            if (!subId) return;
-            if (!documentsBySubject[subId]) documentsBySubject[subId] = [];
-            documentsBySubject[subId].push({
-              id: docSnap.id,
-              subjectId: d.subjectId,
-              title: d.title || '',
-              type: d.type || 'Khác',
-              url: d.url || '',
-              chapter: d.chapter || '',
-              isHidden: Boolean(d.isHidden),
-              isFolder: Boolean(d.isFolder),
-              items: Array.isArray(d.items) ? d.items : [],
-              createdAt: d.createdAt?.toDate ? d.createdAt.toDate().toISOString() : d.createdAt || null
-            });
-            totalDocsCount++;
-          });
-
-          catalogToSync = {
-            lastUpdated: new Date().toISOString(),
-            version: Date.now(),
-            totalSubjects: subjects.length,
-            totalDocuments: totalDocsCount,
-            subjects,
-            documents: documentsBySubject
-          };
-        }
-      }
+      const catalogToSync = {
+        lastUpdated: new Date().toISOString(),
+        version: Date.now(),
+        totalSubjects: subjects.length,
+        totalDocuments: totalDocsCount,
+        subjects,
+        documents: documentsBySubject
+      };
 
       const res = await syncCatalogToGitHub(catalogToSync, githubToken.trim());
-      if (res.success && catalogToSync?.subjects?.length) {
-        setCatalogSubjectsCount(catalogToSync.subjects.length);
+      if (res.success) {
+        setCatalogSubjectsCount(subjects.length);
+        try {
+          localStorage.setItem('sensei_static_catalog_v1', JSON.stringify(catalogToSync));
+          localStorage.setItem('sensei_cached_subjects', JSON.stringify(subjects));
+        } catch (e) {}
       }
       setGithubSyncResult(res);
     } catch (err: any) {
