@@ -342,17 +342,20 @@ export default function SubjectDetail() {
       }
 
       // 2. Documents (Zero-Firestore-Read Mode via Static Catalog + Cache-First)
-      // Check static catalog first (0 reads!)
-      const staticDocs = await getStaticDocuments(id, forceRefresh);
-      if (staticDocs && Array.isArray(staticDocs)) {
-        setDocuments(staticDocs);
-        setIsDataCached(true);
-        const cacheKeyDocs = `subject_docs_${id}_${docLimit}`;
-        setCachedData(cacheKeyDocs, staticDocs, CacheTTL.VERY_LONG);
-        try {
-          localStorage.setItem(`sensei_docs_${id}`, JSON.stringify(staticDocs));
-        } catch (e) {}
-        return;
+      // Regular students (and default loads) use static catalog (0 reads!)
+      // When Admin explicitly refreshes (forceRefresh=true), query live Firestore so new additions show immediately!
+      if (!isAdmin || !forceRefresh) {
+        const staticDocs = await getStaticDocuments(id, forceRefresh);
+        if (staticDocs && Array.isArray(staticDocs)) {
+          setDocuments(staticDocs);
+          setIsDataCached(true);
+          const cacheKeyDocs = `subject_docs_${id}_${docLimit}`;
+          setCachedData(cacheKeyDocs, staticDocs, CacheTTL.VERY_LONG);
+          try {
+            localStorage.setItem(`sensei_docs_${id}`, JSON.stringify(staticDocs));
+          } catch (e) {}
+          return;
+        }
       }
 
       // If static catalog is not yet populated, check local caches
@@ -489,6 +492,7 @@ export default function SubjectDetail() {
         docData.chapter = '';
       }
 
+      let savedDocId = editingDocId;
       if (editingDocId) {
         await updateDoc(doc(db, 'documents', editingDocId), docData);
         if (isAdmin && user) {
@@ -503,7 +507,8 @@ export default function SubjectDetail() {
         }
       } else {
         docData.createdAt = serverTimestamp();
-        await addDoc(collection(db, 'documents'), docData);
+        const docRef = await addDoc(collection(db, 'documents'), docData);
+        savedDocId = docRef.id;
         if (isAdmin && user) {
           await addDoc(collection(db, 'system_updates'), {
             action: 'Tạo mới',
@@ -516,13 +521,35 @@ export default function SubjectDetail() {
         }
       }
 
-      // Invalidate cache and reload
+      // Optimistic update: show on Admin screen immediately without waiting!
+      const newDocItem = {
+        id: savedDocId || `doc_${Date.now()}`,
+        ...docData,
+        createdAt: new Date().toISOString()
+      };
+
+      setDocuments((prev) => {
+        if (editingDocId) {
+          return prev.map((d) => (d.id === editingDocId ? { ...d, ...newDocItem } : d));
+        } else {
+          return [newDocItem, ...prev];
+        }
+      });
+
+      // Update local caches so it persists on reload
       if (id) {
         invalidateCache(`subject_docs_${id}`);
         try {
-          localStorage.removeItem(`sensei_docs_${id}`);
+          const localRaw = localStorage.getItem(`sensei_docs_${id}`);
+          let currentList = localRaw ? JSON.parse(localRaw) : [];
+          if (editingDocId) {
+            currentList = currentList.map((d: any) => (d.id === editingDocId ? { ...d, ...newDocItem } : d));
+          } else {
+            currentList = [newDocItem, ...currentList];
+          }
+          localStorage.setItem(`sensei_docs_${id}`, JSON.stringify(currentList));
+          setCachedData(`subject_docs_${id}_${docLimit}`, currentList, CacheTTL.VERY_LONG);
         } catch (e) {}
-        loadSubjectAndDocs(true);
       }
       logFirestoreWrite(1);
 
@@ -540,6 +567,7 @@ export default function SubjectDetail() {
     try {
       await deleteDoc(doc(db, 'documents', docId));
       logFirestoreDelete(1);
+      setDocuments((prev) => prev.filter((d) => d.id !== docId));
       if (isAdmin && user) {
         await addDoc(collection(db, 'system_updates'), {
           action: 'Xóa',
@@ -553,9 +581,13 @@ export default function SubjectDetail() {
       if (id) {
         invalidateCache(`subject_docs_${id}`);
         try {
-          localStorage.removeItem(`sensei_docs_${id}`);
+          const localRaw = localStorage.getItem(`sensei_docs_${id}`);
+          if (localRaw) {
+            const filtered = JSON.parse(localRaw).filter((d: any) => d.id !== docId);
+            localStorage.setItem(`sensei_docs_${id}`, JSON.stringify(filtered));
+            setCachedData(`subject_docs_${id}_${docLimit}`, filtered, CacheTTL.VERY_LONG);
+          }
         } catch (e) {}
-        loadSubjectAndDocs(true);
       }
       setDeleteConfirmId(null);
     } catch (error) {
