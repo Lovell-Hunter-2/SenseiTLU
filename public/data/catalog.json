@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-10-30T18:02:18.336Z",
-  "version": 1793383338336,
+  "lastUpdated": "2026-10-31T15:35:12.719Z",
+  "version": 1793460912719,
   "totalSubjects": 87,
-  "totalDocuments": 281,
+  "totalDocuments": 283,
   "subjects": [
     {
       "id": "b3yvnb7J7pmzeHhIydyd",
@@ -1818,6 +1818,27 @@
         "createdAt": "2026-10-30T17:14:35.784Z"
       },
       {
+        "id": "KBTCvYxjJlOy5N5m6Fp4",
+        "subjectId": "eJXPaC8iDK8fioBTg7wr",
+        "title": "Đề cương ôn thi chi tiết",
+        "type": "Đề cương",
+        "url": "",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": true,
+        "items": [
+          {
+            "title": "TA1 - Đề cương ôn thi chi tiết (docx)",
+            "url": "https://docs.google.com/document/d/122R8NRS6VQ1l7oxLkhKkh11jSXCA2qLJ/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "TA1 - Đề cương ôn thi chi tiết (pdf)",
+            "url": "https://drive.google.com/file/d/1q1AvbrYX-mVJ1CPCSPNIiRTT3R_dASrN/view?usp=drivesdk"
+          }
+        ],
+        "createdAt": "2026-10-31T15:34:13.306Z"
+      },
+      {
         "id": "LRuQxguVvv4TqTl79Bvl",
         "subjectId": "eJXPaC8iDK8fioBTg7wr",
         "title": "Compact Preliminary For Schools - Workbook Book",
@@ -1828,6 +1849,18 @@
         "isFolder": false,
         "items": [],
         "createdAt": "2026-09-07T10:35:22.867Z"
+      },
+      {
+        "id": "Q7b3zpLbbQwdrTUVzp8F",
+        "subjectId": "eJXPaC8iDK8fioBTg7wr",
+        "title": "TA1 - Review kiến thức",
+        "type": "Slide",
+        "url": "https://drive.google.com/file/d/13mnZLqYfNARhValwZDxyEH9YO7hGZfds/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-10-31T15:34:58.128Z"
       },
       {
         "id": "QGsZKhkPB7qmgO47T9sh",
