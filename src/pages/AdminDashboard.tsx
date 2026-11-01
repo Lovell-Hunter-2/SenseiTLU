@@ -459,14 +459,37 @@ export default function AdminDashboard() {
   };
 
   const handleSyncToGitHub = async () => {
-    if (!githubToken.trim()) {
+    let activeToken = githubToken.trim();
+
+    // If state doesn't have it yet, double check localStorage or Firestore system_config
+    if (!activeToken) {
+      try {
+        const local = localStorage.getItem('sensei_admin_gh_token');
+        if (local && local.trim()) {
+          activeToken = local.trim();
+          setGithubToken(activeToken);
+        } else {
+          const cfgRef = doc(db, 'system_config', 'github_sync');
+          const snap = await getDoc(cfgRef);
+          if (snap.exists() && snap.data()?.token) {
+            activeToken = snap.data().token.trim();
+            setGithubToken(activeToken);
+            try {
+              localStorage.setItem('sensei_admin_gh_token', activeToken);
+            } catch (e) {}
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (!activeToken) {
       setShowGithubTokenInput(true);
       alert('Vui lòng nhập GitHub Personal Access Token (PAT) trước khi đồng bộ lên GitHub & Vercel.');
       return;
     }
 
     try {
-      localStorage.setItem('sensei_admin_gh_token', githubToken.trim());
+      localStorage.setItem('sensei_admin_gh_token', activeToken);
     } catch (e) {}
 
     setIsSyncingGithub(true);
@@ -517,7 +540,7 @@ export default function AdminDashboard() {
         documents: documentsBySubject
       };
 
-      const res = await syncCatalogToGitHub(catalogToSync, githubToken.trim());
+      const res = await syncCatalogToGitHub(catalogToSync, activeToken);
       if (res.success) {
         setCatalogSubjectsCount(subjects.length);
         try {
