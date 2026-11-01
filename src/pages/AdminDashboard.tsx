@@ -716,22 +716,8 @@ export default function AdminDashboard() {
       (err) => console.error("Error in real-time total visits subscription:", err)
     );
 
-    // Real-time Active Connections (Presence Heartbeat within 3 minutes)
-    const unsubPresence = onSnapshot(
-      collection(db, 'presence'),
-      (snap) => {
-        const now = Date.now();
-        let active = 0;
-        snap.docs.forEach((docSnap) => {
-          const d = docSnap.data();
-          const lastSeenMs = d.lastSeen?.toMillis ? d.lastSeen.toMillis() : 0;
-          if (now - lastSeenMs < 3 * 60 * 1000) {
-            active++;
-          }
-        });
-      },
-      (err) => console.error("Error in real-time presence subscription:", err)
-    );
+    // Real-time Active Connections presence listener removed to save quota
+    const unsubPresence = () => {};
 
 
 
