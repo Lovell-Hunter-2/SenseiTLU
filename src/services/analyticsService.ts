@@ -116,6 +116,14 @@ export async function updatePresence(userUid?: string) {
       sid = 's_' + Math.random().toString(36).substring(2, 10);
       sessionStorage.setItem('tlu_session_id', sid);
     }
+    const lastPresence = sessionStorage.getItem('tlu_presence_last');
+    const now = Date.now();
+    // Only write to Firestore at most once every 6 minutes per session to save writes
+    if (lastPresence && now - Number(lastPresence) < 6 * 60 * 1000) {
+      return;
+    }
+    sessionStorage.setItem('tlu_presence_last', String(now));
+
     const presenceRef = doc(db, 'presence', sid);
     await setDoc(presenceRef, {
       sid,
@@ -183,11 +191,20 @@ export async function logGlobalPageView() {
     const today = getVietnamDateString();
     const { cycleId } = getQuotaCycleInfo();
     
+    // Deduplicate per user session: count 1 visit per 30 minutes in this session
+    const sessionKey = `sensei_visit_${today}`;
+    const lastVisit = sessionStorage.getItem(sessionKey);
+    const currentTime = Date.now();
+    if (lastVisit && currentTime - Number(lastVisit) < 30 * 60 * 1000) {
+      return;
+    }
+    sessionStorage.setItem(sessionKey, String(currentTime));
+
     // Convert to VN time for hourly tracking too
     const vnTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
     const hour = vnTime.getUTCHours().toString().padStart(2, '0');
     
-    // Log daily
+    // Log daily (1 write)
     const dailyRef = doc(db, 'analytics', `daily_visits_${today}`);
     await setDoc(dailyRef, {
       visits: increment(1),
@@ -195,7 +212,7 @@ export async function logGlobalPageView() {
       lastUpdated: serverTimestamp()
     }, { merge: true });
 
-    // Log hourly
+    // Log hourly (1 write)
     const hourlyRef = doc(db, 'analytics', `hourly_visits_${today}_${hour}`);
     await setDoc(hourlyRef, {
       visits: increment(1),
@@ -204,18 +221,18 @@ export async function logGlobalPageView() {
       lastUpdated: serverTimestamp()
     }, { merge: true });
 
-    // Total
+    // Total (1 write)
     const totalRef = doc(db, 'analytics', 'total_visits');
     await setDoc(totalRef, {
       visits: increment(1),
       lastUpdated: serverTimestamp()
     }, { merge: true });
 
-    // Quota Cycle Tracker (Tracks estimated Firestore reads in current 24h reset cycle)
+    // Quota Cycle Tracker (1 write per new session)
     const quotaRef = doc(db, 'analytics', `quota_cycle_${cycleId}`);
     await setDoc(quotaRef, {
       cycleId,
-      estimatedReads: increment(6),
+      estimatedReads: increment(3),
       estimatedWrites: increment(3),
       realtimeReads: increment(1),
       pageViews: increment(1),
@@ -228,47 +245,28 @@ export async function logGlobalPageView() {
 
 export async function logSubjectView(subjectId: string, subjectName: string) {
   try {
+    if (!subjectId) return;
     const today = getVietnamDateString();
     const now = new Date();
     const vnTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
     const hour = vnTime.getUTCHours().toString().padStart(2, '0');
 
-    // Total and timeframe subject views stored directly on subject doc
+    // Deduplicate per subject in session (1 view counted per 15 minutes)
+    const sessionKey = `sess_sub_${subjectId}`;
+    const lastView = sessionStorage.getItem(sessionKey);
+    const currentTime = Date.now();
+    if (lastView && currentTime - Number(lastView) < 15 * 60 * 1000) {
+      return;
+    }
+    sessionStorage.setItem(sessionKey, String(currentTime));
+
+    // Total and timeframe subject views stored directly on subject doc (1 single write!)
     const subjectRef = doc(db, 'analytics_subjects', subjectId);
     await setDoc(subjectRef, {
       name: subjectName,
       views: increment(1),
       [`daily_${today}`]: increment(1),
       [`hourly_${today}_${hour}`]: increment(1),
-      lastUpdated: serverTimestamp()
-    }, { merge: true });
-
-    // Track global subject hourly total for today
-    const hourlySubRef = doc(db, 'analytics', `sub_hourly_${today}_${hour}`);
-    await setDoc(hourlySubRef, {
-      visits: increment(1),
-      date: today,
-      hour: hour,
-      lastUpdated: serverTimestamp()
-    }, { merge: true });
-
-    // Track global subject daily total
-    const dailyTotalSubRef = doc(db, 'analytics', `sub_daily_${today}`);
-    await setDoc(dailyTotalSubRef, {
-      visits: increment(1),
-      date: today,
-      lastUpdated: serverTimestamp()
-    }, { merge: true });
-
-    // Quota Cycle Tracker
-    const { cycleId } = getQuotaCycleInfo();
-    const quotaRef = doc(db, 'analytics', `quota_cycle_${cycleId}`);
-    await setDoc(quotaRef, {
-      cycleId,
-      estimatedReads: increment(12),
-      estimatedWrites: increment(2),
-      realtimeReads: increment(2),
-      subjectViews: increment(1),
       lastUpdated: serverTimestamp()
     }, { merge: true });
   } catch (error) {
@@ -278,6 +276,7 @@ export async function logSubjectView(subjectId: string, subjectName: string) {
 
 export async function logDocumentView(docTitle: string, subjectName: string) {
   try {
+    if (!docTitle) return;
     const today = getVietnamDateString();
     const now = new Date();
     const vnTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
@@ -287,7 +286,16 @@ export async function logDocumentView(docTitle: string, subjectName: string) {
     const docId = docTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     if (!docId) return;
 
-    // Total and timeframe document views stored directly on doc doc
+    // Deduplicate per document in session (1 view counted per 15 minutes)
+    const sessionKey = `sess_doc_${docId}`;
+    const lastView = sessionStorage.getItem(sessionKey);
+    const currentTime = Date.now();
+    if (lastView && currentTime - Number(lastView) < 15 * 60 * 1000) {
+      return;
+    }
+    sessionStorage.setItem(sessionKey, String(currentTime));
+
+    // Total and timeframe document views stored directly on doc doc (1 single write!)
     const docRef = doc(db, 'analytics_documents', docId);
     await setDoc(docRef, {
       title: docTitle,
@@ -295,35 +303,6 @@ export async function logDocumentView(docTitle: string, subjectName: string) {
       views: increment(1),
       [`daily_${today}`]: increment(1),
       [`hourly_${today}_${hour}`]: increment(1),
-      lastUpdated: serverTimestamp()
-    }, { merge: true });
-
-    // Track global document hourly total for today
-    const hourlyDocRef = doc(db, 'analytics', `doc_hourly_${today}_${hour}`);
-    await setDoc(hourlyDocRef, {
-      visits: increment(1),
-      date: today,
-      hour: hour,
-      lastUpdated: serverTimestamp()
-    }, { merge: true });
-
-    // Track global document daily total
-    const dailyTotalDocRef = doc(db, 'analytics', `doc_daily_${today}`);
-    await setDoc(dailyTotalDocRef, {
-      visits: increment(1),
-      date: today,
-      lastUpdated: serverTimestamp()
-    }, { merge: true });
-
-    // Quota Cycle Tracker
-    const { cycleId } = getQuotaCycleInfo();
-    const quotaRef = doc(db, 'analytics', `quota_cycle_${cycleId}`);
-    await setDoc(quotaRef, {
-      cycleId,
-      estimatedReads: increment(2),
-      estimatedWrites: increment(1),
-      realtimeReads: increment(1),
-      docViews: increment(1),
       lastUpdated: serverTimestamp()
     }, { merge: true });
   } catch (error) {
