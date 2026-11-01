@@ -465,14 +465,22 @@ export default function UserManagerModal({ onClose, inline }: UserManagerModalPr
                           {u.email}
                         </td>
                         <td className="px-3 sm:px-6 py-3">
-                          <div className={`flex items-center gap-1.5 inline-flex px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-medium ${
-                            u.isOnline 
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                              : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'
-                          }`}>
-                            <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${u.isOnline ? 'bg-green-500 animate-pulse' : 'bg-slate-400'}`}></div>
-                            {u.isOnline ? 'Đang online' : 'Ngoại tuyến'}
-                          </div>
+                          {(() => {
+                            const isOnline = Boolean(
+                              u.isOnline &&
+                              (!u.lastLoginAt || (Date.now() - new Date(u.lastLoginAt).getTime()) < 35 * 60 * 1000)
+                            );
+                            return (
+                              <div className={`flex items-center gap-1.5 inline-flex px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-medium ${
+                                isOnline 
+                                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                                  : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                              }`}>
+                                <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-slate-400'}`}></div>
+                                {isOnline ? 'Đang online' : 'Ngoại tuyến'}
+                              </div>
+                            );
+                          })()}
                         </td>
                         <td className="px-3 sm:px-6 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
                           {formatDate(u.lastLoginAt || u.createdAt)}
