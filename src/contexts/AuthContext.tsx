@@ -107,16 +107,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (user) {
+    // Session mark: ensure isOnline and lastLoginAt are updated once per session start without tab-switch spam
+    if (user) {
+      const sessionKey = 'sensei_auth_session_' + user.uid;
+      const isSessionMarked = sessionStorage.getItem(sessionKey);
+      if (!isSessionMarked) {
+        sessionStorage.setItem(sessionKey, '1');
         const userRef = doc(db, 'users', user.uid);
-        if (document.visibilityState === 'hidden') {
-          setDoc(userRef, { isOnline: false }, { merge: true }).catch(console.error);
-        } else {
-          setDoc(userRef, { isOnline: true, lastLoginAt: new Date().toISOString() }, { merge: true }).catch(console.error);
-        }
+        setDoc(userRef, { isOnline: true, lastLoginAt: new Date().toISOString() }, { merge: true }).catch(console.error);
       }
-    };
+    }
 
     const handleBeforeUnload = () => {
       if (user) {
@@ -125,11 +125,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', handleBeforeUnload);
-    
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [user]);
