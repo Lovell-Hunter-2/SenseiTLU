@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-10-31T15:35:12.719Z",
-  "version": 1793460912719,
+  "lastUpdated": "2026-11-01T02:17:30.053Z",
+  "version": 1793499450053,
   "totalSubjects": 87,
-  "totalDocuments": 283,
+  "totalDocuments": 284,
   "subjects": [
     {
       "id": "b3yvnb7J7pmzeHhIydyd",
@@ -1828,8 +1828,8 @@
         "isFolder": true,
         "items": [
           {
-            "title": "TA1 - Đề cương ôn thi chi tiết (docx)",
-            "url": "https://docs.google.com/document/d/122R8NRS6VQ1l7oxLkhKkh11jSXCA2qLJ/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/122R8NRS6VQ1l7oxLkhKkh11jSXCA2qLJ/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "TA1 - Đề cương ôn thi chi tiết (docx)"
           },
           {
             "title": "TA1 - Đề cương ôn thi chi tiết (pdf)",
@@ -2998,6 +2998,51 @@
         "createdAt": "2026-04-14T15:27:53.899Z"
       },
       {
+        "id": "YmhfLH7mgfcDiLOo3aJf",
+        "subjectId": "192wrgDbhHgMIqvZFyUg",
+        "title": "TN ôn tập từng chương (mới)",
+        "type": "File trắc nghiệm",
+        "url": "",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": true,
+        "items": [
+          {
+            "title": "TN Bài tập 1",
+            "url": "https://drive.google.com/file/d/1RHSE27LlcSDENWJWHMAbENec6Qp2tcsr/view?usp=drivesdk"
+          },
+          {
+            "title": "TN Bài tập 2",
+            "url": "https://drive.google.com/file/d/1zBdV56nSiJmEnwEtoBJZU7A1yXevYB7K/view?usp=drivesdk"
+          },
+          {
+            "title": "Trắc nghiệm ôn Chương 1",
+            "url": "https://drive.google.com/file/d/1ojKzRBix0_EN4-U0Bjqw8dUcOwkvhway/view?usp=drivesdk"
+          },
+          {
+            "title": "Trắc nghiệm ôn Chương 2",
+            "url": "https://drive.google.com/file/d/1EQFlH78p2Z68zDjvQpHu__X3k3Im-sEd/view?usp=drivesdk"
+          },
+          {
+            "title": "Trắc nghiệm ôn Chương 3",
+            "url": "https://drive.google.com/file/d/1cspTkhLSZK4C7P_VkmBb8jgVyBWDWeLB/view?usp=drivesdk"
+          },
+          {
+            "title": "Trắc nghiệm ôn Chương 4",
+            "url": "https://drive.google.com/file/d/1RRVNM4A9VW99RIStl2PecxAhEPj6nsVf/view?usp=drivesdk"
+          },
+          {
+            "title": "Trắc nghiệm ôn Chương 5",
+            "url": "https://drive.google.com/file/d/1h2-Crygh0JzDpZbFneNjsSdPB7uEb2i7/view?usp=drivesdk"
+          },
+          {
+            "title": "Trắc nghiệm ôn Chương 6",
+            "url": "https://drive.google.com/file/d/13dCA7MWuRuWeHh2XMzbATLRLVn7CwYVz/view?usp=drivesdk"
+          }
+        ],
+        "createdAt": "2026-11-01T02:09:46.962Z"
+      },
+      {
         "id": "d3zQQd8yxq9c4txqBFUW",
         "subjectId": "192wrgDbhHgMIqvZFyUg",
         "title": "Bài giảng Kinh tế Chính trị Mác-Lênin",
@@ -3030,6 +3075,10 @@
           {
             "url": "https://drive.google.com/file/d/18_v_mMCGq7ijB2CWpB8IRqZTGnC_rj0X/view?usp=drivesdk",
             "title": "600+ câu Trắc nghiệm Kinh tế chính trị"
+          },
+          {
+            "title": "30 câu ôn tập thi",
+            "url": "https://docs.google.com/document/d/1OV-NH0GMjJwPSlAVrflkq3PRbuYUEV9U/edit?usp=sharing&ouid=112031637253348758978&rtpof=true&sd=true"
           }
         ],
         "createdAt": "2026-04-14T15:25:47.658Z"
