@@ -40,15 +40,16 @@ export async function logSubjectDocumentView(userUid: string | undefined, subjec
     const actDocId = `doc_view_${subjectId}_${today}`;
     const activityRef = doc(db, 'users', userUid, 'activities', actDocId);
     
-    // Log document globally (increment counter)
+    // Log document globally (increment counter with session deduplication)
     logDocumentView(docTitle, subjectName);
 
     // Write with merge - ZERO document reads required!
     await setDoc(activityRef, {
       type: 'document_view',
       action: 'Xem tài liệu ôn thi',
-      details: `Môn: ${subjectName}`,
+      details: docTitle ? `Môn: ${subjectName} - ${docTitle}` : `Môn: ${subjectName}`,
       subjectId,
+      docTitle: docTitle || '',
       path,
       timestamp: Timestamp.now()
     }, { merge: true });
@@ -79,18 +80,17 @@ export function useActivityLogger() {
     updatePresence(user?.uid);
 
     // Heartbeat chỉ gửi khi tab đang được người dùng xem (không gửi ngầm khi tab ẩn)
-    // Tăng chu kỳ lên 3 phút thay vì 60s để giảm 66% số lượt ghi
+    // Chu kỳ 6 phút kết hợp deduplication trong analyticsService để bảo vệ quota ghi
     const interval = setInterval(() => {
       if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
         updatePresence(user?.uid);
       }
-    }, 180000);
+    }, 360000);
 
     return () => clearInterval(interval);
   }, [user?.uid]);
 
   useEffect(() => {
-    console.log("ActivityTracker route change:", location.pathname, user?.uid);
     if (!user || !user.uid) return;
     if (lastPathRef.current === location.pathname) return;
 
@@ -152,6 +152,16 @@ export function useActivityLogger() {
             }
           }
         }
+
+        // Chống spam ghi hoạt động trùng lặp trong cùng 1 phiên:
+        // Nếu người dùng lướt qua lại cùng 1 môn hoặc 1 trang trong vòng 10 phút, không ghi thêm dòng log thừa
+        const sessionActKey = `sensei_act_${user.uid}_${location.pathname}`;
+        const lastActTime = sessionStorage.getItem(sessionActKey);
+        const now = Date.now();
+        if (lastActTime && now - Number(lastActTime) < 10 * 60 * 1000) {
+          return;
+        }
+        sessionStorage.setItem(sessionActKey, String(now));
 
         await addDoc(collection(db, 'users', user.uid, 'activities'), {
           type: 'page_view',
