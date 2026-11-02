@@ -476,6 +476,25 @@ export default function Home() {
     fetchInitial(false);
   }, []);
 
+  // Auto-update subjects list when a newer catalog is deployed to Vercel CDN
+  useEffect(() => {
+    const handleCatalogUpdated = (e: any) => {
+      const newCat = e.detail;
+      if (newCat && Array.isArray(newCat.subjects) && newCat.subjects.length > 0) {
+        setSubjects(newCat.subjects);
+        setTotalSubjectsCount(newCat.subjects.length);
+        setQuotaExceeded(false);
+        try {
+          localStorage.setItem("sensei_cached_subjects", JSON.stringify(newCat.subjects));
+          localStorage.setItem("sensei_cached_subjects_count", String(newCat.subjects.length));
+        } catch (err) {}
+      }
+    };
+
+    window.addEventListener('sensei-catalog-updated', handleCatalogUpdated);
+    return () => window.removeEventListener('sensei-catalog-updated', handleCatalogUpdated);
+  }, []);
+
   // Reset to page 1 whenever user searches
   useEffect(() => {
     setCurrentPage(1);
