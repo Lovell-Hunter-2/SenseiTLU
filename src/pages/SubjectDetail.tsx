@@ -408,6 +408,29 @@ export default function SubjectDetail() {
     loadSubjectAndDocs(false);
   }, [loadSubjectAndDocs]);
 
+  // Auto-update documents and subject when a newer catalog is deployed to Vercel CDN
+  useEffect(() => {
+    const handleCatalogUpdated = (e: any) => {
+      const newCat = e.detail;
+      if (newCat && id) {
+        if (newCat.documents && newCat.documents[id]) {
+          const freshDocs = newCat.documents[id];
+          setDocuments(freshDocs);
+          setIsDataCached(true);
+        }
+        if (newCat.subjects) {
+          const freshSub = newCat.subjects.find((s: any) => s.id === id);
+          if (freshSub) {
+            setSubject(freshSub);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('sensei-catalog-updated', handleCatalogUpdated);
+    return () => window.removeEventListener('sensei-catalog-updated', handleCatalogUpdated);
+  }, [id]);
+
   // Real-time Subject View Stats (for Admin)
   useEffect(() => {
     if (!isAdmin || !id) return;
