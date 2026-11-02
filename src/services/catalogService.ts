@@ -38,43 +38,97 @@ export interface CatalogData {
 const LOCAL_STORAGE_KEY = 'sensei_static_catalog_v1';
 let memoryCatalog: CatalogData | null = null;
 let isFetchingPromise: Promise<CatalogData | null> | null = null;
+let lastRevalidationTime = 0;
 
 /**
- * Load the catalog from static file or cache
+ * Revalidate the catalog from CDN in the background without blocking the UI.
+ * If a newer version/lastUpdated is found, updates cache and dispatches 'sensei-catalog-updated'.
+ */
+export async function revalidateCatalogInBackground(force = false): Promise<CatalogData | null> {
+  const now = Date.now();
+  // Throttle background check to at most once every 30 seconds unless forced
+  if (!force && now - lastRevalidationTime < 30 * 1000) {
+    return memoryCatalog;
+  }
+  lastRevalidationTime = now;
+
+  try {
+    const url = `/data/catalog.json?v=${now}`;
+    const response = await fetch(url, {
+      cache: 'no-cache',
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (!response.ok) return null;
+    const incoming: CatalogData = await response.json();
+    if (!incoming || !Array.isArray(incoming.subjects) || incoming.subjects.length === 0) return null;
+
+    const currentVersion = memoryCatalog?.version || 0;
+    const currentUpdated = memoryCatalog?.lastUpdated || '';
+
+    // Check if new catalog is available
+    const isNewer = incoming.version > currentVersion || incoming.lastUpdated !== currentUpdated;
+    if (isNewer || !memoryCatalog) {
+      console.log('[CatalogService] Newer catalog detected on CDN. Auto-updating client cache...', incoming.version, incoming.lastUpdated);
+      memoryCatalog = incoming;
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(incoming));
+      } catch (e) {}
+
+      // Dispatch event for active UI components to update live without reload
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('sensei-catalog-updated', { detail: incoming }));
+      }
+    }
+    return incoming;
+  } catch (err) {
+    // Network error or offline - silently ignore
+    return null;
+  }
+}
+
+/**
+ * Load the catalog from static file or cache (Stale-While-Revalidate)
+ * Returns cached catalog instantly (0ms) and checks for updates in background.
  */
 export async function loadCatalog(forceFresh = false): Promise<CatalogData | null> {
-  if (memoryCatalog && !forceFresh) {
+  if (forceFresh) {
+    return revalidateCatalogInBackground(true);
+  }
+
+  // 1. If memory catalog exists, return immediately & trigger background revalidation
+  if (memoryCatalog) {
+    revalidateCatalogInBackground(false).catch(() => {});
     return memoryCatalog;
   }
 
-  // Check LocalStorage first if not forcing fresh
-  if (!forceFresh) {
-    try {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (stored) {
-        const parsed: CatalogData = JSON.parse(stored);
-        if (parsed && Array.isArray(parsed.subjects) && parsed.subjects.length > 0) {
-          memoryCatalog = parsed;
-          return parsed;
-        }
+  // 2. Check LocalStorage next
+  try {
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (stored) {
+      const parsed: CatalogData = JSON.parse(stored);
+      if (parsed && Array.isArray(parsed.subjects) && parsed.subjects.length > 0) {
+        memoryCatalog = parsed;
+        // Trigger background revalidation to ensure latest version from Vercel CDN
+        revalidateCatalogInBackground(false).catch(() => {});
+        return parsed;
       }
-    } catch (e) {
-      // ignore parsing error
     }
+  } catch (e) {
+    // ignore parsing error
   }
 
-  if (isFetchingPromise && !forceFresh) {
+  // 3. Fallback: First time visitor with empty cache - fetch directly
+  if (isFetchingPromise) {
     return isFetchingPromise;
   }
 
   isFetchingPromise = (async () => {
     try {
-      // Append cache buster if forcing fresh
-      const url = forceFresh ? `/data/catalog.json?v=${Date.now()}` : '/data/catalog.json';
+      const url = `/data/catalog.json?v=${Date.now()}`;
       const response = await fetch(url, {
-        headers: {
-          'Accept': 'application/json'
-        }
+        cache: 'no-cache',
+        headers: { 'Accept': 'application/json' }
       });
 
       if (!response.ok) {
@@ -91,15 +145,7 @@ export async function loadCatalog(forceFresh = false): Promise<CatalogData | nul
       }
       return memoryCatalog;
     } catch (err) {
-      console.warn('[CatalogService] Could not load /data/catalog.json, falling back to cache:', err);
-      // Fallback to whatever is in memory or localStorage
-      try {
-        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (stored) {
-          memoryCatalog = JSON.parse(stored);
-          return memoryCatalog;
-        }
-      } catch (e) {}
+      console.warn('[CatalogService] Could not load /data/catalog.json:', err);
       return memoryCatalog;
     } finally {
       isFetchingPromise = null;
