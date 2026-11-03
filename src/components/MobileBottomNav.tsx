@@ -24,20 +24,10 @@ const APP_STYLE_MAP: Record<
   string,
   { bgClass: string; iconColor: string; iconComponent: React.FC<any> }
 > = {
-  'hoi-ai': {
-    bgClass: 'bg-emerald-950/60 border-emerald-500/30 text-emerald-400',
-    iconColor: 'text-emerald-400',
-    iconComponent: Bot,
-  },
   'study-space': {
     bgClass: 'bg-cyan-950/60 border-cyan-500/30 text-cyan-400',
     iconColor: 'text-cyan-400',
     iconComponent: Layers,
-  },
-  'ho-tro': {
-    bgClass: 'bg-amber-950/60 border-amber-500/30 text-amber-400',
-    iconColor: 'text-amber-400',
-    iconComponent: MessageCircle,
   },
 };
 
@@ -132,7 +122,7 @@ export const MobileBottomNav: React.FC = () => {
 
   // When rendering with flex-col-reverse, index 0 is at the bottom, closest to the button
   const orderedApps = [...apps].sort((a, b) => {
-    const priority = ['hoi-ai', 'study-space', 'ho-tro'];
+    const priority = ['study-space'];
     const indexA = priority.indexOf(a.id);
     const indexB = priority.indexOf(b.id);
     if (indexA !== -1 && indexB !== -1) return indexA - indexB;
