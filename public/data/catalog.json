@@ -1,6 +1,6 @@
 {
-  "lastUpdated": "2026-11-03T09:34:03.367Z",
-  "version": 1793698443367,
+  "lastUpdated": "2026-11-03T09:58:46.710Z",
+  "version": 1793699926710,
   "totalSubjects": 86,
   "totalDocuments": 284,
   "subjects": [
@@ -2083,7 +2083,7 @@
         "type": "Slide",
         "url": "",
         "chapter": "",
-        "isHidden": true,
+        "isHidden": false,
         "isFolder": true,
         "items": [
           {
@@ -2161,7 +2161,7 @@
         "type": "Chatbot",
         "url": "https://gemini.google.com/gem/1nczp1y-f7713sen4DU6i-t8hLfKAoegk?usp=sharing",
         "chapter": "",
-        "isHidden": true,
+        "isHidden": false,
         "isFolder": false,
         "items": [],
         "createdAt": "2026-09-15T09:04:27.791Z"
@@ -2185,7 +2185,7 @@
         "type": "File trắc nghiệm",
         "url": "",
         "chapter": "",
-        "isHidden": true,
+        "isHidden": false,
         "isFolder": true,
         "items": [
           {
@@ -2210,7 +2210,7 @@
         "type": "Tips",
         "url": "",
         "chapter": "",
-        "isHidden": true,
+        "isHidden": false,
         "isFolder": true,
         "items": [
           {
@@ -5183,7 +5183,7 @@
         "type": "Tips",
         "url": "",
         "chapter": "",
-        "isHidden": true,
+        "isHidden": false,
         "isFolder": true,
         "items": [
           {
