@@ -35,6 +35,7 @@ import EcosystemDropdown from "./EcosystemDropdown";
 import { AnimatedBrandLogo } from "./AnimatedBrandLogo";
 import { HEADER_NAV_ROUTES } from "./navigationConfig";
 import { MobileBottomNav } from "./MobileBottomNav";
+import Mascot3D from "./Mascot3D";
 
 export default function Layout() {
   const { theme, setTheme } = useTheme();
@@ -496,12 +497,8 @@ export default function Layout() {
                 className="block cursor-pointer"
                 title="Cần hỗ trợ? Nhấn vào đây!"
               >
-                <div className="animate-wobble origin-bottom hover:scale-105 transition-transform duration-300">
-                  <img
-                    src="/avt_tlu (remove).png"
-                    alt="Hỗ trợ viên Capybara"
-                    className="w-20 h-20 sm:w-24 sm:h-24 object-contain drop-shadow-2xl rounded-b-[2rem] sm:rounded-b-[2.5rem]"
-                  />
+                <div className="animate-float origin-bottom">
+                  <Mascot3D />
                 </div>
               </a>
             </div>
