@@ -109,30 +109,9 @@ export async function logFirestoreRead(count = 1) {
   }
 }
 
-export async function updatePresence(userUid?: string) {
-  try {
-    let sid = sessionStorage.getItem('tlu_session_id');
-    if (!sid) {
-      sid = 's_' + Math.random().toString(36).substring(2, 10);
-      sessionStorage.setItem('tlu_session_id', sid);
-    }
-    const lastPresence = sessionStorage.getItem('tlu_presence_last');
-    const now = Date.now();
-    // Only write to Firestore at most once every 6 minutes per session to save writes
-    if (lastPresence && now - Number(lastPresence) < 6 * 60 * 1000) {
-      return;
-    }
-    sessionStorage.setItem('tlu_presence_last', String(now));
-
-    const presenceRef = doc(db, 'presence', sid);
-    await setDoc(presenceRef, {
-      sid,
-      userUid: userUid || 'anonymous',
-      lastSeen: serverTimestamp()
-    }, { merge: true });
-  } catch (err) {
-    // ignore
-  }
+export async function updatePresence(_userUid?: string) {
+  // Disabled to eliminate up to 20,000 writes/day from idle student browser tabs
+  return;
 }
 
 export async function logFirestoreWrite(count = 1) {
@@ -189,7 +168,6 @@ export async function logGlobalPageView() {
   try {
     const now = new Date();
     const today = getVietnamDateString();
-    const { cycleId } = getQuotaCycleInfo();
     
     // Deduplicate per user session: count 1 visit per 30 minutes in this session
     const sessionKey = `sensei_visit_${today}`;
@@ -225,17 +203,6 @@ export async function logGlobalPageView() {
     const totalRef = doc(db, 'analytics', 'total_visits');
     await setDoc(totalRef, {
       visits: increment(1),
-      lastUpdated: serverTimestamp()
-    }, { merge: true });
-
-    // Quota Cycle Tracker (1 write per new session)
-    const quotaRef = doc(db, 'analytics', `quota_cycle_${cycleId}`);
-    await setDoc(quotaRef, {
-      cycleId,
-      estimatedReads: increment(3),
-      estimatedWrites: increment(3),
-      realtimeReads: increment(1),
-      pageViews: increment(1),
       lastUpdated: serverTimestamp()
     }, { merge: true });
   } catch (error) {
