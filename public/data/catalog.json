@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-11-03T09:58:46.710Z",
-  "version": 1793699926710,
+  "lastUpdated": "2026-11-03T10:16:32.333Z",
+  "version": 1793700992333,
   "totalSubjects": 86,
-  "totalDocuments": 284,
+  "totalDocuments": 287,
   "subjects": [
     {
       "id": "b3yvnb7J7pmzeHhIydyd",
@@ -2087,16 +2087,16 @@
         "isFolder": true,
         "items": [
           {
-            "title": "CHƯƠNG 1 - GIỚI THIỆU",
-            "url": "https://drive.google.com/file/d/1l9cnciuKkGsvBObuX-_KvDv3Rb49yPcf/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1l9cnciuKkGsvBObuX-_KvDv3Rb49yPcf/view?usp=drivesdk",
+            "title": "CHƯƠNG 1 - GIỚI THIỆU"
           },
           {
             "url": "https://drive.google.com/file/d/1emWSSwm6ChtUn0E0yP5HLqLALLT4yhp7/view?usp=drivesdk",
             "title": "CHƯƠNG 2 - THU THẬP SỐ LIỆU"
           },
           {
-            "title": "CHƯƠNG 3 - MÔ TẢ DỮ LIỆU",
-            "url": "https://drive.google.com/file/d/1AfmwVzj0v0PrAqSMV6MYqipsUkXeNJL5/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1AfmwVzj0v0PrAqSMV6MYqipsUkXeNJL5/view?usp=drivesdk",
+            "title": "CHƯƠNG 3 - MÔ TẢ DỮ LIỆU"
           },
           {
             "title": "CHƯƠNG 4 - SUY LUẬN THỐNG KÊ",
@@ -2107,8 +2107,8 @@
             "url": "https://drive.google.com/file/d/1UUNPtsvkw3JmtYe_gAQLv994soj418Om/view?usp=drivesdk"
           },
           {
-            "url": "https://drive.google.com/file/d/1bRLlsuymxmkbHn3cAIwCXEwZySzE7BHO/view?usp=drivesdk",
-            "title": "CHƯƠNG 6 - KHAI THÁC VÀ KHÁM PHÁ DỮ LIỆU"
+            "title": "CHƯƠNG 6 - KHAI THÁC VÀ KHÁM PHÁ DỮ LIỆU",
+            "url": "https://drive.google.com/file/d/1bRLlsuymxmkbHn3cAIwCXEwZySzE7BHO/view?usp=drivesdk"
           },
           {
             "url": "https://drive.google.com/file/d/1XwBmbcJMbZUi7NvS0qze5B8ihR8gF7ru/view?usp=drivesdk",
@@ -2167,6 +2167,18 @@
         "createdAt": "2026-09-15T09:04:27.791Z"
       },
       {
+        "id": "doyvyPfixdKBv29ucyjJ",
+        "subjectId": "kUroeB6LxmsXWmx37yCF",
+        "title": "Video bài giảng kiến thức NotebookLM",
+        "type": "Chatbot",
+        "url": "https://notebook.google.com/notebook/fad89dec-bfc8-4916-bec7-d670845d1a67",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-03T10:14:20.000Z"
+      },
+      {
         "id": "jBwe4Fd5Vqff8zDXlkdv",
         "subjectId": "kUroeB6LxmsXWmx37yCF",
         "title": "Đề cương Nhập môn Phân tích dữ liệu",
@@ -2189,16 +2201,16 @@
         "isFolder": true,
         "items": [
           {
-            "url": "https://docs.google.com/document/d/14dH1CVhI9H5yiwMqAEcn_kjOOAFhOjin/edit?usp=drivesdk&rtpof=true&sd=true",
-            "title": "CÂU-HỎI-ÔN-TẬP-NMPTDL"
+            "title": "CÂU-HỎI-ÔN-TẬP-NMPTDL",
+            "url": "https://docs.google.com/document/d/14dH1CVhI9H5yiwMqAEcn_kjOOAFhOjin/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
             "title": "CÂU HỎI ÔN TẬP",
             "url": "https://docs.google.com/document/d/1gdwGtrjtep8riw9GqN3wgFMtyFfxKhXE/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "CÂU HỎI ÔN TẬP_SV2",
-            "url": "https://docs.google.com/document/d/1rYA-daMMiMJdbFocOeAgq4YrXlaaGwx0/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1rYA-daMMiMJdbFocOeAgq4YrXlaaGwx0/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "CÂU HỎI ÔN TẬP_SV2"
           }
         ],
         "createdAt": "2026-09-04T09:26:01.109Z"
@@ -2214,12 +2226,12 @@
         "isFolder": true,
         "items": [
           {
-            "title": "Chương 1 - Giới thiệu và Ứng dụng phân tích dữ liệu",
-            "url": "https://docs.google.com/document/d/1mXU7V8iX3DRFsHWYHSqLfrSGfZQMNdp5/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1mXU7V8iX3DRFsHWYHSqLfrSGfZQMNdp5/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Chương 1 - Giới thiệu và Ứng dụng phân tích dữ liệu"
           },
           {
-            "url": "https://docs.google.com/document/d/1h3kVK-DqbDJxOt3zzCqFGf7bijv6eGwL/edit?usp=drivesdk&rtpof=true&sd=true",
-            "title": "Chương 2 - Thu thập số liệu"
+            "title": "Chương 2 - Thu thập số liệu",
+            "url": "https://docs.google.com/document/d/1h3kVK-DqbDJxOt3zzCqFGf7bijv6eGwL/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
             "url": "https://docs.google.com/document/d/1TIQ7xqk58ZBp6OKIKp8nvrpVTNlbL_UE/edit?usp=drivesdk&rtpof=true&sd=true",
@@ -2230,16 +2242,16 @@
             "title": "Chương 4 - Suy luận thống kê"
           },
           {
-            "url": "https://docs.google.com/document/d/1sBuYo1Kz3M5kEVBOFz7IY1nLJSRGaTt6/edit?usp=drivesdk&rtpof=true&sd=true",
-            "title": "Chương 5 - Hồi quy tuyến tính"
+            "title": "Chương 5 - Hồi quy tuyến tính",
+            "url": "https://docs.google.com/document/d/1sBuYo1Kz3M5kEVBOFz7IY1nLJSRGaTt6/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "Chương 6 - Khai thác và khám phá dữ liệu",
-            "url": "https://docs.google.com/document/d/118DcaYbI82xD5b_we4CQ7DIXqAa5Enfw/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/118DcaYbI82xD5b_we4CQ7DIXqAa5Enfw/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Chương 6 - Khai thác và khám phá dữ liệu"
           },
           {
-            "title": "Chương 7 -  Khai thác dữ liệu",
-            "url": "https://docs.google.com/document/d/10mBvqrOCrW1bOY3FR1t1cmXuYEj4QjqD/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/10mBvqrOCrW1bOY3FR1t1cmXuYEj4QjqD/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Chương 7 -  Khai thác dữ liệu"
           },
           {
             "title": "Chương 8 - Học máy (ML) & Trí tuệ nhân tạo (AI)",
@@ -2393,6 +2405,18 @@
           }
         ],
         "createdAt": "2026-09-16T20:22:14.285Z"
+      },
+      {
+        "id": "RQCgUtN0K0pQ9Xy4gvEv",
+        "subjectId": "ncRNujbv559Vi157hez4",
+        "title": "Video bài giảng kiến thức NotebookLM",
+        "type": "Chatbot",
+        "url": "https://notebook.google.com/notebook/8e0097f8-1243-423d-882c-d00f5a35db65",
+        "chapter": "",
+        "isHidden": true,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-03T10:16:14.020Z"
       },
       {
         "id": "SvMOjKZzHNVCfMZrpmgZ",
@@ -5165,6 +5189,18 @@
         "createdAt": "2026-09-15T08:39:45.298Z"
       },
       {
+        "id": "YR3F4Bp5bSBZPZi4by9u",
+        "subjectId": "A2F2AIw5aJZyeHGNWFbQ",
+        "title": "Video khái quát kiến thức NotebookLM",
+        "type": "Chatbot",
+        "url": "https://notebook.google.com/notebook/1dacdc6d-8397-4c7a-a5e6-70c1ab6da56a",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-03T10:12:35.190Z"
+      },
+      {
         "id": "amp7vGYf90qKno1uIru9",
         "subjectId": "A2F2AIw5aJZyeHGNWFbQ",
         "title": "Bài giảng NLTK (Thuvienso)",
@@ -5187,16 +5223,16 @@
         "isFolder": true,
         "items": [
           {
-            "title": "Chương 1 - Những vấn đề chung về thống kê",
-            "url": "https://docs.google.com/document/d/1ZN0iOJu8kPfPGzEBnHpuVcnLKrU_8pqd/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1ZN0iOJu8kPfPGzEBnHpuVcnLKrU_8pqd/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Chương 1 - Những vấn đề chung về thống kê"
           },
           {
             "url": "https://docs.google.com/document/d/1YZ2RTXZvcdWSsqrlm7o99vR_-1IihBp8/edit?usp=drivesdk&rtpof=true&sd=true",
             "title": "Chương 2 - Điều tra thống kê"
           },
           {
-            "title": "Chương 3 - Phân tổ tổng hợp tài liệu điều tra thống kê",
-            "url": "https://docs.google.com/document/d/1lwyQRCz3jEe1l6eFVXxYqgeNAi0tEG4V/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1lwyQRCz3jEe1l6eFVXxYqgeNAi0tEG4V/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Chương 3 - Phân tổ tổng hợp tài liệu điều tra thống kê"
           },
           {
             "title": "Chương 4 - Các chỉ tiêu mức độ khối lượng của hiện tượng Kinh tế - Xã hội và kinh doanh",
