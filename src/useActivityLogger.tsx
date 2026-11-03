@@ -75,19 +75,8 @@ export function useActivityLogger() {
     // Không ghi log nếu là bot / crawler tự động để tránh spam Firestore
     if (isLikelyBot()) return;
 
-    // Chỉ đếm 1 truy cập mỗi lần người dùng thật mở hoặc tải lại trang web
+    // Chỉ đếm 1 truy cập mỗi lần người dùng thật mở trang (đã deduplicate 30 phút theo session)
     logGlobalPageView();
-    updatePresence(user?.uid);
-
-    // Heartbeat chỉ gửi khi tab đang được người dùng xem (không gửi ngầm khi tab ẩn)
-    // Chu kỳ 6 phút kết hợp deduplication trong analyticsService để bảo vệ quota ghi
-    const interval = setInterval(() => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        updatePresence(user?.uid);
-      }
-    }, 360000);
-
-    return () => clearInterval(interval);
   }, [user?.uid]);
 
   useEffect(() => {
@@ -96,9 +85,17 @@ export function useActivityLogger() {
 
     lastPathRef.current = location.pathname;
 
+    // Chỉ log các hoạt động học tập có giá trị (Xem môn, Thi thử, Workspace, Đóng góp, Blog)
+    // Bỏ qua các trang tĩnh không cần thiết (Trang chủ, Về chúng tôi, Chính sách) để tiết kiệm 100% quota ghi
+    const isStudyRoute = location.pathname.startsWith('/subject/') || 
+                         location.pathname.startsWith('/workspace') || 
+                         location.pathname.startsWith('/blog') || 
+                         location.pathname.startsWith('/contribute');
+    if (!isStudyRoute) return;
+
     const logActivity = async () => {
       try {
-        let actionStr = 'Truy cập tab';
+        let actionStr = 'Hoạt động học tập';
         let detailStr = location.pathname;
 
         if (routeNames[location.pathname]) {
