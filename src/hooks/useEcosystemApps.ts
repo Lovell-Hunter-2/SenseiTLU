@@ -23,31 +23,19 @@ export const DEFAULT_ECOSYSTEM_APPS: EcosystemAppItem[] = [
     iconName: 'Layers',
     colorTheme: 'blue',
   },
-  {
-    id: 'hoi-ai',
-    name: 'Hỏi AI',
-    description: 'Trợ lý thông minh hỗ trợ giải đáp',
-    iconName: 'Bot',
-    colorTheme: 'emerald',
-    isSpecialAction: 'ai-assistant',
-  },
-  {
-    id: 'ho-tro',
-    name: 'Hỗ trợ',
-    description: 'Liên hệ hỗ trợ & giải đáp thắc mắc',
-    url: 'https://www.facebook.com/lovelltitussof1910',
-    iconName: 'MessageCircle',
-    colorTheme: 'amber',
-  },
 ];
 
-// Helper to filter out removed/obsolete apps
+// Helper to filter out removed/obsolete apps (Hỏi AI, Hỗ trợ, etc.)
 const isAllowedApp = (app: EcosystemAppItem) => {
   return (
     app.id !== 'lich-hoc' &&
     app.id !== 'thi-online-ai' &&
     app.name !== 'Lịch học' &&
-    app.name !== 'Thi online AI'
+    app.name !== 'Thi online AI' &&
+    app.id !== 'hoi-ai' &&
+    app.id !== 'ho-tro' &&
+    app.name !== 'Hỏi AI' &&
+    app.name !== 'Hỗ trợ'
   );
 };
 
