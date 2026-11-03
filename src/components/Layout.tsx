@@ -36,6 +36,7 @@ import { AnimatedBrandLogo } from "./AnimatedBrandLogo";
 import { HEADER_NAV_ROUTES } from "./navigationConfig";
 import { MobileBottomNav } from "./MobileBottomNav";
 import Mascot3D from "./Mascot3D";
+import FloatingMascot from "./FloatingMascot";
 
 export default function Layout() {
   const { theme, setTheme } = useTheme();
@@ -516,6 +517,9 @@ export default function Layout() {
           </a>
         </div>
       )}
+
+      {/* Floating Mascot cho thiết bị di động (kéo thả, hít viền nam châm) */}
+      {location.pathname === "/" && <FloatingMascot />}
 
       <TextSelectionHelper />
       <AIAssistantWidget />
