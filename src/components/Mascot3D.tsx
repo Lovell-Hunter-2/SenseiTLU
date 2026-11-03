@@ -3,9 +3,11 @@ import "@google/model-viewer";
 
 // Ép model-viewer luôn render ở độ phân giải gốc 100% (Native Retina / High-DPI),
 // tránh việc model-viewer tự động hạ renderScale xuống 0.5/0.25 gây mờ khi có hoạt ảnh
-const ModelViewerClass = customElements.get("model-viewer") as any;
-if (ModelViewerClass) {
-  ModelViewerClass.minimumRenderScale = 1;
+if (typeof window !== "undefined" && typeof customElements !== "undefined") {
+  const ModelViewerClass = customElements.get("model-viewer") as any;
+  if (ModelViewerClass) {
+    ModelViewerClass.minimumRenderScale = 1;
+  }
 }
 
 // Type declarations for <model-viewer> web component in React JSX
