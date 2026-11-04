@@ -1,6 +1,6 @@
 {
-  "lastUpdated": "2026-11-04T15:01:41.575Z",
-  "version": 1793804501575,
+  "lastUpdated": "2026-11-04T17:34:55.674Z",
+  "version": 1793813695674,
   "totalSubjects": 86,
   "totalDocuments": 300,
   "subjects": [
@@ -987,7 +987,7 @@
         "type": "Khác",
         "url": "https://docs.google.com/document/d/1ORNYjRzfZ-YlzwI4uiZf-YtxnymJQhdl/edit?usp=sharing&ouid=112031637253348758978&rtpof=true&sd=true",
         "chapter": "",
-        "isHidden": false,
+        "isHidden": true,
         "isFolder": false,
         "items": [],
         "createdAt": "2026-04-14T15:48:29.750Z"
@@ -3382,8 +3382,8 @@
         "isFolder": true,
         "items": [
           {
-            "title": "Đề tham khảo NLKT (1)",
-            "url": "https://docs.google.com/document/d/1vT4sjvPKoM1aCQ7-iOoDTWTn1v3KSvU9/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1vT4sjvPKoM1aCQ7-iOoDTWTn1v3KSvU9/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Đề tham khảo NLKT (1)"
           },
           {
             "title": "Đề tham khảo NLKT (2)",
@@ -5249,8 +5249,8 @@
         "isFolder": true,
         "items": [
           {
-            "title": "698-câu-và-40-câu-TN-PLĐC",
-            "url": "https://docs.google.com/document/d/1H1q2TK-FKcq9YNCL-5pCcb33j-i4rFtY/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1H1q2TK-FKcq9YNCL-5pCcb33j-i4rFtY/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "698-câu-và-40-câu-TN-PLĐC"
           },
           {
             "title": "700-câu-TN-PLĐC",
@@ -5734,7 +5734,7 @@
         "type": "Đề cương",
         "url": "",
         "chapter": "",
-        "isHidden": false,
+        "isHidden": true,
         "isFolder": true,
         "items": [
           {
