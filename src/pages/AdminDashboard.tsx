@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
-import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon, CheckCircle2, X, FileText, User as UserIcon, MapPin, Clock, EyeOff, MessageSquare, Globe, BookOpen, TrendingUp, Calendar, Flame, Layers, Award, Sparkles, ExternalLink, Filter, Edit3, Info, Check, Zap, RotateCcw, RefreshCw, Download, FileCode } from 'lucide-react';
+import { Users, BarChart3, Image as ImageIcon, LayoutDashboard, Shield, Activity, AlertTriangle, Database, LineChart as LineChartIcon, AlertOctagon, CheckCircle2, X, FileText, User as UserIcon, MapPin, Clock, EyeOff, MessageSquare, Globe, BookOpen, TrendingUp, Calendar, Flame, Layers, Award, Sparkles, ExternalLink, Filter, Edit3, Info, Check, Zap, RotateCcw, RefreshCw, Download, FileCode, Wrench } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, doc, getDoc, getDocs, setDoc, query, orderBy, limit, startAt, endAt, collectionGroup, getCountFromServer, updateDoc, deleteDoc, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import UserManagerModal from '../components/UserManagerModal';
@@ -9,6 +9,8 @@ import HeroImageManagerModal from '../components/HeroImageManagerModal';
 import AdminManagerModal from '../components/AdminManagerModal';
 import HiddenDocsManager from '../components/HiddenDocsManager';
 import EcosystemManagerModal from '../components/EcosystemManagerModal';
+import MaintenanceModal from '../components/MaintenanceModal';
+import { MaintenanceConfig } from '../types/maintenance';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, BarChart, Bar } from 'recharts';
 import { getVietnamDateString, getQuotaCycleInfo, calibrateQuotaCycle, resetCurrentQuotaToZero } from '../services/analyticsService';
 import { syncCatalogToGitHub, loadCatalog } from '../services/catalogService';
@@ -142,6 +144,21 @@ export default function AdminDashboard() {
     writes: '',
     deletes: '',
   });
+
+  // Maintenance Mode state
+  const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
+  const [maintenanceConfig, setMaintenanceConfig] = useState<MaintenanceConfig | null>(null);
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'maintenance'), (snap) => {
+      if (snap.exists()) {
+        setMaintenanceConfig(snap.data() as MaintenanceConfig);
+      } else {
+        setMaintenanceConfig({ enabled: false, startTime: '', endTime: '' });
+      }
+    });
+    return () => unsub();
+  }, []);
 
   // Content analytics state (Subjects & Docs)
   const [contentAnalyticsTab, setContentAnalyticsTab] = useState<'subjects' | 'documents'>('subjects');
@@ -1828,6 +1845,23 @@ export default function AdminDashboard() {
                   
                   <div className="flex flex-wrap items-center gap-2">
                     <button
+                      onClick={() => setIsMaintenanceModalOpen(true)}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-xs ${
+                        maintenanceConfig?.enabled
+                          ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-amber-500/25 ring-2 ring-amber-400/50'
+                          : 'bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60'
+                      }`}
+                      title="Cài đặt chế độ bảo trì hệ thống"
+                    >
+                      <Wrench className={`w-3.5 h-3.5 ${maintenanceConfig?.enabled ? 'animate-bounce text-slate-950' : 'text-amber-600 dark:text-amber-400'}`} />
+                      <span>
+                        {maintenanceConfig?.enabled ? 'Đang Bảo Trì (Bật)' : 'Chế độ Bảo trì'}
+                      </span>
+                      {maintenanceConfig?.enabled && (
+                        <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
+                      )}
+                    </button>
+                    <button
                       onClick={handleResetQuotaToZero}
                       className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
                       title="Đặt lại các lượt đếm của chu kỳ hiện tại về 0"
@@ -2800,6 +2834,13 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Maintenance Mode Configuration Modal */}
+      <MaintenanceModal
+        isOpen={isMaintenanceModalOpen}
+        onClose={() => setIsMaintenanceModalOpen(false)}
+        onSaved={(cfg) => setMaintenanceConfig(cfg)}
+      />
     </div>
   );
 }
