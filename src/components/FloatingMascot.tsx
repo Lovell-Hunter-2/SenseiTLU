@@ -184,7 +184,7 @@ export const FloatingMascot: React.FC<FloatingMascotProps> = () => {
           title="Cần hỗ trợ? Nhấn vào đây!"
         >
           <div className="w-[72px] h-[72px] pointer-events-none">
-            <Mascot3D className="w-full h-full" />
+            <Mascot3D className="w-full h-full" trackMouse={false} />
           </div>
         </div>
       </div>
