@@ -10,7 +10,7 @@ import AdminManagerModal from '../components/AdminManagerModal';
 import HiddenDocsManager from '../components/HiddenDocsManager';
 import EcosystemManagerModal from '../components/EcosystemManagerModal';
 import MaintenanceModal from '../components/MaintenanceModal';
-import { MaintenanceConfig } from '../types/maintenance';
+import { MaintenanceConfig, getMaintenanceStatus } from '../types/maintenance';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, BarChart, Bar } from 'recharts';
 import { getVietnamDateString, getQuotaCycleInfo, calibrateQuotaCycle, resetCurrentQuotaToZero } from '../services/analyticsService';
 import { syncCatalogToGitHub, loadCatalog } from '../services/catalogService';
@@ -1844,23 +1844,37 @@ export default function AdminDashboard() {
                   </div>
                   
                   <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      onClick={() => setIsMaintenanceModalOpen(true)}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-xs ${
-                        maintenanceConfig?.enabled
-                          ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-amber-500/25 ring-2 ring-amber-400/50'
-                          : 'bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60'
-                      }`}
-                      title="Cài đặt chế độ bảo trì hệ thống"
-                    >
-                      <Wrench className={`w-3.5 h-3.5 ${maintenanceConfig?.enabled ? 'animate-bounce text-slate-950' : 'text-amber-600 dark:text-amber-400'}`} />
-                      <span>
-                        {maintenanceConfig?.enabled ? 'Đang Bảo Trì (Bật)' : 'Chế độ Bảo trì'}
-                      </span>
-                      {maintenanceConfig?.enabled && (
-                        <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
-                      )}
-                    </button>
+                    {(() => {
+                      const mStatus = getMaintenanceStatus(maintenanceConfig);
+                      return (
+                        <button
+                          onClick={() => setIsMaintenanceModalOpen(true)}
+                          className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-xs cursor-pointer ${
+                            mStatus === 'active'
+                              ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-amber-500/25 ring-2 ring-amber-400/50'
+                              : mStatus === 'scheduled'
+                              ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/25 ring-2 ring-blue-400/40'
+                              : 'bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60'
+                          }`}
+                          title="Cài đặt chế độ bảo trì hệ thống"
+                        >
+                          <Wrench className={`w-3.5 h-3.5 ${mStatus === 'active' ? 'animate-bounce text-slate-950' : mStatus === 'scheduled' ? 'text-white' : 'text-amber-600 dark:text-amber-400'}`} />
+                          <span>
+                            {mStatus === 'active'
+                              ? 'Đang Bảo Trì (Bật)'
+                              : mStatus === 'scheduled'
+                              ? 'Đã Lên Lịch Bảo Trì'
+                              : 'Chế độ Bảo trì'}
+                          </span>
+                          {mStatus === 'active' && (
+                            <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
+                          )}
+                          {mStatus === 'scheduled' && (
+                            <span className="w-2 h-2 rounded-full bg-cyan-300 animate-pulse" />
+                          )}
+                        </button>
+                      );
+                    })()}
                     <button
                       onClick={handleResetQuotaToZero}
                       className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
