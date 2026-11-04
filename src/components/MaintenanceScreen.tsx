@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Wrench, RefreshCw, ShieldAlert, LogIn, Clock } from 'lucide-react';
-import { MaintenanceConfig, formatMaintenanceMessage } from '../types/maintenance';
+import {
+  MaintenanceConfig,
+  formatMaintenanceMessage,
+  parseMaintenanceDate,
+  formatTimeRemaining,
+} from '../types/maintenance';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import BowingMascot3D from './BowingMascot3D';
@@ -15,8 +20,16 @@ export default function MaintenanceScreen({ config, onRefresh }: MaintenanceScre
   const navigate = useNavigate();
   const [loggingIn, setLoggingIn] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [nowMs, setNowMs] = useState(Date.now());
+
+  // Tự động đếm từng giây để cập nhật thời gian còn lại
+  useEffect(() => {
+    const interval = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const message = formatMaintenanceMessage(config.startTime, config.endTime);
+  const endMs = parseMaintenanceDate(config.endTime);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -99,6 +112,16 @@ export default function MaintenanceScreen({ config, onRefresh }: MaintenanceScre
                 {message}
               </p>
 
+              {/* Real-time countdown if endTime is specified and in future */}
+              {endMs && endMs > nowMs && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                  <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                  <span>
+                    Dự kiến kết thúc sau: <strong className="text-white">{formatTimeRemaining(endMs, nowMs)}</strong>
+                  </span>
+                </div>
+              )}
+
               {config.reason && (
                 <div className="pt-3 border-t border-slate-800/80 text-xs text-slate-400 flex items-center justify-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
@@ -110,9 +133,10 @@ export default function MaintenanceScreen({ config, onRefresh }: MaintenanceScre
             {/* Action buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
               <button
+                type="button"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:scale-98 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:scale-98 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 <span>Tải lại trang</span>
@@ -120,9 +144,10 @@ export default function MaintenanceScreen({ config, onRefresh }: MaintenanceScre
 
               {!isAdmin && (
                 <button
+                  type="button"
                   onClick={handleAdminLogin}
                   disabled={loggingIn}
-                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-800 border border-slate-700 active:scale-98 text-slate-300 hover:text-white font-medium text-xs sm:text-sm transition-all flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-800 border border-slate-700 active:scale-98 text-slate-300 hover:text-white font-medium text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <LogIn className="w-4 h-4 text-slate-400" />
                   <span>{loggingIn ? 'Đang xác thực...' : 'Quản trị viên đăng nhập'}</span>
@@ -131,8 +156,9 @@ export default function MaintenanceScreen({ config, onRefresh }: MaintenanceScre
 
               {isAdmin && (
                 <button
+                  type="button"
                   onClick={() => navigate('/admin')}
-                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-600/20"
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-600/20 cursor-pointer"
                 >
                   <ShieldAlert className="w-4 h-4" />
                   <span>Vào trang Quản trị (Admin)</span>
