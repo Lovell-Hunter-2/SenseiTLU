@@ -4,6 +4,7 @@ import 'katex/dist/katex.min.css';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
+import MaintenanceGuard from './components/MaintenanceGuard';
 
 import Home from './pages/Home';
 // Lazy loading secondary pages for better performance
@@ -99,23 +100,25 @@ export default function App() {
           <ScrollToTopOnRouteChange />
           <ActivityTracker />
           <ErrorTracker />
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Routes>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<Home />} />
-                <Route path="subject/:id" element={<SubjectDetail />} />
-                <Route path="subject/:id/mock-exam" element={<MockExam />} />
-                <Route path="subject/:id/mock-exam/:examId" element={<MockExam />} />
-                <Route path="about" element={<About />} />
-                <Route path="contribute" element={<Contribute />} />
-                <Route path="blog" element={<Blog />} />
-                <Route path="privacy" element={<PrivacyPolicy />} />
-                <Route path="terms" element={<TermsOfService />} />
-                <Route path="admin" element={<AdminDashboard />} />
-              </Route>
-              <Route path="/workspace" element={<StudyWorkspace />} />
-            </Routes>
-          </Suspense>
+          <MaintenanceGuard>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <Routes>
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<Home />} />
+                  <Route path="subject/:id" element={<SubjectDetail />} />
+                  <Route path="subject/:id/mock-exam" element={<MockExam />} />
+                  <Route path="subject/:id/mock-exam/:examId" element={<MockExam />} />
+                  <Route path="about" element={<About />} />
+                  <Route path="contribute" element={<Contribute />} />
+                  <Route path="blog" element={<Blog />} />
+                  <Route path="privacy" element={<PrivacyPolicy />} />
+                  <Route path="terms" element={<TermsOfService />} />
+                  <Route path="admin" element={<AdminDashboard />} />
+                </Route>
+                <Route path="/workspace" element={<StudyWorkspace />} />
+              </Routes>
+            </Suspense>
+          </MaintenanceGuard>
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>
