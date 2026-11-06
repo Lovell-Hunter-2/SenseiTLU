@@ -1,6 +1,6 @@
 {
-  "lastUpdated": "2026-11-04T17:34:55.674Z",
-  "version": 1793813695674,
+  "lastUpdated": "2026-11-06T17:35:35.497Z",
+  "version": 1793986535497,
   "totalSubjects": 86,
   "totalDocuments": 300,
   "subjects": [
@@ -2474,7 +2474,7 @@
         "type": "Tips",
         "url": "",
         "chapter": "",
-        "isHidden": true,
+        "isHidden": false,
         "isFolder": true,
         "items": [
           {
@@ -2515,7 +2515,7 @@
         "type": "Chatbot",
         "url": "https://notebook.google.com/notebook/8e0097f8-1243-423d-882c-d00f5a35db65",
         "chapter": "",
-        "isHidden": true,
+        "isHidden": false,
         "isFolder": false,
         "items": [],
         "createdAt": "2026-11-03T10:16:14.020Z"
@@ -2527,7 +2527,7 @@
         "type": "Slide",
         "url": "",
         "chapter": "",
-        "isHidden": true,
+        "isHidden": false,
         "isFolder": true,
         "items": [
           {
@@ -5738,12 +5738,12 @@
         "isFolder": true,
         "items": [
           {
-            "url": "https://drive.google.com/file/d/1SoM7jRk5gbqoQCMTJK1rlWeanP67opXo/view?usp=drivesdk",
-            "title": "Đề mẫu KNM&TTKN (1)"
+            "title": "Đề mẫu KNM&TTKN (1)",
+            "url": "https://drive.google.com/file/d/1SoM7jRk5gbqoQCMTJK1rlWeanP67opXo/view?usp=drivesdk"
           },
           {
-            "title": "Đề mẫu KNM&TTKN (2)",
-            "url": "https://drive.google.com/file/d/1QULILB7as4tpn50iMVVoCcOF8KWUEcwR/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1QULILB7as4tpn50iMVVoCcOF8KWUEcwR/view?usp=drivesdk",
+            "title": "Đề mẫu KNM&TTKN (2)"
           }
         ],
         "createdAt": "2026-04-14T16:16:53.823Z"
