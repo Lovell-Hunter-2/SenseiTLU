@@ -42,6 +42,24 @@ export default function BlogInteractions({ postId }: Props) {
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [shareText, setShareText] = useState('Chia sẻ');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{ commentId: string; rootId: string; authorName: string } | null>(null);
+  const commentInputRef = useRef<HTMLInputElement>(null);
+
+  const handleReplyClick = (comment: any, rootId: string) => {
+    if (!user) {
+      alert('Vui lòng đăng nhập để trả lời bình luận.');
+      return;
+    }
+    const author = (comment.userEmail || 'Anonymous').split('@')[0];
+    setReplyingTo({
+      commentId: comment.id,
+      rootId: rootId || comment.id,
+      authorName: author,
+    });
+    setTimeout(() => {
+      commentInputRef.current?.focus();
+    }, 100);
+  };
 
   const canEditComment = (comment: any) => {
     if (isAdmin) return true;
@@ -126,15 +144,21 @@ export default function BlogInteractions({ postId }: Props) {
     localStorage.setItem('last_comment_time', Date.now().toString());
 
     try {
-      await addDoc(collection(db, 'blog', postId, 'comments'), {
+      const commentPayload: any = {
         content: newComment.trim(),
         imageUrl: attachmentUrl,
         userId: user.uid,
         userEmail: user.email || 'Anonymous',
         createdAt: serverTimestamp()
-      });
+      };
+      if (replyingTo) {
+        commentPayload.parentId = replyingTo.rootId;
+        commentPayload.replyTo = replyingTo.authorName;
+      }
+      await addDoc(collection(db, 'blog', postId, 'comments'), commentPayload);
       setNewComment('');
       setAttachmentUrl('');
+      setReplyingTo(null);
       setShowAttachMenu(false);
     } catch (error) {
       console.error('Error adding comment:', error);
@@ -185,6 +209,17 @@ export default function BlogInteractions({ postId }: Props) {
     if (!window.confirm('Chắc chắn xóa bình luận này?')) return;
     try {
       await deleteDoc(doc(db, 'blog', postId, 'comments', comment.id));
+      // Cascade delete child replies if root comment is deleted
+      if (!comment.parentId) {
+        const childReplies = comments.filter(c => c.parentId === comment.id);
+        for (const child of childReplies) {
+          try {
+            await deleteDoc(doc(db, 'blog', postId, 'comments', child.id));
+          } catch (e) {
+            console.error('Error deleting child reply:', e);
+          }
+        }
+      }
     } catch (error) {
       console.error('Error deleting comment:', error);
     }
@@ -345,46 +380,153 @@ export default function BlogInteractions({ postId }: Props) {
       {showComments && (
         <div className="mt-4 space-y-4">
           <div className="space-y-4 mb-4">
-            {comments.map((comment) => (
-              <div key={comment.id} className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm shrink-0">
-                  {((comment.userEmail || comment.userId)?.toString() || 'A').charAt(0).toUpperCase()}
-                </div>
-                <div className="flex-1">
-                  <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl px-4 py-2 inline-block">
-                    <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">{(comment.userEmail || 'Anonymous').split('@')[0]}</p>
-                    {comment.content && <p className="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap">{comment.content}</p>}
-                    {comment.imageUrl && (
-                       <img 
-                          src={comment.imageUrl} 
-                          alt="attachment" 
-                          className="rounded-lg max-w-full max-h-64 mt-2 object-contain cursor-pointer hover:opacity-90 transition-opacity" 
-                          referrerPolicy="no-referrer" 
-                          onClick={() => setSelectedImage(comment.imageUrl)}
-                       />
+            {(() => {
+              const rootComments = comments.filter((c) => !c.parentId);
+              const rootIds = new Set(rootComments.map((c) => c.id));
+              const orphanReplies = comments.filter((c) => c.parentId && !rootIds.has(c.parentId));
+              const displayRoots = [...rootComments, ...orphanReplies];
+
+              if (displayRoots.length === 0) {
+                return (
+                  <div className="text-center py-4 text-xs text-slate-500">
+                    Chưa có bình luận nào. Hãy là người đầu tiên bình luận!
+                  </div>
+                );
+              }
+
+              return displayRoots.map((comment) => {
+                const childReplies = comments.filter((c) => c.parentId === comment.id);
+
+                return (
+                  <div key={comment.id} className="space-y-2">
+                    {/* Parent / Root Comment */}
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm shrink-0 mt-0.5">
+                        {((comment.userEmail || comment.userId)?.toString() || 'A').charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl px-4 py-2 inline-block max-w-full">
+                          <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+                            {(comment.userEmail || 'Anonymous').split('@')[0]}
+                          </p>
+                          {comment.content && (
+                            <p className="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap break-words">
+                              {comment.content}
+                            </p>
+                          )}
+                          {comment.imageUrl && (
+                            <img
+                              src={comment.imageUrl}
+                              alt="attachment"
+                              className="rounded-lg max-w-full max-h-64 mt-2 object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                              referrerPolicy="no-referrer"
+                              onClick={() => setSelectedImage(comment.imageUrl)}
+                            />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3.5 mt-1 px-4 text-xs text-slate-500">
+                          <span>{formatDate(comment.createdAt)}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleReplyClick(comment, comment.id)}
+                            className="font-semibold text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                          >
+                            Trả lời
+                          </button>
+                          {canEditComment(comment) && (
+                            <button
+                              onClick={() => handleDeleteComment(comment)}
+                              className="hover:text-red-500 transition-colors"
+                            >
+                              Xóa
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Nested Child Replies */}
+                    {childReplies.length > 0 && (
+                      <div className="ml-8 sm:ml-11 pl-3 border-l-2 border-slate-200 dark:border-slate-800 space-y-2.5 pt-1">
+                        {childReplies.map((reply) => (
+                          <div key={reply.id} className="flex gap-2.5 items-start">
+                            <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                              {((reply.userEmail || reply.userId)?.toString() || 'A').charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="bg-slate-100/90 dark:bg-slate-800/90 rounded-2xl px-3.5 py-1.5 inline-block max-w-full">
+                                <p className="font-semibold text-xs text-slate-900 dark:text-slate-100">
+                                  {(reply.userEmail || 'Anonymous').split('@')[0]}
+                                </p>
+                                <p className="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap break-words">
+                                  {reply.replyTo && (
+                                    <span className="text-blue-500 dark:text-blue-400 font-semibold mr-1.5 text-xs">
+                                      @{reply.replyTo}
+                                    </span>
+                                  )}
+                                  {reply.content}
+                                </p>
+                                {reply.imageUrl && (
+                                  <img
+                                    src={reply.imageUrl}
+                                    alt="attachment"
+                                    className="rounded-lg max-w-full max-h-56 mt-2 object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                                    referrerPolicy="no-referrer"
+                                    onClick={() => setSelectedImage(reply.imageUrl)}
+                                  />
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3 mt-0.5 px-3 text-[11px] text-slate-500">
+                                <span>{formatDate(reply.createdAt)}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleReplyClick(reply, comment.id)}
+                                  className="font-semibold text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                                >
+                                  Trả lời
+                                </button>
+                                {canEditComment(reply) && (
+                                  <button
+                                    onClick={() => handleDeleteComment(reply)}
+                                    className="hover:text-red-500 transition-colors"
+                                  >
+                                    Xóa
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-4 mt-1 px-4 text-xs text-slate-500">
-                    <span>{formatDate(comment.createdAt)}</span>
-                    {canEditComment(comment) && (
-                      <button 
-                        onClick={() => handleDeleteComment(comment)}
-                        className="hover:text-red-500 transition-colors"
-                      >
-                        Xóa
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+                );
+              });
+            })()}
           </div>
 
           <form onSubmit={handleAddComment} className="flex gap-2 items-end">
-            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm shrink-0 mt-1">
+            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm shrink-0 mb-1">
               {(user?.email || 'A').charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 relative flex flex-col gap-2">
+              {/* Replying banner indicator */}
+              {replyingTo && (
+                <div className="flex items-center justify-between px-3 py-1 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-200/80 dark:border-blue-900/60 text-xs animate-in fade-in duration-150">
+                  <span className="flex items-center gap-1 truncate">
+                    Đang trả lời <strong className="font-bold">@{replyingTo.authorName}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setReplyingTo(null)}
+                    className="p-0.5 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-full transition-colors ml-2"
+                    title="Hủy trả lời"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
               {attachmentUrl && (
                 <div className="relative inline-block w-fit">
                   <img src={attachmentUrl} alt="Preview" className="h-20 rounded-lg object-contain border border-slate-200 dark:border-slate-700 bg-white" />
@@ -445,8 +587,9 @@ export default function BlogInteractions({ postId }: Props) {
                   </div>
                 )}
                 <input
+                  ref={commentInputRef}
                   type="text"
-                  placeholder="Viết bình luận... (Có thể dán ảnh)"
+                  placeholder={replyingTo ? `Trả lời @${replyingTo.authorName}... (Có thể dán ảnh)` : "Viết bình luận... (Có thể dán ảnh)"}
                   className="flex-1 py-2 bg-transparent outline-none text-sm placeholder-slate-400"
                   value={newComment}
                   onChange={e => setNewComment(e.target.value)}
