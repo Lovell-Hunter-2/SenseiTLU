@@ -77,6 +77,7 @@ export default function EcosystemManagerModal({ isOpen, onClose, inline = false 
       setEditingId(null);
       setFormData({ name: "", description: "", url: "", iconName: "Globe", colorTheme: "blue" });
       fetchApps();
+      window.dispatchEvent(new CustomEvent('sensei_ecosystem_updated'));
     } catch (error) {
       console.error("Error saving app:", error);
     }
@@ -99,6 +100,7 @@ export default function EcosystemManagerModal({ isOpen, onClose, inline = false 
     try {
       await deleteDoc(doc(db, "ecosystem", id));
       fetchApps();
+      window.dispatchEvent(new CustomEvent('sensei_ecosystem_updated'));
     } catch (error) {
       console.error("Error deleting app:", error);
     }
@@ -111,7 +113,10 @@ export default function EcosystemManagerModal({ isOpen, onClose, inline = false 
           <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Globe className="w-6 h-6 text-blue-500" /> Quản lý Hệ sinh thái
           </h2>
-          <p className="text-sm text-slate-500 mt-1">Thêm hoặc chỉnh sửa các trang web liên kết.</p>
+          <p className="text-sm text-slate-500 mt-1 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            Cập nhật tức thì: Tự động hiển thị trên Menu và Trang chủ ngay lập tức mà không cần bấm đồng bộ hay deploy.
+          </p>
         </div>
         {!inline && onClose && (
           <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg">
