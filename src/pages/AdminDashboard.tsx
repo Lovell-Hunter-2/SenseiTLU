@@ -11,6 +11,7 @@ import HiddenDocsManager from '../components/HiddenDocsManager';
 import EcosystemManagerModal from '../components/EcosystemManagerModal';
 import MaintenanceModal from '../components/MaintenanceModal';
 import { MaintenanceConfig, getMaintenanceStatus } from '../types/maintenance';
+import KpiAnalyticsModal, { KpiMetricType } from '../components/KpiAnalyticsModal';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, BarChart, Bar } from 'recharts';
 import { getVietnamDateString, getQuotaCycleInfo, calibrateQuotaCycle, resetCurrentQuotaToZero } from '../services/analyticsService';
 import { syncCatalogToGitHub, loadCatalog } from '../services/catalogService';
@@ -148,6 +149,9 @@ export default function AdminDashboard() {
   // Maintenance Mode state
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
   const [maintenanceConfig, setMaintenanceConfig] = useState<MaintenanceConfig | null>(null);
+
+  // KPI Analytics Drilldown Modal state (for averages, ratios, hourly breakdown)
+  const [kpiModalMetric, setKpiModalMetric] = useState<KpiMetricType | null>(null);
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'settings', 'maintenance'), (snap) => {
@@ -1253,9 +1257,16 @@ export default function AdminDashboard() {
                 {/* 2. Lưới 2 cột: Lượt truy cập hôm nay & Tổng lượt truy cập */}
                 <div className="grid grid-cols-2 gap-2.5">
                   {/* Lượt truy cập hôm nay */}
-                  <div className="p-4 rounded-2xl bg-[#0d1527] border border-slate-800 flex flex-col justify-between shadow-xs">
+                  <button
+                    type="button"
+                    onClick={() => setKpiModalMetric('today')}
+                    className="p-4 rounded-2xl bg-[#0d1527] border border-slate-800 hover:border-blue-500/50 flex flex-col justify-between shadow-xs text-left active:scale-[0.98] transition-all group"
+                  >
                     <div>
-                      <p className="text-xs font-medium text-slate-400">Lượt truy cập hôm nay</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium text-slate-400">Lượt truy cập hôm nay</p>
+                        <span className="text-[10px] text-blue-400 font-semibold group-hover:underline">TB ↗</span>
+                      </div>
                       <p className="text-2xl font-black text-white mt-1.5 tracking-tight">
                         {dailyVisits.toLocaleString('vi-VN')}
                       </p>
@@ -1264,12 +1275,19 @@ export default function AdminDashboard() {
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       <span>Đang ghi nhận</span>
                     </div>
-                  </div>
+                  </button>
 
                   {/* Tổng lượt truy cập */}
-                  <div className="p-4 rounded-2xl bg-[#0d1527] border border-slate-800 flex flex-col justify-between shadow-xs">
+                  <button
+                    type="button"
+                    onClick={() => setKpiModalMetric('total')}
+                    className="p-4 rounded-2xl bg-[#0d1527] border border-slate-800 hover:border-indigo-500/50 flex flex-col justify-between shadow-xs text-left active:scale-[0.98] transition-all group"
+                  >
                     <div>
-                      <p className="text-xs font-medium text-slate-400">Tổng lượt truy cập</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium text-slate-400">Tổng lượt truy cập</p>
+                        <span className="text-[10px] text-indigo-400 font-semibold group-hover:underline">TB ↗</span>
+                      </div>
                       <p className="text-2xl font-black text-white mt-1.5 tracking-tight">
                         {totalVisits.toLocaleString('vi-VN')}
                       </p>
@@ -1277,7 +1295,7 @@ export default function AdminDashboard() {
                     <div className="mt-3 flex items-center gap-1 text-xs text-emerald-400 font-medium">
                       <span>▲ 12% tuần này</span>
                     </div>
-                  </div>
+                  </button>
                 </div>
 
                 {/* 3. Thẻ biểu đồ cột 7 ngày gần nhất chiếm cả hàng (chỉ hiện khi có dữ liệu thật) */}
@@ -1308,12 +1326,21 @@ export default function AdminDashboard() {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                   {/* Card 1: Daily Visits */}
-                  <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-blue-300 dark:hover:border-blue-700/50 transition-all group">
+                  <div 
+                    onClick={() => setKpiModalMetric('today')}
+                    className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md hover:scale-[1.01] transition-all cursor-pointer group"
+                    title="Bấm để xem phân tích chi tiết, trung bình mỗi giờ & phân bổ ca hôm nay"
+                  >
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <div>
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Hôm nay</span>
-                          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Lượt truy cập</h3>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Hôm nay</span>
+                            <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 rounded-md border border-blue-200 dark:border-blue-800/60">
+                              Phân tích TB ↗
+                            </span>
+                          </div>
+                          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5">Lượt truy cập</h3>
                         </div>
                         <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
                           <BarChart3 className="w-5 h-5" />
@@ -1329,17 +1356,35 @@ export default function AdminDashboard() {
                       <span className="inline-flex items-center gap-1.5 font-medium text-emerald-600 dark:text-emerald-400">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Đang ghi nhận
                       </span>
-                      <span className="text-[11px] text-slate-400">Từ 00:00 VN</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setKpiModalMetric('today');
+                        }}
+                        className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-semibold"
+                      >
+                        Xem TB & phân bổ &rarr;
+                      </button>
                     </div>
                   </div>
 
                   {/* Card 2: Total Visits */}
-                  <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-indigo-300 dark:hover:border-indigo-700/50 transition-all group">
+                  <div 
+                    onClick={() => setKpiModalMetric('total')}
+                    className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-md hover:scale-[1.01] transition-all cursor-pointer group"
+                    title="Bấm để xem tính toán trung bình theo ngày, tuần, tháng & kỷ lục"
+                  >
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <div>
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Toàn thời gian</span>
-                          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Tổng lượt truy cập</h3>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Toàn thời gian</span>
+                            <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800/60">
+                              TB Ngày/Tuần ↗
+                            </span>
+                          </div>
+                          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5">Tổng lượt truy cập</h3>
                         </div>
                         <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
                           <TrendingUp className="w-5 h-5" />
@@ -1355,17 +1400,35 @@ export default function AdminDashboard() {
                       <span className="inline-flex items-center gap-1 font-medium text-indigo-600 dark:text-indigo-400">
                         SenseiTLU Hub
                       </span>
-                      <span className="text-[11px] text-slate-400">Tích lũy hệ thống</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setKpiModalMetric('total');
+                        }}
+                        className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
+                      >
+                        Tính TB ngày/tuần/tháng &rarr;
+                      </button>
                     </div>
                   </div>
 
                   {/* Card 3: Total Users */}
-                  <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-emerald-300 dark:hover:border-emerald-700/50 transition-all group">
+                  <div 
+                    onClick={() => setKpiModalMetric('users')}
+                    className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-emerald-400 dark:hover:border-emerald-600 hover:shadow-md hover:scale-[1.01] transition-all cursor-pointer group"
+                    title="Bấm để xem tỉ lệ người dùng @thanglong.edu.vn vs Gmail & độ hoạt động"
+                  >
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <div>
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Người dùng</span>
-                          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Tổng tài khoản</h3>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Người dùng</span>
+                            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/60">
+                              Tỉ lệ & Retention ↗
+                            </span>
+                          </div>
+                          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5">Tổng tài khoản</h3>
                         </div>
                         <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
                           <Users className="w-5 h-5" />
@@ -1378,11 +1441,22 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between text-xs pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-slate-500 dark:text-slate-400">
-                      <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
-                        Sinh viên & GV
-                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setKpiModalMetric('users');
+                        }}
+                        className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline font-semibold"
+                      >
+                        Tỉ lệ người dùng &rarr;
+                      </button>
                       <button 
-                        onClick={() => setActiveTab('users')} 
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveTab('users');
+                        }} 
                         className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-semibold"
                       >
                         Xem danh sách &rarr;
@@ -1396,7 +1470,11 @@ export default function AdminDashboard() {
                     const quotaPercent = Math.min(100, Math.round((quotaReads / limitValue) * 100));
 
                     return (
-                      <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-violet-300 dark:hover:border-violet-700/50 transition-all group">
+                      <div 
+                        onClick={() => setKpiModalMetric('quota')}
+                        className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-md hover:scale-[1.01] transition-all cursor-pointer group"
+                        title="Bấm để xem tốc độ đốt Quota, hiệu suất Cache & dự báo chu kỳ"
+                      >
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <div>
@@ -1446,13 +1524,23 @@ export default function AdminDashboard() {
                         </div>
 
                         <div className="flex items-center justify-between text-xs pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-slate-500 dark:text-slate-400">
-                          <span className="inline-flex items-center gap-1 text-[11px]" title={`Firestore tự động reset vào ${quotaCycle.resetTimeVN} (00:00 US Pacific Time)`}>
-                            <Clock className="w-3.5 h-3.5 text-slate-400" />
-                            <span>Reset lúc {quotaCycle.resetTimeShortVN || '14:00'} (sau <strong className="text-slate-700 dark:text-slate-200 font-semibold">{quotaCycle.hoursRemaining}h {quotaCycle.minutesRemaining}m</strong>)</span>
-                          </span>
                           <button
-                            onClick={() => setActiveTab('quota')}
-                            className="text-[11px] text-violet-600 dark:text-violet-400 hover:underline font-semibold flex items-center gap-0.5"
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setKpiModalMetric('quota');
+                            }}
+                            className="text-[11px] text-violet-600 dark:text-violet-400 hover:underline font-semibold"
+                          >
+                            Tốc độ & hiệu suất &rarr;
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveTab('quota');
+                            }}
+                            className="text-[11px] text-slate-500 dark:text-slate-400 hover:underline font-medium flex items-center gap-0.5"
                             title="Xem chi tiết tab Giám sát Quota"
                           >
                             Chi tiết &rarr;
@@ -2854,6 +2942,23 @@ export default function AdminDashboard() {
         isOpen={isMaintenanceModalOpen}
         onClose={() => setIsMaintenanceModalOpen(false)}
         onSaved={(cfg) => setMaintenanceConfig(cfg)}
+      />
+
+      {/* KPI Analytics Breakdown Modal (Averages, Ratios, Quota Pacing) */}
+      <KpiAnalyticsModal
+        isOpen={!!kpiModalMetric}
+        initialMetric={kpiModalMetric || 'today'}
+        onClose={() => setKpiModalMetric(null)}
+        dailyVisits={dailyVisits}
+        totalVisits={totalVisits}
+        totalUsers={totalUsers}
+        quotaReads={quotaReads}
+        quotaWrites={quotaWrites}
+        quotaDeletes={quotaDeletes}
+        quotaCycle={quotaCycle}
+        todayHourlyData={todayHourlyData}
+        dailyVisitsHistory={dailyVisitsHistory}
+        usersCache={usersCache}
       />
     </div>
   );
