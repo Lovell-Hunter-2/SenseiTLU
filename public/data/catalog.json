@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-11-08T09:29:29.165Z",
-  "version": 1794130169165,
+  "lastUpdated": "2026-11-08T09:48:57.600Z",
+  "version": 1794131337600,
   "totalSubjects": 86,
-  "totalDocuments": 300,
+  "totalDocuments": 301,
   "subjects": [
     {
       "id": "b3yvnb7J7pmzeHhIydyd",
@@ -1887,6 +1887,35 @@
         "createdAt": "2026-08-23T14:44:05.650Z"
       },
       {
+        "id": "XzfMsdy7o50BklMEK3Yp",
+        "subjectId": "eJXPaC8iDK8fioBTg7wr",
+        "title": "Unit test (U1-U4)",
+        "type": "Bài tập",
+        "url": "",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": true,
+        "items": [
+          {
+            "title": "Compact PFS TG Unit Test 1 - Vocabulary & Grammar Exercises ",
+            "url": "https://drive.google.com/file/d/1mbs3px2HpNyAdhhy_eKhU_NXj12E_whY/view?usp=drivesdk"
+          },
+          {
+            "title": "Compact PFS TG Unit Test 2 - Vocabulary & Grammar Exercises",
+            "url": "https://drive.google.com/file/d/14E0opV8fAkQ0SBPgr5o5wA2Qiwg7ldIj/view?usp=drivesdk"
+          },
+          {
+            "title": "Compact PFS TG Unit Test 3 - Vocabulary & Grammar Exercises",
+            "url": "https://drive.google.com/file/d/1ZPe2G5QDy2ICo6UbvfixcX5T7VimvsgY/view?usp=drivesdk"
+          },
+          {
+            "title": "Compact PFS TG Unit Test 4 (Standard) Vocabulary & Grammar Exercises",
+            "url": "https://drive.google.com/file/d/1YtcwmWJTinfBaLYrtU7cEzslfBnAM2PR/view?usp=drivesdk"
+          }
+        ],
+        "createdAt": "2026-11-08T09:43:00.322Z"
+      },
+      {
         "id": "a0TDu9izEsvpegKxlGPw",
         "subjectId": "eJXPaC8iDK8fioBTg7wr",
         "title": "Compact workbook CD",
@@ -1941,7 +1970,7 @@
         "title": "Đề ôn tập các dạng bài thi",
         "type": "Đề thi mẫu",
         "url": "",
-        "chapter": "",
+        "chapter": "(Bàn docx dễ sửa, bản pdf dễ xem)",
         "isHidden": false,
         "isFolder": true,
         "items": [
@@ -1960,6 +1989,10 @@
           {
             "url": "https://drive.google.com/file/d/1Gi1Sd7X0a1jbjUowIQLRCSfCeiWDClJB/view?usp=drivesdk",
             "title": "Đề ôn tập các dạng bài thi (pdf)"
+          },
+          {
+            "title": "Full BT tự luyện Tiếng Anh 1",
+            "url": "https://docs.google.com/document/d/1glBJZ__UWls5fsqWugO3sE_9M8p5jT0E/edit?usp=sharing&ouid=112031637253348758978&rtpof=true&sd=true"
           }
         ],
         "createdAt": "2026-10-30T17:43:33.718Z"
@@ -2322,16 +2355,16 @@
         "isFolder": true,
         "items": [
           {
-            "title": "140+ Câu trắc nghiệm CNXHKH (Có đáp án)",
-            "url": "https://docs.google.com/document/d/1fqzX6-e-Pc8qhqP_OlbZISa6RAX2antb/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1fqzX6-e-Pc8qhqP_OlbZISa6RAX2antb/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "140+ Câu trắc nghiệm CNXHKH (Có đáp án)"
           },
           {
-            "title": "190+ Câu (có đáp án)",
-            "url": "https://docs.google.com/document/d/1jRBtZbm36OpCtrEz-lvZNbzgBBQWWUXl/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1jRBtZbm36OpCtrEz-lvZNbzgBBQWWUXl/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "190+ Câu (có đáp án)"
           },
           {
-            "title": "215 câu hỏi và đáp án trắc nghiệm CNXHKH (Đáp án chưa chuẩn)",
-            "url": "https://drive.google.com/file/d/1eQ2zTopNvo8H_iQH-sm1r9RmSMyl6uPf/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1eQ2zTopNvo8H_iQH-sm1r9RmSMyl6uPf/view?usp=drivesdk",
+            "title": "215 câu hỏi và đáp án trắc nghiệm CNXHKH (Đáp án chưa chuẩn)"
           },
           {
             "title": "250 câu trắc nghiệm ôn tập",
@@ -2342,12 +2375,12 @@
             "url": "https://docs.google.com/document/d/1kmX58JUk-yn8vXasvxAMgPmQQWQSG6Id/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "50+ Câu (có đáp án)",
-            "url": "https://docs.google.com/document/d/1cfFmb-F0hN0o2HLCHGUIWpsvoloY1zrc/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1cfFmb-F0hN0o2HLCHGUIWpsvoloY1zrc/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "50+ Câu (có đáp án)"
           },
           {
-            "title": "Đề ôn CNXHKH 1300+ câu (DOCX)",
-            "url": "https://docs.google.com/document/d/1PdNG8xCPTh3i4jEJuz1zM5_J891nA3ud/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1PdNG8xCPTh3i4jEJuz1zM5_J891nA3ud/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Đề ôn CNXHKH 1300+ câu (DOCX)"
           },
           {
             "title": "Đề ôn CNXHKH 1300+ câu (PDF)",
@@ -2367,16 +2400,16 @@
         "isFolder": true,
         "items": [
           {
-            "url": "https://docs.google.com/document/d/1rV1GErODHtu2LnFwz4JVj6JmgyiT7EU8/edit?usp=drivesdk&rtpof=true&sd=true",
-            "title": "9.2024.HỆ THỐNG CÂU HỎI TỔNG ÔN TẬP CNXHKH"
+            "title": "9.2024.HỆ THỐNG CÂU HỎI TỔNG ÔN TẬP CNXHKH",
+            "url": "https://docs.google.com/document/d/1rV1GErODHtu2LnFwz4JVj6JmgyiT7EU8/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "url": "https://docs.google.com/document/d/11zWiyEruyB-tdhN5xzIlv2VY2FJXkHaO/edit?usp=drivesdk&rtpof=true&sd=true",
-            "title": "Trắc nghiệm chương I"
+            "title": "Trắc nghiệm chương I",
+            "url": "https://docs.google.com/document/d/11zWiyEruyB-tdhN5xzIlv2VY2FJXkHaO/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "Trắc nghiệm chương II",
-            "url": "https://docs.google.com/document/d/1OwghSozCIwSXMDqorC_oAQTYJDg2ZXy0/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1OwghSozCIwSXMDqorC_oAQTYJDg2ZXy0/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Trắc nghiệm chương II"
           },
           {
             "title": "Trắc nghiệm ôn chương 2-4",
@@ -2387,8 +2420,8 @@
             "title": "Trắc nghiệm ôn chương 5-7"
           },
           {
-            "title": "Đáp án hệ thống câu hỏi ôn tập (chuẩn)",
-            "url": "https://docs.google.com/document/d/1VQvInjeHbmUhMnCM-Wl_50fao-ufOllv/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1VQvInjeHbmUhMnCM-Wl_50fao-ufOllv/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Đáp án hệ thống câu hỏi ôn tập (chuẩn)"
           },
           {
             "title": "Đáp án Trắc nghiệm ôn chương 2-4",
@@ -2477,12 +2510,12 @@
             "title": "Chương 3"
           },
           {
-            "url": "https://docs.google.com/document/d/1VbsA1vbbeEZrNNhEImgdpUHkvSsPsKg6/edit?usp=drivesdk&rtpof=true&sd=true",
-            "title": "Chương 4"
+            "title": "Chương 4",
+            "url": "https://docs.google.com/document/d/1VbsA1vbbeEZrNNhEImgdpUHkvSsPsKg6/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "url": "https://docs.google.com/document/d/1zgOFUaYdNGFIdXdl0agb2k2qYBK7l0lb/edit?usp=drivesdk&rtpof=true&sd=true",
-            "title": "chương 5"
+            "title": "chương 5",
+            "url": "https://docs.google.com/document/d/1zgOFUaYdNGFIdXdl0agb2k2qYBK7l0lb/edit?usp=drivesdk&rtpof=true&sd=true"
           }
         ],
         "createdAt": "2026-11-03T17:57:34.302Z"
@@ -2612,28 +2645,28 @@
             "url": "https://docs.google.com/document/d/16pvVT0PivP6zXR-IhxEv_jWCPXHiHxim/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "Đề kiểm tra giữa kỳ Azota - 2 mã đề (2024-2025)",
-            "url": "https://docs.google.com/document/d/1KAoeLpksZq8yCl2qd9igIH3dnJWFM48b/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1KAoeLpksZq8yCl2qd9igIH3dnJWFM48b/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Đề kiểm tra giữa kỳ Azota - 2 mã đề (2024-2025)"
           },
           {
             "title": "Đề kiểm tra giữa kỳ CNXHKH (C1-C4) (2)",
             "url": "https://docs.google.com/document/d/1b2V_XCno6qizC8EqAbpUtqSVQS-1rJYf/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "Đề kiểm tra giữa kỳ CNXHKH (C5-C7) (2)",
-            "url": "https://drive.google.com/file/d/1CBWmDUksRl4RfQD-YpGOiFBsD9NBNtNE/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1CBWmDUksRl4RfQD-YpGOiFBsD9NBNtNE/view?usp=drivesdk",
+            "title": "Đề kiểm tra giữa kỳ CNXHKH (C5-C7) (2)"
           },
           {
-            "title": "Đề kiểm tra giữa kỳ CNXHKH (C5-C7) (raw) (2)",
-            "url": "https://drive.google.com/file/d/1A78461x2zzHmNHtYlu2oJ3U2Sx0T62NE/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1A78461x2zzHmNHtYlu2oJ3U2Sx0T62NE/view?usp=drivesdk",
+            "title": "Đề kiểm tra giữa kỳ CNXHKH (C5-C7) (raw) (2)"
           },
           {
-            "title": "Đề kiểm tra giữa kỳ CNXHKH 1 (C1-C4)",
-            "url": "https://drive.google.com/file/d/1RODAsl1pYqqhYQK4A5wpYIpSAeVebhUF/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1RODAsl1pYqqhYQK4A5wpYIpSAeVebhUF/view?usp=drivesdk",
+            "title": "Đề kiểm tra giữa kỳ CNXHKH 1 (C1-C4)"
           },
           {
-            "title": "Đề kiểm tra giữa kỳ CNXHKH 2 (C5-C7)",
-            "url": "https://drive.google.com/file/d/19nK2PoxG7vxREYWfWPj92ZT6vwMN17y4/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/19nK2PoxG7vxREYWfWPj92ZT6vwMN17y4/view?usp=drivesdk",
+            "title": "Đề kiểm tra giữa kỳ CNXHKH 2 (C5-C7)"
           },
           {
             "title": "Đề kiểm tra giữa kỳ Google Forms (2024-2025)",
@@ -2644,8 +2677,8 @@
             "url": "https://drive.google.com/file/d/1qPTHHDSSFaZYryCZbehIrj6YZHNZjmQD/view?usp=drivesdk"
           },
           {
-            "title": "Đề kiểm tra giữa kỳ lần 2 CNXHKH (C5-C7)",
-            "url": "https://drive.google.com/file/d/1cGxYnEO5VG54MniU_ATYhJAOo1rc3xQd/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1cGxYnEO5VG54MniU_ATYhJAOo1rc3xQd/view?usp=drivesdk",
+            "title": "Đề kiểm tra giữa kỳ lần 2 CNXHKH (C5-C7)"
           },
           {
             "title": "Đề kiểm tra LMS (40 câu) (2024-2025)",
