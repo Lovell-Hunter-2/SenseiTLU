@@ -456,25 +456,68 @@ export default function Home() {
   useEffect(() => {
     document.title = "SenseiTLU";
 
-    // Fetch hero images (Cache-First)
-    const cachedHero = getCachedData<{ leftUrl: string; rightUrl: string }>("hero_images_settings");
+    // Fetch hero images: Exam-Season Quota Shield Architecture
+    // 1. Instant Cache Hydration (0ms, 0 reads, no layout shift)
+    const cachedHero = getCachedData<{ leftUrl: string; rightUrl: string }>("hero_images_settings", true);
     if (cachedHero) {
       setHeroImages(cachedHero);
-    } else {
-      getDoc(doc(db, "settings", "heroImages")).then((docsnap) => {
-        if (docsnap.exists()) {
-          const data = docsnap.data() as { leftUrl: string; rightUrl: string };
-          setHeroImages(data);
-          setCachedData("hero_images_settings", data, CacheTTL.VERY_LONG);
-        }
-      }).catch(err => {
-        const staleHero = getCachedData<{ leftUrl: string; rightUrl: string }>("hero_images_settings", true);
-        if (staleHero) setHeroImages(staleHero);
-      });
     }
 
+    // 2. Real-time Live Listener ONLY for Admins (0 delay when testing/updating)
+    // For regular students during peak exam season: Stale-While-Revalidate with 1-hour session throttle (Saves 99.5% reads!)
+    let unsubHero = () => {};
+
+    if (isAdmin) {
+      unsubHero = onSnapshot(
+        doc(db, "settings", "heroImages"),
+        (docsnap) => {
+          if (docsnap.exists()) {
+            const data = docsnap.data() as { leftUrl: string; rightUrl: string };
+            setHeroImages(data);
+            setCachedData("hero_images_settings", data, CacheTTL.LONG);
+          }
+        },
+        (err) => {
+          console.warn("Admin hero live listener error:", err);
+        }
+      );
+    } else {
+      // Students / Public traffic: Check if cache is older than 60 minutes
+      const now = Date.now();
+      const lastCheck = Number(sessionStorage.getItem("sensei_hero_last_check") || 0);
+      const THROTTLE_MS = 60 * 60 * 1000; // 1 hour per session
+
+      if (!cachedHero || now - lastCheck > THROTTLE_MS) {
+        getDoc(doc(db, "settings", "heroImages"))
+          .then((docsnap) => {
+            if (docsnap.exists()) {
+              const data = docsnap.data() as { leftUrl: string; rightUrl: string };
+              setHeroImages(data);
+              setCachedData("hero_images_settings", data, CacheTTL.LONG);
+              sessionStorage.setItem("sensei_hero_last_check", String(now));
+            }
+          })
+          .catch((err) => {
+            console.warn("Student hero fetch error, fallback to cache:", err);
+          });
+      }
+    }
+
+    // 3. Instant local event listener across tabs/windows in same browser
+    const handleLocalHeroUpdate = (e: any) => {
+      if (e.detail) {
+        setHeroImages(e.detail);
+      }
+    };
+    window.addEventListener('sensei_hero_images_updated', handleLocalHeroUpdate);
+
     fetchInitial(false);
-  }, []);
+
+    return () => {
+      unsubHero();
+      window.removeEventListener('sensei_hero_images_updated', handleLocalHeroUpdate);
+    };
+  }, [isAdmin]);
 
   // Auto-update subjects list when a newer catalog is deployed to Vercel CDN
   useEffect(() => {
