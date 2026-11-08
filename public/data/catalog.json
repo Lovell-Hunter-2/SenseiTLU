@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-11-08T11:01:15.035Z",
-  "version": 1794135675035,
+  "lastUpdated": "2026-11-08T11:09:27.485Z",
+  "version": 1794136167485,
   "totalSubjects": 86,
-  "totalDocuments": 312,
+  "totalDocuments": 315,
   "subjects": [
     {
       "id": "b3yvnb7J7pmzeHhIydyd",
@@ -1451,6 +1451,18 @@
         "isFolder": false,
         "items": [],
         "createdAt": "2026-08-23T15:47:17.380Z"
+      },
+      {
+        "id": "VygT6M70nwlmYJHVz6DK",
+        "subjectId": "c5WZ5PM3h9BJBgPQcmBQ",
+        "title": "Slide bài giảng Đồ họa web",
+        "type": "Slide",
+        "url": "https://drive.google.com/file/d/1ZXeyVuc0qfCn5VEo28-aBoiB6Owxp7x1/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-08T11:02:48.134Z"
       }
     ],
     "DV1JXkwll9WMB2xlHClG": [
@@ -4138,6 +4150,18 @@
         "isFolder": false,
         "items": [],
         "createdAt": "2026-04-20T15:46:51.597Z"
+      },
+      {
+        "id": "uclBNAL6e4ccofayWv5J",
+        "subjectId": "cbBqvm8m4bxAU8UGNMjr",
+        "title": "Câu hỏi trắc nghiệm Vĩ mô",
+        "type": "File trắc nghiệm",
+        "url": "https://drive.google.com/file/d/10uoQS5YKv77qqAEGHzZNIrvVu13a1W-p/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-08T11:05:16.834Z"
       }
     ],
     "8Q5kdKIyTqMxM8vjHShJ": [
@@ -5233,24 +5257,24 @@
         "isFolder": true,
         "items": [
           {
-            "title": "CHƯƠNG 1 - DỊCH VỤ NỘI DUNG SỐ",
-            "url": "https://drive.google.com/file/d/1WhSFs3Pfw187aH-CuAND_6W1t0B8VERq/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1WhSFs3Pfw187aH-CuAND_6W1t0B8VERq/view?usp=drivesdk",
+            "title": "CHƯƠNG 1 - DỊCH VỤ NỘI DUNG SỐ"
           },
           {
-            "title": "CHƯƠNG 2 - QUẢN TRỊ TỔ CHỨC VÀ TÀI CHÍNH DVNDS - sv",
-            "url": "https://drive.google.com/file/d/1rMxoSpA5Xfb_ioNRDDzBEK9Ams_-q8ek/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1rMxoSpA5Xfb_ioNRDDzBEK9Ams_-q8ek/view?usp=drivesdk",
+            "title": "CHƯƠNG 2 - QUẢN TRỊ TỔ CHỨC VÀ TÀI CHÍNH DVNDS - sv"
           },
           {
-            "title": "CHƯƠNG 3 - PHÂN TÍCH VÀ ĐO LƯỜNG NGƯỜI DÙNG DỊCH VỤ NỘI DUNG SỐ",
-            "url": "https://drive.google.com/file/d/16mnPDbBr-Za2fR4TtbWj4u06Vu-zsNKD/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/16mnPDbBr-Za2fR4TtbWj4u06Vu-zsNKD/view?usp=drivesdk",
+            "title": "CHƯƠNG 3 - PHÂN TÍCH VÀ ĐO LƯỜNG NGƯỜI DÙNG DỊCH VỤ NỘI DUNG SỐ"
           },
           {
             "title": "CHƯƠNG 4 - SẢN XUẤT VÀ QUẢN TRỊ TÀI SẢN NỘI DUNG SỐ (MAKE)",
             "url": "https://drive.google.com/file/d/11qp6BYvoTHK7dnK4R9PplSub4py_aT_-/view?usp=drivesdk"
           },
           {
-            "title": "CHƯƠNG 5 - CHIẾN LƯỢC TIẾP THỊ VÀ PHÂN PHỐI (MARKET & MOVE)",
-            "url": "https://drive.google.com/file/d/1Cioehtau6Ym2-64ciZfrRMYYsENrvDec/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1Cioehtau6Ym2-64ciZfrRMYYsENrvDec/view?usp=drivesdk",
+            "title": "CHƯƠNG 5 - CHIẾN LƯỢC TIẾP THỊ VÀ PHÂN PHỐI (MARKET & MOVE)"
           },
           {
             "title": "CHƯƠNG 6 - MÔ HÌNH KINH DOANH VÀ DOANH THU DỊCH VỤ NỘI DUNG SỐ",
@@ -5832,6 +5856,18 @@
         "isFolder": false,
         "items": [],
         "createdAt": "2026-04-27T15:11:28.806Z"
+      },
+      {
+        "id": "SwWHGiXt1xgmJzAcsHMr",
+        "subjectId": "mhq1n4ARXjSlZXqYyOgB",
+        "title": "TN 540 câu TMĐT căn bản ",
+        "type": "File trắc nghiệm",
+        "url": "https://docs.google.com/document/d/1JKZMRTHEMhhX5__kVS-SreibOTpt-6Vv/edit?usp=sharing&ouid=112031637253348758978&rtpof=true&sd=true",
+        "chapter": "(9 chương)",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-08T11:08:54.711Z"
       },
       {
         "id": "c6ihvWi1jaxgWfxhPpDG",
@@ -6607,16 +6643,16 @@
         "isFolder": true,
         "items": [
           {
-            "title": "BÀI TẬP ÔN TẬP TÀI CHÍNH TIỀN TỆ_1",
-            "url": "https://drive.google.com/file/d/1W8EcmVoDFYoy4rw-0gIZGZqwMfqNfuTP/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1W8EcmVoDFYoy4rw-0gIZGZqwMfqNfuTP/view?usp=drivesdk",
+            "title": "BÀI TẬP ÔN TẬP TÀI CHÍNH TIỀN TỆ_1"
           },
           {
-            "title": "MỘT SỐ CÂU HỎI TRẮC NGHIỆM ÔN TẬP TÀI CHÍNH TIỀN TỆ",
-            "url": "https://drive.google.com/file/d/1zvgl3sL_uJcuR2lKHeSkBnGqwlLOsZA8/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1zvgl3sL_uJcuR2lKHeSkBnGqwlLOsZA8/view?usp=drivesdk",
+            "title": "MỘT SỐ CÂU HỎI TRẮC NGHIỆM ÔN TẬP TÀI CHÍNH TIỀN TỆ"
           },
           {
-            "title": "trắc nghiệm cô vân anh",
-            "url": "https://docs.google.com/document/d/141cQaj6r3FCYMdhJYdtskw_ND80j4L3q/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/141cQaj6r3FCYMdhJYdtskw_ND80j4L3q/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "trắc nghiệm cô vân anh"
           },
           {
             "title": "trắc nghiệm tctt",
@@ -6627,8 +6663,8 @@
             "url": "https://docs.google.com/document/d/17B7Vp2dqSxAfBfN3Cab7cdeKhESCJrVW/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "ôn tổng hợp tctt lý thuyết",
-            "url": "https://docs.google.com/document/d/1Jq2LW3vADMC8EhdbMysaWl679ZDIdM7x/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1Jq2LW3vADMC8EhdbMysaWl679ZDIdM7x/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "ôn tổng hợp tctt lý thuyết"
           }
         ],
         "createdAt": "2026-11-08T10:55:36.707Z"
