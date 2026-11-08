@@ -1,6 +1,6 @@
 {
-  "lastUpdated": "2026-11-06T17:37:00.462Z",
-  "version": 1793986620462,
+  "lastUpdated": "2026-11-08T09:29:29.165Z",
+  "version": 1794130169165,
   "totalSubjects": 86,
   "totalDocuments": 300,
   "subjects": [
@@ -489,7 +489,7 @@
       "name": "Tiếng Anh 1",
       "iconName": "Globe2",
       "description": "",
-      "isPriority": true,
+      "isPriority": false,
       "createdAt": "2026-08-21T06:47:24.122Z"
     },
     {
@@ -2317,21 +2317,41 @@
         "title": "Trắc nghiệm ôn tập",
         "type": "Bài tập",
         "url": "",
-        "chapter": "",
+        "chapter": "(Tài liệu sát thi)",
         "isHidden": false,
         "isFolder": true,
         "items": [
           {
-            "url": "https://docs.google.com/document/d/1kedoXoqhPdA-193AZHQbWvd45TPpCTtN/edit?usp=drivesdk&rtpof=true&sd=true",
-            "title": "200- câu (có đáp án)"
+            "title": "140+ Câu trắc nghiệm CNXHKH (Có đáp án)",
+            "url": "https://docs.google.com/document/d/1fqzX6-e-Pc8qhqP_OlbZISa6RAX2antb/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "50 câu (có đáp án)",
-            "url": "https://docs.google.com/document/d/1BNhl0gqBrfvp3soDMLI0XbVrzj1H094_/edit?usp=drivesdk&rtpof=true&sd=true"
+            "title": "190+ Câu (có đáp án)",
+            "url": "https://docs.google.com/document/d/1jRBtZbm36OpCtrEz-lvZNbzgBBQWWUXl/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "50+ câu (có đáp án)",
-            "url": "https://docs.google.com/document/d/12u8PFjoHD3hLcieGSNBfF84NhACyp9fV/edit?usp=drivesdk&rtpof=true&sd=true"
+            "title": "215 câu hỏi và đáp án trắc nghiệm CNXHKH (Đáp án chưa chuẩn)",
+            "url": "https://drive.google.com/file/d/1eQ2zTopNvo8H_iQH-sm1r9RmSMyl6uPf/view?usp=drivesdk"
+          },
+          {
+            "title": "250 câu trắc nghiệm ôn tập",
+            "url": "https://drive.google.com/file/d/1fSRCyf5Dsp8_BCnsCPfZvj_5malrtNNI/view?usp=drivesdk"
+          },
+          {
+            "title": "50 Câu (có đáp án)",
+            "url": "https://docs.google.com/document/d/1kmX58JUk-yn8vXasvxAMgPmQQWQSG6Id/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "50+ Câu (có đáp án)",
+            "url": "https://docs.google.com/document/d/1cfFmb-F0hN0o2HLCHGUIWpsvoloY1zrc/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "Đề ôn CNXHKH 1300+ câu (DOCX)",
+            "url": "https://docs.google.com/document/d/1PdNG8xCPTh3i4jEJuz1zM5_J891nA3ud/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "Đề ôn CNXHKH 1300+ câu (PDF)",
+            "url": "https://drive.google.com/file/d/1f7y1EfU9gVMiXRE6HLZbwyq6sl356BG_/view?usp=drivesdk"
           }
         ],
         "createdAt": "2026-04-24T15:42:34.569Z"
@@ -2339,11 +2359,11 @@
       {
         "id": "Ck3zv746ZM46MBLpDd9R",
         "subjectId": "ncRNujbv559Vi157hez4",
-        "title": "Hệ thống câu hỏi ôn tập (GV)",
+        "title": "Hệ thống câu hỏi ôn tập ",
         "type": "Tips",
         "url": "",
-        "chapter": "",
-        "isHidden": true,
+        "chapter": "(Từ GV gửi)",
+        "isHidden": false,
         "isFolder": true,
         "items": [
           {
@@ -2433,7 +2453,7 @@
         "type": "Chatbot",
         "url": "https://gemini.google.com/gem/18rRHSUGtWYqXO5tZ_n6tQQYStbrq5YJP?usp=sharing",
         "chapter": "",
-        "isHidden": true,
+        "isHidden": false,
         "isFolder": false,
         "items": [],
         "createdAt": "2026-09-20T16:36:22.227Z"
@@ -2441,10 +2461,10 @@
       {
         "id": "M0VtWNDrDb6B4SZgNCKN",
         "subjectId": "ncRNujbv559Vi157hez4",
-        "title": "Tìm hiểu bài (yêu cầu)",
+        "title": "Tìm hiểu bài ",
         "type": "Bài tập",
         "url": "",
-        "chapter": "",
+        "chapter": "(GV yêu cầu)",
         "isHidden": false,
         "isFolder": true,
         "items": [
@@ -2588,24 +2608,48 @@
         "isFolder": true,
         "items": [
           {
-            "url": "https://drive.google.com/file/d/1zl5FWh6lLckCF0xQqY8qIv2jrGZfTVtX/view?usp=drivesdk",
-            "title": "Đề kiểm tra giữa kỳ CNXHKH (C5-C7) (khác)"
+            "title": "Đề kiểm tra giữa kỳ Azota (7 chương) (2024-2025)",
+            "url": "https://docs.google.com/document/d/16pvVT0PivP6zXR-IhxEv_jWCPXHiHxim/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "url": "https://drive.google.com/file/d/1p2S48gJ32BysfIEF-nUWEocsPJHt45jF/view?usp=drivesdk",
-            "title": "Đề kiểm tra giữa kỳ CNXHKH lần 1 (C1-C4)"
+            "title": "Đề kiểm tra giữa kỳ Azota - 2 mã đề (2024-2025)",
+            "url": "https://docs.google.com/document/d/1KAoeLpksZq8yCl2qd9igIH3dnJWFM48b/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "Đề kiểm tra giữa kỳ CNXHKH lần 2 (C5-C7)",
-            "url": "https://drive.google.com/file/d/12L016Iz6jiUpZYHfuKtOYEJrUFMGSe0w/view?usp=drivesdk"
+            "title": "Đề kiểm tra giữa kỳ CNXHKH (C1-C4) (2)",
+            "url": "https://docs.google.com/document/d/1b2V_XCno6qizC8EqAbpUtqSVQS-1rJYf/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "url": "https://drive.google.com/file/d/16zNlY5TbFjzMvYWbUoNV8g-A5jHzyYsa/view?usp=drivesdk",
-            "title": "Đáp án đề kiểm tra giữa kỳ lần 1 CNXHKH (C1-C4)"
+            "title": "Đề kiểm tra giữa kỳ CNXHKH (C5-C7) (2)",
+            "url": "https://drive.google.com/file/d/1CBWmDUksRl4RfQD-YpGOiFBsD9NBNtNE/view?usp=drivesdk"
           },
           {
-            "title": "Đáp án đề kiểm tra giữa kỳ lần 2 CNXHKH (C5-C7)",
-            "url": "https://drive.google.com/file/d/187BWbiwKHLsAP3MRHtOSCSeP7j1_-MdU/view?usp=drivesdk"
+            "title": "Đề kiểm tra giữa kỳ CNXHKH (C5-C7) (raw) (2)",
+            "url": "https://drive.google.com/file/d/1A78461x2zzHmNHtYlu2oJ3U2Sx0T62NE/view?usp=drivesdk"
+          },
+          {
+            "title": "Đề kiểm tra giữa kỳ CNXHKH 1 (C1-C4)",
+            "url": "https://drive.google.com/file/d/1RODAsl1pYqqhYQK4A5wpYIpSAeVebhUF/view?usp=drivesdk"
+          },
+          {
+            "title": "Đề kiểm tra giữa kỳ CNXHKH 2 (C5-C7)",
+            "url": "https://drive.google.com/file/d/19nK2PoxG7vxREYWfWPj92ZT6vwMN17y4/view?usp=drivesdk"
+          },
+          {
+            "title": "Đề kiểm tra giữa kỳ Google Forms (2024-2025)",
+            "url": "https://docs.google.com/document/d/1d-abWcFrSuJZo17lwCEPtv46Me941FKL/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "Đề kiểm tra giữa kỳ lần 1 CNXHKH (C1-C4)",
+            "url": "https://drive.google.com/file/d/1qPTHHDSSFaZYryCZbehIrj6YZHNZjmQD/view?usp=drivesdk"
+          },
+          {
+            "title": "Đề kiểm tra giữa kỳ lần 2 CNXHKH (C5-C7)",
+            "url": "https://drive.google.com/file/d/1cGxYnEO5VG54MniU_ATYhJAOo1rc3xQd/view?usp=drivesdk"
+          },
+          {
+            "title": "Đề kiểm tra LMS (40 câu) (2024-2025)",
+            "url": "https://docs.google.com/document/d/1KNhLlbgqb7Y_K3e0QkZ8czHNmeZyMUIY/edit?usp=drivesdk&rtpof=true&sd=true"
           }
         ],
         "createdAt": "2026-10-05T11:06:28.659Z"
