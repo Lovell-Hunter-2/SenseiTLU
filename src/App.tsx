@@ -5,6 +5,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import MaintenanceGuard from './components/MaintenanceGuard';
+import PopupBanner from './components/PopupBanner';
 
 import Home from './pages/Home';
 // Lazy loading secondary pages for better performance
@@ -100,6 +101,7 @@ export default function App() {
           <ScrollToTopOnRouteChange />
           <ActivityTracker />
           <ErrorTracker />
+          <PopupBanner />
           <MaintenanceGuard>
             <Suspense fallback={<PageLoadingFallback />}>
               <Routes>
