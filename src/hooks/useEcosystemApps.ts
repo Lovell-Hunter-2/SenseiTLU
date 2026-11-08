@@ -41,7 +41,7 @@ const isAllowedApp = (app: EcosystemAppItem) => {
 
 export function useEcosystemApps() {
   const [apps, setApps] = useState<EcosystemAppItem[]>(() => {
-    const cached = getCachedData<EcosystemAppItem[]>('ecosystem_apps');
+    const cached = getCachedData<EcosystemAppItem[]>('ecosystem_apps', true);
     if (cached && cached.length > 0) {
       const validCached = cached.filter(isAllowedApp);
       const merged = [...validCached];
@@ -57,55 +57,57 @@ export function useEcosystemApps() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const now = Date.now();
+    const lastCheck = Number(sessionStorage.getItem('sensei_ecosystem_last_check') || 0);
+    const THROTTLE_MS = 60 * 60 * 1000; // 1 hour per session
+
+    const cached = getCachedData<EcosystemAppItem[]>('ecosystem_apps', true);
+
+    // If cache is fresh (< 1 hour in this session), skip Firestore read completely (0 reads!)
+    if (cached && cached.length > 0 && now - lastCheck < THROTTLE_MS) {
+      return;
+    }
+
     const fetchApps = async () => {
       try {
         setLoading(true);
         const q = query(collection(db, 'ecosystem'), orderBy('createdAt', 'asc'));
         const snapshot = await getDocs(q);
-        const appsData = snapshot.docs
-          .map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          })) as EcosystemAppItem[];
+        const appsData = snapshot.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        })) as EcosystemAppItem[];
 
-        // Filter out any duplicate or unwanted apps
         const validFetched = appsData.filter(isAllowedApp);
-
-        if (validFetched.length > 0) {
-          // Ensure essential apps (study-space, ho-tro, hoi-ai) are present
-          const merged = [...validFetched];
-          for (const def of DEFAULT_ECOSYSTEM_APPS) {
-            if (!merged.some((a) => a.id === def.id)) {
-              merged.push(def);
-            }
+        const merged = [...validFetched];
+        for (const def of DEFAULT_ECOSYSTEM_APPS) {
+          if (!merged.some((a) => a.id === def.id)) {
+            merged.push(def);
           }
-          setApps(merged);
-          setCachedData('ecosystem_apps', merged, CacheTTL.VERY_LONG);
-        } else {
-          setApps(DEFAULT_ECOSYSTEM_APPS);
-          setCachedData('ecosystem_apps', DEFAULT_ECOSYSTEM_APPS, CacheTTL.VERY_LONG);
         }
+        setApps(merged);
+        setCachedData('ecosystem_apps', merged, CacheTTL.LONG);
+        sessionStorage.setItem('sensei_ecosystem_last_check', String(now));
       } catch (err) {
-        console.warn('Error fetching ecosystem apps from Firestore, using fallback:', err);
-        const stale = getCachedData<EcosystemAppItem[]>('ecosystem_apps', true);
-        if (stale && stale.length > 0) {
-          const validStale = stale.filter(isAllowedApp);
-          const merged = [...validStale];
-          for (const def of DEFAULT_ECOSYSTEM_APPS) {
-            if (!merged.some((a) => a.id === def.id)) {
-              merged.push(def);
-            }
-          }
-          setApps(merged);
-        } else {
-          setApps(DEFAULT_ECOSYSTEM_APPS);
-        }
+        console.warn('Error fetching ecosystem apps, using cache:', err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchApps();
+
+    const handleLocalUpdate = () => {
+      const fresh = getCachedData<EcosystemAppItem[]>('ecosystem_apps', true);
+      if (fresh && fresh.length > 0) {
+        setApps(fresh.filter(isAllowedApp));
+      }
+    };
+    window.addEventListener('sensei_ecosystem_updated', handleLocalUpdate);
+
+    return () => {
+      window.removeEventListener('sensei_ecosystem_updated', handleLocalUpdate);
+    };
   }, []);
 
   return { apps, loading };
