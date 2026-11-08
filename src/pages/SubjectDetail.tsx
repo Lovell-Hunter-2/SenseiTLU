@@ -8,6 +8,9 @@ import { logActivityEvent, logSubjectDocumentView } from '../useActivityLogger';
 import { getVietnamDateString, logFirestoreWrite, logFirestoreDelete } from '../services/analyticsService';
 import { getCachedData, setCachedData, invalidateCache, CacheTTL } from '../services/cacheService';
 import { getStaticSubjects, getStaticDocuments } from '../services/catalogService';
+import { SideBannerColumn } from '../components/SideBanners';
+import MobileHorizontalBanner from '../components/MobileHorizontalBanner';
+import { incrementDocViewCounter } from '../hooks/useBannerConfig';
 
 const typeIcons: Record<string, React.ElementType> = {
   'Chatbot': Bot,
@@ -62,6 +65,7 @@ export default function SubjectDetail() {
 
   const handleDocumentClick = (e: React.MouseEvent, title: string, url: string) => {
     e.preventDefault();
+    incrementDocViewCounter();
     setSelectedDocument({ title, url });
     if (subject && user) {
       logSubjectDocumentView(user.uid, subject.id, subject.name, title, window.location.pathname);
@@ -879,9 +883,14 @@ export default function SubjectDetail() {
   };
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="text-center space-y-3 py-6 relative">
+    <div className="w-full max-w-[1760px] mx-auto px-1 sm:px-3 lg:px-4 flex justify-between gap-3 xl:gap-6 2xl:gap-8 relative">
+      {/* Banner dọc bên trái - cố định sát lề */}
+      <SideBannerColumn side="left" className="hidden xl:block w-36 2xl:w-48" stickyTop="top-20" />
+
+      {/* Nội dung chính của môn học */}
+      <div className="flex-1 max-w-5xl mx-auto min-w-0 space-y-6 sm:space-y-8">
+        {/* Header */}
+      <div className="text-center space-y-2 sm:space-y-3 py-3 sm:py-6 relative">
         <div className="flex flex-col items-center justify-center gap-2">
           <h1 className="text-3xl md:text-4xl font-bold flex items-center justify-center gap-3">
             <Book className="w-8 h-8 text-blue-500" /> {subject.name}
@@ -909,7 +918,7 @@ export default function SubjectDetail() {
         </p>
 
         {/* Thin Search Bar */}
-        <div className="max-w-md mx-auto mt-6 relative z-30 text-left" ref={searchContainerRef}>
+        <div className="max-w-md mx-auto mt-4 sm:mt-6 relative z-30 text-left" ref={searchContainerRef}>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-4 w-4 text-slate-400" />
@@ -957,6 +966,9 @@ export default function SubjectDetail() {
             </div>
           )}
         </div>
+
+        {/* Mobile Horizontal Sponsor Banner */}
+        <MobileHorizontalBanner className="max-w-md mx-auto mt-3" />
       </div>
 
       {/* Action Bar */}
@@ -1558,6 +1570,10 @@ export default function SubjectDetail() {
           </div>
         </div>
       )}
+      </div>
+
+      {/* Banner dọc bên phải - cố định sát lề */}
+      <SideBannerColumn side="right" className="hidden xl:block w-36 2xl:w-48" stickyTop="top-20" />
     </div>
   );
 }
