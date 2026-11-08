@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { X, Image as ImageIcon, UploadCloud, Cloud } from "lucide-react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
+import { setCachedData, CacheTTL } from "../services/cacheService";
 import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
 
 const CLIENT_ID = import.meta.env.VITE_OAUTH_CLIENT_ID || "";
@@ -117,13 +118,25 @@ function HeroImageManagerModalContent({
         {
           leftUrl,
           rightUrl,
+          updatedAt: serverTimestamp(),
         },
         { merge: true },
       );
+
+      // Instantly update cache and dispatch live event across all open windows/tabs
+      setCachedData("hero_images_settings", { leftUrl, rightUrl }, CacheTTL.VERY_LONG);
+      window.dispatchEvent(
+        new CustomEvent("sensei_hero_images_updated", {
+          detail: { leftUrl, rightUrl },
+        })
+      );
+
       if (onClose) {
         onClose();
       } else {
-        alert("Lưu cài đặt ảnh thành công!");
+        alert(
+          "Lưu cài đặt ảnh thành công! Hình ảnh đã được cập nhật trực tiếp lên trang chủ ngay lập tức mà không cần bấm đồng bộ hay deploy."
+        );
       }
     } catch (error: any) {
       console.error("Error saving hero images:", error);
@@ -319,6 +332,13 @@ function HeroImageManagerModalContent({
           )}
         </div>
 
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40 text-xs text-blue-700 dark:text-blue-300">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+          <span>
+            <strong>Cập nhật tức thì:</strong> Ảnh trang trí và banner sẽ hiển thị ngay lập tức trên Trang chủ sau khi bấm lưu mà <em>không cần bấm Đồng bộ danh mục hay Deploy lại web</em>.
+          </span>
+        </div>
+
         <div className="flex gap-3 pt-2">
           {!inline && onClose && (
             <button
@@ -332,7 +352,7 @@ function HeroImageManagerModalContent({
           <button
             type="submit"
             disabled={saving}
-            className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium disabled:opacity-50"
+            className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold shadow-md shadow-blue-500/20 disabled:opacity-50"
           >
             {saving ? "Đang lưu..." : "Lưu cài đặt ảnh"}
           </button>
