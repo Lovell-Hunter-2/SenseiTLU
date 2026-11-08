@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-11-08T10:53:35.680Z",
-  "version": 1794135215680,
+  "lastUpdated": "2026-11-08T11:01:15.035Z",
+  "version": 1794135675035,
   "totalSubjects": 86,
-  "totalDocuments": 310,
+  "totalDocuments": 312,
   "subjects": [
     {
       "id": "b3yvnb7J7pmzeHhIydyd",
@@ -5221,6 +5221,61 @@
         "createdAt": "2026-09-11T19:54:49.345Z"
       }
     ],
+    "CvYnGCKX5iGviOptHv2V": [
+      {
+        "id": "Ah5cV1oJ9FIRuJCWOuGy",
+        "subjectId": "CvYnGCKX5iGviOptHv2V",
+        "title": "Slide bài giảng Dịch vụ nội dung số",
+        "type": "Slide",
+        "url": "",
+        "chapter": "(7 chương)",
+        "isHidden": false,
+        "isFolder": true,
+        "items": [
+          {
+            "title": "CHƯƠNG 1 - DỊCH VỤ NỘI DUNG SỐ",
+            "url": "https://drive.google.com/file/d/1WhSFs3Pfw187aH-CuAND_6W1t0B8VERq/view?usp=drivesdk"
+          },
+          {
+            "title": "CHƯƠNG 2 - QUẢN TRỊ TỔ CHỨC VÀ TÀI CHÍNH DVNDS - sv",
+            "url": "https://drive.google.com/file/d/1rMxoSpA5Xfb_ioNRDDzBEK9Ams_-q8ek/view?usp=drivesdk"
+          },
+          {
+            "title": "CHƯƠNG 3 - PHÂN TÍCH VÀ ĐO LƯỜNG NGƯỜI DÙNG DỊCH VỤ NỘI DUNG SỐ",
+            "url": "https://drive.google.com/file/d/16mnPDbBr-Za2fR4TtbWj4u06Vu-zsNKD/view?usp=drivesdk"
+          },
+          {
+            "title": "CHƯƠNG 4 - SẢN XUẤT VÀ QUẢN TRỊ TÀI SẢN NỘI DUNG SỐ (MAKE)",
+            "url": "https://drive.google.com/file/d/11qp6BYvoTHK7dnK4R9PplSub4py_aT_-/view?usp=drivesdk"
+          },
+          {
+            "title": "CHƯƠNG 5 - CHIẾN LƯỢC TIẾP THỊ VÀ PHÂN PHỐI (MARKET & MOVE)",
+            "url": "https://drive.google.com/file/d/1Cioehtau6Ym2-64ciZfrRMYYsENrvDec/view?usp=drivesdk"
+          },
+          {
+            "title": "CHƯƠNG 6 - MÔ HÌNH KINH DOANH VÀ DOANH THU DỊCH VỤ NỘI DUNG SỐ",
+            "url": "https://drive.google.com/file/d/1ZIDj5mOKw4qvgFYu4hIwsNcTZ3ImocTn/view?usp=drivesdk"
+          },
+          {
+            "title": "CHƯƠNG 7 - PHÁP LÝ VÀ CHUẨN MỰC ĐẠO ĐỨC TRONG DỊCH VỤ NỘI DUNG SỐ SV",
+            "url": "https://drive.google.com/file/d/1SJcTx-zs_--R-0ne55DZwzGg2cDN-f9k/view?usp=drivesdk"
+          }
+        ],
+        "createdAt": "2026-11-08T10:58:12.276Z"
+      },
+      {
+        "id": "MattZcj2v4qbLCtyibf2",
+        "subjectId": "CvYnGCKX5iGviOptHv2V",
+        "title": "Bài giảng Dịch vụ nội dung số",
+        "type": "Giáo trình",
+        "url": "https://drive.google.com/file/d/19GomarQGaLPzkzKOvy8K1GP2xzznpJ7D/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-04-30T18:17:16.919Z"
+      }
+    ],
     "qquYVo3FiD1lW54ffONb": [
       {
         "id": "BIQMpVxFChGyYC6nva3k",
@@ -6225,20 +6280,6 @@
         "createdAt": "2026-08-28T17:25:07.330Z"
       }
     ],
-    "CvYnGCKX5iGviOptHv2V": [
-      {
-        "id": "MattZcj2v4qbLCtyibf2",
-        "subjectId": "CvYnGCKX5iGviOptHv2V",
-        "title": "Bài giảng Dịch vụ nội dung số",
-        "type": "Giáo trình",
-        "url": "https://drive.google.com/file/d/19GomarQGaLPzkzKOvy8K1GP2xzznpJ7D/view?usp=sharing",
-        "chapter": "",
-        "isHidden": false,
-        "isFolder": false,
-        "items": [],
-        "createdAt": "2026-04-30T18:17:16.919Z"
-      }
-    ],
     "pM3O43wiZvzJ2A2klET5": [
       {
         "id": "MpbXcjEmpEt0yTup4hRk",
@@ -6554,6 +6595,43 @@
         "isFolder": false,
         "items": [],
         "createdAt": "2026-04-24T16:30:07.285Z"
+      },
+      {
+        "id": "k6TJRmSH5N3CFddq93ci",
+        "subjectId": "kyWr3hvN70NfDN9rGK69",
+        "title": "Trắc nghiệm ôn tập",
+        "type": "File trắc nghiệm",
+        "url": "",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": true,
+        "items": [
+          {
+            "title": "BÀI TẬP ÔN TẬP TÀI CHÍNH TIỀN TỆ_1",
+            "url": "https://drive.google.com/file/d/1W8EcmVoDFYoy4rw-0gIZGZqwMfqNfuTP/view?usp=drivesdk"
+          },
+          {
+            "title": "MỘT SỐ CÂU HỎI TRẮC NGHIỆM ÔN TẬP TÀI CHÍNH TIỀN TỆ",
+            "url": "https://drive.google.com/file/d/1zvgl3sL_uJcuR2lKHeSkBnGqwlLOsZA8/view?usp=drivesdk"
+          },
+          {
+            "title": "trắc nghiệm cô vân anh",
+            "url": "https://docs.google.com/document/d/141cQaj6r3FCYMdhJYdtskw_ND80j4L3q/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "trắc nghiệm tctt",
+            "url": "https://docs.google.com/document/d/1Qyl7IBmzu_6eCYcqEvajxtByneV-91nY/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "ôn bài tập cô vân anh",
+            "url": "https://docs.google.com/document/d/17B7Vp2dqSxAfBfN3Cab7cdeKhESCJrVW/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "ôn tổng hợp tctt lý thuyết",
+            "url": "https://docs.google.com/document/d/1Jq2LW3vADMC8EhdbMysaWl679ZDIdM7x/edit?usp=drivesdk&rtpof=true&sd=true"
+          }
+        ],
+        "createdAt": "2026-11-08T10:55:36.707Z"
       },
       {
         "id": "l588iGVGh5qy2FSGhiLp",
