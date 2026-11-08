@@ -96,6 +96,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { getCachedData, setCachedData, invalidateCache, CacheTTL } from "../services/cacheService";
 import { getStaticSubjects } from "../services/catalogService";
 import { AnimatedHeroTitle } from "../components/AnimatedHeroTitle";
+import { SideBannerColumn } from "../components/SideBanners";
+import MobileHorizontalBanner from "../components/MobileHorizontalBanner";
 
 // Icon mapping helper
 const iconLabels: Record<string, string> = {
@@ -344,7 +346,9 @@ export default function Home() {
   const [heroImages, setHeroImages] = useState<{
     leftUrl: string;
     rightUrl: string;
-  }>({ leftUrl: "", rightUrl: "" });
+    leftLinkUrl?: string;
+    rightLinkUrl?: string;
+  }>({ leftUrl: "", rightUrl: "", leftLinkUrl: "", rightLinkUrl: "" });
 
   useEffect(() => {
     localStorage.setItem("favoriteSubjects", JSON.stringify(favorites));
@@ -472,7 +476,13 @@ export default function Home() {
         doc(db, "settings", "heroImages"),
         (docsnap) => {
           if (docsnap.exists()) {
-            const data = docsnap.data() as { leftUrl: string; rightUrl: string };
+            const raw = docsnap.data();
+            const data = {
+              leftUrl: raw.heroLeftUrl || raw.leftUrl || "",
+              leftLinkUrl: raw.heroLeftLinkUrl || raw.leftLinkUrl || "",
+              rightUrl: raw.heroRightUrl || raw.rightUrl || "",
+              rightLinkUrl: raw.heroRightLinkUrl || raw.rightLinkUrl || "",
+            };
             setHeroImages(data);
             setCachedData("hero_images_settings", data, CacheTTL.LONG);
           }
@@ -491,7 +501,13 @@ export default function Home() {
         getDoc(doc(db, "settings", "heroImages"))
           .then((docsnap) => {
             if (docsnap.exists()) {
-              const data = docsnap.data() as { leftUrl: string; rightUrl: string };
+              const raw = docsnap.data();
+              const data = {
+                leftUrl: raw.heroLeftUrl || raw.leftUrl || "",
+                leftLinkUrl: raw.heroLeftLinkUrl || raw.leftLinkUrl || "",
+                rightUrl: raw.heroRightUrl || raw.rightUrl || "",
+                rightLinkUrl: raw.heroRightLinkUrl || raw.rightLinkUrl || "",
+              };
               setHeroImages(data);
               setCachedData("hero_images_settings", data, CacheTTL.LONG);
               sessionStorage.setItem("sensei_hero_last_check", String(now));
@@ -691,47 +707,71 @@ export default function Home() {
   };
 
   return (
-    <div className="space-y-8 relative min-h-screen">
-      {/* Mobile Clock Widgets (in flow below header, not covered by sticky layout) */}
-      <div className="md:hidden relative w-full pt-1 px-1 z-20">
-        <ClockWidget isMobileView={true} />
-      </div>
+    <div className="w-full max-w-[2000px] mx-auto flex justify-center gap-4 xl:gap-8 relative min-h-screen">
+      {/* Cố định cột banner trái trong layout - chỉ hiện trên màn hình siêu rộng (màn dài >=1800px) */}
+      <SideBannerColumn side="left" className="hidden min-[1800px]:block w-40 2xl:w-48" stickyTop="top-28" />
+
+      {/* Nội dung Home chính - hiển thị bình thường trên mọi màn hình thông thường */}
+      <div className="flex-1 max-w-7xl min-w-0 space-y-8 relative">
+        {/* Mobile Clock Widgets (in flow below header, not covered by sticky layout) */}
+        <div className="md:hidden relative w-full pt-1 px-1 z-20">
+          <ClockWidget isMobileView={true} />
+        </div>
       {/* Background Capybara Watermark */}
       <div className="fixed inset-0 pointer-events-none flex justify-center items-center z-0 opacity-[0.04] dark:opacity-[0.08] mt-20">
         <img src="/avt_tlu (remove).png" alt="" className="w-[80vw] max-w-[600px] object-contain object-bottom" />
       </div>
 
       {/* Hero / Search Section */}
-      <div className="relative flex items-center justify-center py-12 px-4 z-30">
+      <div className="relative flex items-center justify-center py-6 sm:py-12 px-4 z-30">
         {/* Left Image */}
         {heroImages.leftUrl && (
-          <div className="hidden lg:block absolute left-8 xl:left-16 w-48 xl:w-64 z-0 animate-in fade-in zoom-in duration-700">
-            <img
-              src={heroImages.leftUrl}
-              alt="Trái"
-              referrerPolicy="no-referrer"
-              className="w-full h-auto object-contain rounded-2xl drop-shadow-2xl pointer-events-none select-none"
-              draggable="false"
-              onContextMenu={(e) => e.preventDefault()}
-            />
+          <div className="hidden lg:block absolute left-8 xl:left-16 w-48 xl:w-64 z-10 animate-in fade-in zoom-in duration-700">
+            {heroImages.leftLinkUrl ? (
+              <a
+                href={heroImages.leftLinkUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block group hover:scale-[1.02] transition-transform"
+                title="Xem liên kết tài trợ"
+              >
+                <img
+                  src={heroImages.leftUrl}
+                  alt="Trái"
+                  referrerPolicy="no-referrer"
+                  className="w-full h-auto object-contain rounded-2xl drop-shadow-2xl select-none"
+                  draggable="false"
+                  onContextMenu={(e) => e.preventDefault()}
+                />
+              </a>
+            ) : (
+              <img
+                src={heroImages.leftUrl}
+                alt="Trái"
+                referrerPolicy="no-referrer"
+                className="w-full h-auto object-contain rounded-2xl drop-shadow-2xl pointer-events-none select-none"
+                draggable="false"
+                onContextMenu={(e) => e.preventDefault()}
+              />
+            )}
           </div>
         )}
 
         {/* Main Center Content */}
-        <div className="flex flex-col items-center justify-center space-y-6 text-center z-10 w-full max-w-xl">
+        <div className="flex flex-col items-center justify-center space-y-4 sm:space-y-6 text-center z-10 w-full max-w-xl">
           <AnimatedHeroTitle />
-          <p className="text-slate-600 dark:text-slate-400">
+          <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">
             Nền tảng chia sẻ tài liệu học tập, giáo trình, đề cương và thi thử
             trực tuyến dành cho sinh viên Trường Đại học Thủy lợi.
           </p>
 
-          <div className="relative w-full mt-4 z-50" ref={searchContainerRef}>
+          <div className="relative w-full mt-2 sm:mt-4 z-50" ref={searchContainerRef}>
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-slate-400" />
             </div>
             <input
               type="text"
-              className="block w-full pl-11 pr-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm dark:shadow-none focus:shadow-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+              className="block w-full pl-11 pr-4 py-3.5 sm:py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm dark:shadow-none focus:shadow-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
               placeholder="Tìm môn học..."
               value={searchQuery}
               onChange={(e) => {
@@ -775,19 +815,41 @@ export default function Home() {
               </div>
             )}
           </div>
+
+          {/* Mobile Horizontal Sponsor Banner */}
+          <MobileHorizontalBanner className="mt-2" />
         </div>
 
         {/* Right Image */}
         {heroImages.rightUrl && (
-          <div className="hidden lg:block absolute right-8 xl:right-16 w-48 xl:w-64 z-0 animate-in fade-in zoom-in duration-700 delay-150">
-            <img
-              src={heroImages.rightUrl}
-              alt="Phải"
-              referrerPolicy="no-referrer"
-              className="w-full h-auto object-contain rounded-2xl drop-shadow-2xl pointer-events-none select-none"
-              draggable="false"
-              onContextMenu={(e) => e.preventDefault()}
-            />
+          <div className="hidden lg:block absolute right-8 xl:right-16 w-48 xl:w-64 z-10 animate-in fade-in zoom-in duration-700 delay-150">
+            {heroImages.rightLinkUrl ? (
+              <a
+                href={heroImages.rightLinkUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block group hover:scale-[1.02] transition-transform"
+                title="Xem liên kết tài trợ"
+              >
+                <img
+                  src={heroImages.rightUrl}
+                  alt="Phải"
+                  referrerPolicy="no-referrer"
+                  className="w-full h-auto object-contain rounded-2xl drop-shadow-2xl select-none"
+                  draggable="false"
+                  onContextMenu={(e) => e.preventDefault()}
+                />
+              </a>
+            ) : (
+              <img
+                src={heroImages.rightUrl}
+                alt="Phải"
+                referrerPolicy="no-referrer"
+                className="w-full h-auto object-contain rounded-2xl drop-shadow-2xl pointer-events-none select-none"
+                draggable="false"
+                onContextMenu={(e) => e.preventDefault()}
+              />
+            )}
           </div>
         )}
       </div>
@@ -1293,6 +1355,10 @@ export default function Home() {
           <span className="font-medium hidden sm:inline">Study Space</span>
         </div>
       </Link>
+      </div>
+
+      {/* Cố định cột banner phải trong layout - chỉ hiện trên màn hình siêu rộng (màn dài >=1800px) */}
+      <SideBannerColumn side="right" className="hidden min-[1800px]:block w-40 2xl:w-48" stickyTop="top-28" />
     </div>
   );
 }
