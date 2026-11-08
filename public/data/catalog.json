@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-11-08T10:05:52.518Z",
-  "version": 1794132352518,
+  "lastUpdated": "2026-11-08T10:53:35.680Z",
+  "version": 1794135215680,
   "totalSubjects": 86,
-  "totalDocuments": 307,
+  "totalDocuments": 310,
   "subjects": [
     {
       "id": "b3yvnb7J7pmzeHhIydyd",
@@ -3230,8 +3230,8 @@
         "isFolder": true,
         "items": [
           {
-            "title": "TA2 - Đề mẫu 1 (đáp án)",
-            "url": "https://docs.google.com/document/d/10GQa2dXq--jXEW4ChbLgXFpDzsrtQhxv/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/10GQa2dXq--jXEW4ChbLgXFpDzsrtQhxv/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "TA2 - Đề mẫu 1 (đáp án)"
           },
           {
             "title": "TA2 - Đề mẫu 2 (đáp án)",
@@ -3259,12 +3259,12 @@
             "url": "https://docs.google.com/document/d/1Cuwt0PKcNU74iNJ09eJgahV-kEA6wQ9Z/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "TA2 - Đề mẫu 2",
-            "url": "https://docs.google.com/document/d/1V50LvjVovcMWqO7YHX7CoTIkhVp-1Z7V/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1V50LvjVovcMWqO7YHX7CoTIkhVp-1Z7V/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "TA2 - Đề mẫu 2"
           },
           {
-            "title": "TA2 - Đề mẫu 3",
-            "url": "https://docs.google.com/document/d/1X8s07DYoqVoAq0eNNfoPXs1ZUKLEuHLv/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1X8s07DYoqVoAq0eNNfoPXs1ZUKLEuHLv/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "TA2 - Đề mẫu 3"
           }
         ],
         "createdAt": "2026-11-08T09:53:14.741Z"
@@ -3300,8 +3300,8 @@
             "url": "https://drive.google.com/file/d/1neByAod8R459xBLYEhgQoBoQtjX7PwAW/view?usp=drivesdk"
           },
           {
-            "title": "Unit 7 - Wild in heart",
-            "url": "https://drive.google.com/file/d/1KOTwLv-YlPXIae10PDPAQz5cRxe1mnXu/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1KOTwLv-YlPXIae10PDPAQz5cRxe1mnXu/view?usp=drivesdk",
+            "title": "Unit 7 - Wild in heart"
           },
           {
             "title": "Unit 8 - We are off!",
@@ -3321,6 +3321,56 @@
         "isFolder": false,
         "items": [],
         "createdAt": "2026-08-23T14:54:39.996Z"
+      }
+    ],
+    "2mH7VDpZc9mfbV3yUz1s": [
+      {
+        "id": "4wf3fJIR9sZAMCcw66d6",
+        "subjectId": "2mH7VDpZc9mfbV3yUz1s",
+        "title": "CẤU TRÚC ĐỀ THI CÔNG NGHỆ TÀI CHÍNH",
+        "type": "Đề cương",
+        "url": "https://drive.google.com/file/d/1GLMTI_C3P2mlxA1-NEESYOZ97uEHTD3O/view?usp=sharing",
+        "chapter": "(Trắc Nghiệm & Tự Luận)",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-08T10:51:44.882Z"
+      },
+      {
+        "id": "IuromJ1WRA4s2YBBmBFb",
+        "subjectId": "2mH7VDpZc9mfbV3yUz1s",
+        "title": "Giáo trình Công nghệ Tài chính",
+        "type": "Giáo trình",
+        "url": "https://drive.google.com/file/d/1yIyb2luwfGNSwxQINuzfshAhd7TT0H5w/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-05-01T18:34:12.663Z"
+      },
+      {
+        "id": "aFsiWZ96rMedFJeueBN0",
+        "subjectId": "2mH7VDpZc9mfbV3yUz1s",
+        "title": "Đề kiểm tra giữa kỳ môn CNTC_ Các câu hỏi và nội dung liên quan",
+        "type": "Đề thi mẫu",
+        "url": "https://drive.google.com/file/d/1_A29D2gn0SqecARvGxj1zCT2DVujTywE/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-08T10:53:08.131Z"
+      },
+      {
+        "id": "dAsZtxKTpMR1V7V8LDzQ",
+        "subjectId": "2mH7VDpZc9mfbV3yUz1s",
+        "title": "Trắc nghiệm ôn tập Công nghệ tài chính",
+        "type": "File trắc nghiệm",
+        "url": "https://drive.google.com/file/d/1I_YP-m8sxZhcbf1WwE_E1lYzWehtaB9n/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-08T10:53:24.952Z"
       }
     ],
     "192wrgDbhHgMIqvZFyUg": [
@@ -6107,20 +6157,6 @@
         "isFolder": false,
         "items": [],
         "createdAt": "2026-04-23T18:07:15.349Z"
-      }
-    ],
-    "2mH7VDpZc9mfbV3yUz1s": [
-      {
-        "id": "IuromJ1WRA4s2YBBmBFb",
-        "subjectId": "2mH7VDpZc9mfbV3yUz1s",
-        "title": "Giáo trình Công nghệ Tài chính",
-        "type": "Giáo trình",
-        "url": "https://drive.google.com/file/d/1yIyb2luwfGNSwxQINuzfshAhd7TT0H5w/view?usp=sharing",
-        "chapter": "",
-        "isHidden": false,
-        "isFolder": false,
-        "items": [],
-        "createdAt": "2026-05-01T18:34:12.663Z"
       }
     ],
     "qJlvFwYUQirx5CYZDaqR": [
