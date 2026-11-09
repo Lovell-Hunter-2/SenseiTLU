@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-11-09T14:40:24.369Z",
-  "version": 1794235224369,
-  "totalSubjects": 89,
-  "totalDocuments": 319,
+  "lastUpdated": "2026-11-09T14:43:25.659Z",
+  "version": 1794235405659,
+  "totalSubjects": 90,
+  "totalDocuments": 320,
   "subjects": [
     {
       "id": "b3yvnb7J7pmzeHhIydyd",
@@ -227,6 +227,14 @@
       "description": "",
       "isPriority": false,
       "createdAt": "2026-11-09T14:33:39.041Z"
+    },
+    {
+      "id": "d4UmcbkzMCC8cPLxnKtl",
+      "name": "Luật thương mại quốc tế",
+      "iconName": "Scale",
+      "description": "",
+      "isPriority": false,
+      "createdAt": "2026-11-09T14:42:32.308Z"
     },
     {
       "id": "OUoC88zeIHmFd8L2p0nR",
@@ -6338,6 +6346,20 @@
         "isFolder": false,
         "items": [],
         "createdAt": "2026-08-28T17:25:07.330Z"
+      }
+    ],
+    "d4UmcbkzMCC8cPLxnKtl": [
+      {
+        "id": "L0uc3KvZXjjKh7OhMhlk",
+        "subjectId": "d4UmcbkzMCC8cPLxnKtl",
+        "title": "Slide bài giảng Luật thương mại quốc tế",
+        "type": "Slide",
+        "url": "https://drive.google.com/file/d/1_aprCLRqNAfOfVkettbp71GaijAHSv7b/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-09T14:43:10.866Z"
       }
     ],
     "pM3O43wiZvzJ2A2klET5": [
