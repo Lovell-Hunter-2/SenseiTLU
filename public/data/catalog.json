@@ -1,6 +1,6 @@
 {
-  "lastUpdated": "2026-11-09T14:39:10.278Z",
-  "version": 1794235150278,
+  "lastUpdated": "2026-11-09T14:40:24.369Z",
+  "version": 1794235224369,
   "totalSubjects": 89,
   "totalDocuments": 319,
   "subjects": [
@@ -6359,7 +6359,7 @@
         "id": "MrLGA4W19ZShFmaQ8xX1",
         "subjectId": "MLlZ579LBuphba895Ilu",
         "title": "Slide bài giảng Luật thương mại 1",
-        "type": "Giáo trình",
+        "type": "Slide",
         "url": "https://drive.google.com/file/d/1hJrKDEqbsta0YgD6Jis-iYDFRK8WUqzk/view?usp=sharing",
         "chapter": "",
         "isHidden": false,
@@ -7021,7 +7021,7 @@
         "id": "nHkgrw77D5ZmBkDmY630",
         "subjectId": "rKqU6XIau16Hw8FKkvee",
         "title": "Slide bài giảng Luật thương mại 2",
-        "type": "Giáo trình",
+        "type": "Slide",
         "url": "https://drive.google.com/file/d/1EMYv5YJEvT_g-l6nS1KYm4MZ9A7TIC6l/view?usp=sharing",
         "chapter": "",
         "isHidden": false,
