@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-11-08T11:09:27.485Z",
-  "version": 1794136167485,
-  "totalSubjects": 86,
-  "totalDocuments": 315,
+  "lastUpdated": "2026-11-09T14:33:02.102Z",
+  "version": 1794234782102,
+  "totalSubjects": 90,
+  "totalDocuments": 317,
   "subjects": [
     {
       "id": "b3yvnb7J7pmzeHhIydyd",
@@ -203,6 +203,38 @@
       "description": "",
       "isPriority": false,
       "createdAt": "2026-04-14T15:35:50.350Z"
+    },
+    {
+      "id": "Ij4qscK9eg5ARm7BfqYj",
+      "name": "Luật thương mại",
+      "iconName": "Scale",
+      "description": "",
+      "isPriority": false,
+      "createdAt": "2026-11-09T14:27:28.912Z"
+    },
+    {
+      "id": "EH0xRG4y6tcncGxAWh33",
+      "name": "Luật thương mại 1",
+      "iconName": "Scale",
+      "description": "",
+      "isPriority": false,
+      "createdAt": "2026-11-09T14:32:17.851Z"
+    },
+    {
+      "id": "MLlZ579LBuphba895Ilu",
+      "name": "Luật thương mại 1",
+      "iconName": "Scale",
+      "description": "",
+      "isPriority": false,
+      "createdAt": "2026-11-09T14:26:59.541Z"
+    },
+    {
+      "id": "cGRtSRcyqifpVzWyvoz3",
+      "name": "Luật thương mại 2",
+      "iconName": "Scale",
+      "description": "",
+      "isPriority": false,
+      "createdAt": "2026-11-09T14:27:18.432Z"
     },
     {
       "id": "OUoC88zeIHmFd8L2p0nR",
@@ -6330,6 +6362,20 @@
         "createdAt": "2026-08-23T17:49:02.737Z"
       }
     ],
+    "MLlZ579LBuphba895Ilu": [
+      {
+        "id": "MrLGA4W19ZShFmaQ8xX1",
+        "subjectId": "MLlZ579LBuphba895Ilu",
+        "title": "Slide bài giảng Luật thương mại 1",
+        "type": "Giáo trình",
+        "url": "https://drive.google.com/file/d/1hJrKDEqbsta0YgD6Jis-iYDFRK8WUqzk/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-09T14:30:17.574Z"
+      }
+    ],
     "Sq2hurM8abkYqjqUT9R1": [
       {
         "id": "N8EWZ5sZ1zSuW5wp9jTp",
@@ -6894,6 +6940,20 @@
         "isFolder": false,
         "items": [],
         "createdAt": "2026-08-24T08:00:39.287Z"
+      }
+    ],
+    "EH0xRG4y6tcncGxAWh33": [
+      {
+        "id": "jpzNONlWqwXQ5fC1WIpv",
+        "subjectId": "EH0xRG4y6tcncGxAWh33",
+        "title": "Slide bài giảng Luật thương mại 1",
+        "type": "Giáo trình",
+        "url": "https://drive.google.com/file/d/1hJrKDEqbsta0YgD6Jis-iYDFRK8WUqzk/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-09T14:32:45.939Z"
       }
     ],
     "vf6Pwk5FnZCQ0TqjIBln": [
