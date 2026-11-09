@@ -1,7 +1,7 @@
 {
-  "lastUpdated": "2026-11-09T14:34:14.196Z",
-  "version": 1794234854196,
-  "totalSubjects": 91,
+  "lastUpdated": "2026-11-09T14:36:17.349Z",
+  "version": 1794234977349,
+  "totalSubjects": 89,
   "totalDocuments": 318,
   "subjects": [
     {
@@ -213,28 +213,12 @@
       "createdAt": "2026-11-09T14:27:28.912Z"
     },
     {
-      "id": "EH0xRG4y6tcncGxAWh33",
-      "name": "Luật thương mại 1",
-      "iconName": "Scale",
-      "description": "",
-      "isPriority": false,
-      "createdAt": "2026-11-09T14:32:17.851Z"
-    },
-    {
       "id": "MLlZ579LBuphba895Ilu",
       "name": "Luật thương mại 1",
       "iconName": "Scale",
       "description": "",
       "isPriority": false,
       "createdAt": "2026-11-09T14:26:59.541Z"
-    },
-    {
-      "id": "cGRtSRcyqifpVzWyvoz3",
-      "name": "Luật thương mại 2",
-      "iconName": "Scale",
-      "description": "",
-      "isPriority": false,
-      "createdAt": "2026-11-09T14:27:18.432Z"
     },
     {
       "id": "rKqU6XIau16Hw8FKkvee",
