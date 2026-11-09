@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-11-09T14:36:17.349Z",
-  "version": 1794234977349,
+  "lastUpdated": "2026-11-09T14:39:10.278Z",
+  "version": 1794235150278,
   "totalSubjects": 89,
-  "totalDocuments": 318,
+  "totalDocuments": 319,
   "subjects": [
     {
       "id": "b3yvnb7J7pmzeHhIydyd",
@@ -6878,6 +6878,20 @@
         "isFolder": false,
         "items": [],
         "createdAt": "2026-08-23T17:51:22.520Z"
+      }
+    ],
+    "Ij4qscK9eg5ARm7BfqYj": [
+      {
+        "id": "h3arjKVL6QCjC0hwepJP",
+        "subjectId": "Ij4qscK9eg5ARm7BfqYj",
+        "title": "Slide bài giảng Luật thương mại",
+        "type": "Slide",
+        "url": "https://drive.google.com/file/d/1wvXSonuUvsH4Guy_SdzpcaVmnyxyd89z/view?usp=sharing",
+        "chapter": "",
+        "isHidden": true,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-09T14:38:57.156Z"
       }
     ],
     "KaI5yAxMMmaduki2ABmU": [
