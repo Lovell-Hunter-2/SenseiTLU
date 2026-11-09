@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-11-09T14:33:02.102Z",
-  "version": 1794234782102,
-  "totalSubjects": 90,
-  "totalDocuments": 317,
+  "lastUpdated": "2026-11-09T14:34:14.196Z",
+  "version": 1794234854196,
+  "totalSubjects": 91,
+  "totalDocuments": 318,
   "subjects": [
     {
       "id": "b3yvnb7J7pmzeHhIydyd",
@@ -235,6 +235,14 @@
       "description": "",
       "isPriority": false,
       "createdAt": "2026-11-09T14:27:18.432Z"
+    },
+    {
+      "id": "rKqU6XIau16Hw8FKkvee",
+      "name": "Luật thương mại 2",
+      "iconName": "Scale",
+      "description": "",
+      "isPriority": false,
+      "createdAt": "2026-11-09T14:33:39.041Z"
     },
     {
       "id": "OUoC88zeIHmFd8L2p0nR",
@@ -7008,6 +7016,20 @@
         "isFolder": false,
         "items": [],
         "createdAt": "2026-08-28T17:24:11.233Z"
+      }
+    ],
+    "rKqU6XIau16Hw8FKkvee": [
+      {
+        "id": "nHkgrw77D5ZmBkDmY630",
+        "subjectId": "rKqU6XIau16Hw8FKkvee",
+        "title": "Slide bài giảng Luật thương mại 2",
+        "type": "Giáo trình",
+        "url": "https://drive.google.com/file/d/1EMYv5YJEvT_g-l6nS1KYm4MZ9A7TIC6l/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-09T14:33:56.712Z"
       }
     ],
     "zCvVn9qVrBIYszPBE1dj": [
