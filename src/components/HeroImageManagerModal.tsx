@@ -319,7 +319,7 @@ const MobileLivePreview = ({ bannerUrl }: { bannerUrl?: string }) => (
   </div>
 );
 
-// 4. Pop-up Live Dialog Preview
+// 4. Pop-up Live Dialog Preview (Frameless clean image with floating X)
 const PopupLivePreview = ({
   imageUrl,
   title,
@@ -329,32 +329,32 @@ const PopupLivePreview = ({
   title?: string;
   enabled?: boolean;
 }) => (
-  <div className="w-full rounded-2xl bg-slate-950 border border-slate-800/90 p-4 relative overflow-hidden shadow-2xl min-h-[190px] flex items-center justify-center select-none">
+  <div className="w-full rounded-2xl bg-slate-950 border border-slate-800/90 p-5 relative overflow-hidden shadow-2xl min-h-[190px] flex items-center justify-center select-none">
     {/* Dimmed mock background */}
     <div className="w-full flex items-center justify-center">
       {enabled && imageUrl ? (
-        <div className="w-72 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col text-slate-100">
-          {/* Header */}
-          <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-800 bg-slate-950/80">
-            <span className="text-[8px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-              Tài trợ
-            </span>
-            <span className="text-[9px] font-semibold text-slate-300 truncate max-w-[140px]">
-              {title || 'Thông tin đối tác'}
-            </span>
-            <span className="text-[10px] text-slate-400">✕</span>
+        <div className="relative flex flex-col items-center animate-in zoom-in-95 duration-200">
+          {/* Optional title badge if admin explicitly filled title */}
+          {title && title.trim() && (
+            <div className="mb-2 px-2.5 py-0.5 bg-slate-900 text-white rounded-full border border-slate-700 text-[9px] font-semibold flex items-center gap-1 shadow-md">
+              <span>{title}</span>
+            </div>
+          )}
+
+          {/* Clean image with floating X button on corner */}
+          <div className="relative">
+            <div className="absolute -top-2.5 -right-2.5 w-6 h-6 bg-slate-900 hover:bg-red-600 text-white rounded-full flex items-center justify-center border border-white/20 shadow-xl text-[10px] font-bold z-10">
+              ✕
+            </div>
+            <div className="w-64 max-h-48 rounded-2xl overflow-hidden shadow-2xl bg-transparent flex items-center justify-center border border-slate-700/40">
+              <img src={imageUrl} alt="Popup preview" className="w-full h-auto max-h-44 object-contain rounded-2xl" />
+            </div>
           </div>
 
-          {/* Banner Image */}
-          <div className="w-full h-32 bg-slate-950 flex items-center justify-center overflow-hidden p-1">
-            <img src={imageUrl} alt="Popup preview" className="w-full h-full object-contain" />
-          </div>
-
-          {/* Footer */}
-          <div className="px-3 py-1 bg-slate-950/90 border-t border-slate-800 flex justify-between text-[8px] text-slate-400">
-            <span>SenseiTLU Sponsor</span>
-            <span className="underline">Bỏ qua</span>
-          </div>
+          {/* Subtle skip link underneath */}
+          <span className="mt-2 text-[10px] text-slate-400 hover:text-white underline">
+            Bỏ qua quảng cáo
+          </span>
         </div>
       ) : (
         <div className="text-center p-5 rounded-xl border border-dashed border-slate-800 bg-slate-900/40">
@@ -1024,10 +1024,12 @@ function HeroImageManagerModalContent({
               {/* Title & Image */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Tiêu đề popup:</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">
+                    Tiêu đề popup (không bắt buộc - để trống nếu chỉ muốn hiện ảnh thuần túy):
+                  </span>
                   <input
                     type="text"
-                    placeholder="Thông tin đối tác & tài trợ"
+                    placeholder="Để trống nếu chỉ muốn hiện ảnh"
                     value={form.popupTitle || ''}
                     onChange={(e) => setForm(prev => ({ ...prev, popupTitle: e.target.value }))}
                     className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-sm outline-none focus:ring-2 focus:ring-blue-500"
