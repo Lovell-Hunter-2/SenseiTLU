@@ -93,7 +93,7 @@ export const BowingMascot3D: React.FC<BowingMascot3DProps> = ({
 
       // Cập nhật cameraOrbit của 3D model
       try {
-        viewer.cameraOrbit = `${baseYaw.toFixed(1)}deg ${bowPitch.toFixed(2)}deg 82%`;
+        viewer.cameraOrbit = `${baseYaw.toFixed(1)}deg ${bowPitch.toFixed(2)}deg 100%`;
       } catch (_) {}
 
       animationFrameId = requestAnimationFrame(animate);
@@ -109,7 +109,7 @@ export const BowingMascot3D: React.FC<BowingMascot3DProps> = ({
   return (
     <div className={`flex flex-col items-center select-none ${className}`}>
       {/* 3D Mascot Canvas with Bowing Tilt Container */}
-      <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 flex items-center justify-center">
+      <div className="relative w-32 h-36 sm:w-40 sm:h-44 md:w-48 md:h-52 flex items-center justify-center">
         {/* Subtle ambient light glow */}
         <div
           className={`absolute inset-4 rounded-full blur-xl transition-all duration-700 pointer-events-none ${
@@ -125,11 +125,11 @@ export const BowingMascot3D: React.FC<BowingMascot3DProps> = ({
         >
           <model-viewer
             ref={modelRef as any}
-            src="/capytlu.glb"
+            src="/capytlu_bow.glb"
             alt={`Mascot SenseiTLU cúi đầu (${side === 'left' ? 'trái' : 'phải'})`}
             camera-controls={false}
             disable-zoom
-            camera-orbit={`${side === 'left' ? '-20deg' : '20deg'} 74deg 82%`}
+            camera-orbit={`${side === 'left' ? '-20deg' : '20deg'} 74deg 100%`}
             field-of-view="28deg"
             environment-image="neutral"
             tone-mapping="neutral"
