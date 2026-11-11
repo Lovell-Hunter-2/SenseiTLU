@@ -153,19 +153,19 @@ export const Mascot3D: React.FC<Mascot3DProps> = ({ className = "", trackMouse =
       document.addEventListener("mouseleave", handleMouseLeave);
     }
 
-    // Kịch bản chuyển động tự nhiên khi chuột đứng yên hoặc trên màn hình cảm ứng:
+    // Kịch bản chuyển động tự nhiên: góc nhìn ngang tầm mắt (pitch 76°-84°) giữ mặt chính diện đáng yêu
     const POSES = [
-      { yaw: 0, pitch: 74, tilt: 0, lift: 0, moveDuration: 1.0, pauseDuration: 0.6 },
-      // Quay nhanh sang trái với vẻ tò mò, nghiêng đầu nhẹ
-      { yaw: -16.5, pitch: 70, tilt: 3.2, lift: 0, moveDuration: 0.75, pauseDuration: 0.8 },
-      // Trôi chậm rãi về gần giữa, cúi nhìn xuống dưới (hướng người dùng / nút hỗ trợ)
-      { yaw: -3, pitch: 67, tilt: 0.8, lift: -1.5, moveDuration: 1.6, pauseDuration: 0.6 },
-      // Ngước mặt lên trên rõ rệt (pitch 83° ngước tự nhiên, tuyệt đối không lộ đế)
-      { yaw: 6, pitch: 83.0, tilt: -1.6, lift: 3.0, moveDuration: 1.1, pauseDuration: 0.8 },
-      // Quay nhanh sang phải quan sát
-      { yaw: 17.5, pitch: 72.0, tilt: -3.5, lift: 0.5, moveDuration: 0.8, pauseDuration: 0.8 },
-      // Nhìn xuống dưới chếch phải
-      { yaw: 7, pitch: 68.0, tilt: -1.0, lift: -1.0, moveDuration: 1.1, pauseDuration: 0.5 },
+      { yaw: 0, pitch: 80.0, tilt: 0, lift: 0, moveDuration: 1.0, pauseDuration: 0.6 },
+      // Quay sang trái với vẻ tò mò, nghiêng đầu nhẹ
+      { yaw: -16.5, pitch: 78.5, tilt: 3.2, lift: 0, moveDuration: 0.75, pauseDuration: 0.8 },
+      // Trôi chậm rãi về gần giữa, nhìn nhẹ xuống hướng người dùng
+      { yaw: -3, pitch: 77.0, tilt: 0.8, lift: -1.0, moveDuration: 1.6, pauseDuration: 0.6 },
+      // Ngước mặt lên trên rõ rệt
+      { yaw: 6, pitch: 84.0, tilt: -1.6, lift: 2.5, moveDuration: 1.1, pauseDuration: 0.8 },
+      // Quay sang phải quan sát
+      { yaw: 17.5, pitch: 79.0, tilt: -3.5, lift: 0.5, moveDuration: 0.8, pauseDuration: 0.8 },
+      // Nhìn nhẹ xuống dưới chếch phải
+      { yaw: 7, pitch: 77.5, tilt: -1.0, lift: -0.5, moveDuration: 1.1, pauseDuration: 0.5 },
     ];
 
     let currentPoseIdx = 0;
@@ -176,7 +176,7 @@ export const Mascot3D: React.FC<Mascot3DProps> = ({ className = "", trackMouse =
 
     // Trạng thái góc nhìn hiện tại
     let curYaw = 0;
-    let curPitch = 74;
+    let curPitch = 80;
     let curTilt = 0;
     let curLift = 0;
 
@@ -209,10 +209,8 @@ export const Mascot3D: React.FC<Mascot3DProps> = ({ className = "", trackMouse =
           // Góc quay ngang theo chuột: sang trái quay trái, sang phải quay phải
           const targetYaw = -normX * (normX < 0 ? 22 : 14);
 
-          // Góc nhìn dọc mở rộng rõ rệt:
-          // normY < 0 (chuột ở trên cao): ngước mặt lên tới 84.5° (rõ rệt, an toàn <85° không lộ đế)
-          // normY > 0 (chuột ở dưới thấp): cúi nhìn xuống 66.0°
-          const targetPitch = Math.max(66.0, Math.min(84.5, 74 - normY * 10.5));
+          // Góc nhìn dọc giữ ở độ cao tầm mắt (75° - 84.5°) để che vệt đỉnh đầu
+          const targetPitch = Math.max(75.0, Math.min(84.5, 80.0 - normY * 6.5));
 
           // Nâng nhẹ thân người lên khi ngước nhìn lên cao để tạo hiệu ứng ngước sống động
           const targetLift = normY < 0 ? -normY * 4.0 : 0;
@@ -283,7 +281,7 @@ export const Mascot3D: React.FC<Mascot3DProps> = ({ className = "", trackMouse =
         }
 
         try {
-          viewer.cameraOrbit = `${curYaw.toFixed(2)}deg ${curPitch.toFixed(2)}deg 82%`;
+          viewer.cameraOrbit = `${curYaw.toFixed(2)}deg ${curPitch.toFixed(2)}deg 100%`;
         } catch (_) {}
       }
 
@@ -311,7 +309,7 @@ export const Mascot3D: React.FC<Mascot3DProps> = ({ className = "", trackMouse =
 
   return (
     <div
-      className={`relative w-24 h-24 sm:w-28 sm:h-28 transition-transform duration-300 ease-out hover:scale-110 cursor-grab active:cursor-grabbing select-none drop-shadow-[0_12px_20px_rgba(0,0,0,0.45)] ${className}`}
+      className={`relative w-24 h-28 sm:w-28 sm:h-32 transition-transform duration-300 ease-out hover:scale-110 cursor-grab active:cursor-grabbing select-none drop-shadow-[0_12px_20px_rgba(0,0,0,0.45)] ${className}`}
     >
       <div
         ref={tiltRef}
@@ -324,9 +322,9 @@ export const Mascot3D: React.FC<Mascot3DProps> = ({ className = "", trackMouse =
           alt="Capybara Mascot 3D"
           camera-controls
           disable-zoom
-          camera-orbit="0deg 74deg 82%"
-          min-camera-orbit="-30deg 65deg 82%"
-          max-camera-orbit="30deg 85deg 82%"
+          camera-orbit="0deg 78deg 100%"
+          min-camera-orbit="-30deg 70deg 100%"
+          max-camera-orbit="30deg 85deg 100%"
           field-of-view="28deg"
           environment-image="neutral"
           tone-mapping="neutral"
