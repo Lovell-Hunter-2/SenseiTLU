@@ -63,7 +63,7 @@ export default function Blog() {
 
   const handleAddPost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPost.title.trim() || !newPost.content.trim() || !user) return;
+    if (!newPost.title.trim() || !user) return;
     
     // Check cooldown
     const lastPostTime = localStorage.getItem('last_post_time');
@@ -134,7 +134,7 @@ export default function Blog() {
 
   const handleUpdatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingPost || !editingPost.title.trim() || !editingPost.content.trim()) return;
+    if (!editingPost || !editingPost.title.trim()) return;
 
     if (!canEditPost(editingPost)) {
       alert("Đã hết thời gian 30 phút để chỉnh sửa bài viết này.");
@@ -258,25 +258,27 @@ export default function Blog() {
                   </div>
                 )}
               </div>
-              <h2 className="text-2xl font-bold mb-4">{post.title}</h2>
-              <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300">
-                <Markdown
-                  remarkPlugins={[remarkGfm, remarkBreaks]}
-                  components={{
-                    a: ({ node, ...props }) => {
-                      if (props.href && isImageUrl(props.href)) {
-                        return <img src={props.href} alt="Blog image" className="rounded-xl max-w-full h-auto my-4" referrerPolicy="no-referrer" />;
-                      }
-                      return <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline" />;
-                    },
-                    img: ({ node, ...props }) => (
-                      <img {...props} className="rounded-xl max-w-full h-auto my-4" referrerPolicy="no-referrer" />
-                    )
-                  }}
-                >
-                  {post.content}
-                </Markdown>
-              </div>
+              <h2 className={`text-2xl font-bold ${post.content?.trim() ? 'mb-4' : 'mb-2'}`}>{post.title}</h2>
+              {post.content?.trim() && (
+                <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300">
+                  <Markdown
+                    remarkPlugins={[remarkGfm, remarkBreaks]}
+                    components={{
+                      a: ({ node, ...props }) => {
+                        if (props.href && isImageUrl(props.href)) {
+                          return <img src={props.href} alt="Blog image" className="rounded-xl max-w-full h-auto my-4" referrerPolicy="no-referrer" />;
+                        }
+                        return <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline" />;
+                      },
+                      img: ({ node, ...props }) => (
+                        <img {...props} className="rounded-xl max-w-full h-auto my-4" referrerPolicy="no-referrer" />
+                      )
+                    }}
+                  >
+                    {post.content}
+                  </Markdown>
+                </div>
+              )}
               <BlogInteractions postId={post.id} />
             </div>
           </article>
@@ -379,9 +381,8 @@ export default function Blog() {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Nội dung</label>
+                <label className="block text-sm font-medium mb-1">Nội dung (Tùy chọn)</label>
                 <textarea
-                  required
                   rows={8}
                   className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-transparent focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                   value={newPost.content}
@@ -478,12 +479,11 @@ export default function Blog() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Nội dung (hỗ trợ Markdown)</label>
+                <label className="block text-sm font-medium mb-1">Nội dung (Tùy chọn, hỗ trợ Markdown)</label>
                 <textarea
-                  value={editingPost.content}
+                  value={editingPost.content || ''}
                   onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
                   className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 h-64 focus:ring-2 focus:ring-blue-500 outline-none resize-none font-mono text-sm"
-                  required
                 />
               </div>
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
@@ -496,7 +496,7 @@ export default function Blog() {
                 </button>
                 <button
                   type="submit"
-                  disabled={!editingPost.title.trim() || !editingPost.content.trim()}
+                  disabled={!editingPost.title?.trim()}
                   className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
                 >
                   Cập nhật
