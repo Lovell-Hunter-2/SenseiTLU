@@ -1,7 +1,9 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "@google/model-viewer";
 import { useBannerConfig } from "../hooks/useBannerConfig";
 import { DEFAULT_MAIN_MASCOT } from "../types/banner";
+
+const FALLBACK_MASCOT = "/capytlu.glb";
 
 // Đảm bảo không lỗi trong môi trường build/SSR
 if (typeof window !== "undefined" && typeof customElements !== "undefined") {
@@ -91,15 +93,52 @@ function easeInOutCubic(t: number): number {
 
 export const Mascot3D: React.FC<Mascot3DProps> = ({ className = "", trackMouse = true, src }) => {
   const bannerConfig = useBannerConfig();
-  const activeMascotSrc = src || bannerConfig.mainMascot || DEFAULT_MAIN_MASCOT;
+  const requestedSrc = src || bannerConfig.mainMascot || DEFAULT_MAIN_MASCOT;
+  const [resolvedSrc, setResolvedSrc] = useState<string>(requestedSrc);
+  const [hasModelError, setHasModelError] = useState(false);
   const modelRef = useRef<HTMLElement | null>(null);
   const tiltRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    setResolvedSrc(requestedSrc);
+    setHasModelError(false);
+
+    if (requestedSrc && requestedSrc !== FALLBACK_MASCOT && requestedSrc.startsWith("/")) {
+      fetch(requestedSrc, { method: "HEAD" })
+        .then((res) => {
+          if (cancelled) return;
+          const contentType = res.headers.get("content-type") || "";
+          if (!res.ok || contentType.includes("text/html")) {
+            console.warn(`[Mascot3D] ${requestedSrc} unavailable (${res.status}, ${contentType}), falling back to ${FALLBACK_MASCOT}`);
+            setResolvedSrc(FALLBACK_MASCOT);
+          }
+        })
+        .catch(() => {});
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [requestedSrc]);
+
+  useEffect(() => {
+    if (hasModelError) return;
     const viewer = modelRef.current as any;
     if (!viewer) return;
 
     viewer.minimumRenderScale = 1;
+
+    const handleModelError = () => {
+      if (resolvedSrc !== FALLBACK_MASCOT) {
+        console.warn(`[Mascot3D] Failed to load ${resolvedSrc}, falling back to ${FALLBACK_MASCOT}`);
+        setResolvedSrc(FALLBACK_MASCOT);
+      } else {
+        setHasModelError(true);
+      }
+    };
+
+    viewer.addEventListener("error", handleModelError);
 
     let isInteracting = false;
     let interactionTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -297,6 +336,7 @@ export const Mascot3D: React.FC<Mascot3DProps> = ({ className = "", trackMouse =
     animationFrameId = requestAnimationFrame(animate);
 
     return () => {
+      viewer.removeEventListener("error", handleModelError);
       cancelAnimationFrame(animationFrameId);
       if (interactionTimeout) clearTimeout(interactionTimeout);
       viewer.removeEventListener("camera-change", handleCameraChange);
@@ -310,7 +350,7 @@ export const Mascot3D: React.FC<Mascot3DProps> = ({ className = "", trackMouse =
         document.removeEventListener("mouseleave", handleMouseLeave);
       }
     };
-  }, [trackMouse]);
+  }, [trackMouse, resolvedSrc, hasModelError]);
 
   return (
     <div
@@ -321,30 +361,41 @@ export const Mascot3D: React.FC<Mascot3DProps> = ({ className = "", trackMouse =
         className="w-full h-full origin-bottom"
         style={{ transform: "translateY(0px) rotate(0deg)" }}
       >
-        <model-viewer
-          ref={modelRef as any}
-          src={activeMascotSrc}
-          alt="Capybara Mascot 3D"
-          camera-controls
-          disable-zoom
-          camera-orbit="0deg 78deg 100%"
-          min-camera-orbit="-30deg 70deg 100%"
-          max-camera-orbit="30deg 85deg 100%"
-          field-of-view="28deg"
-          environment-image="neutral"
-          tone-mapping="neutral"
-          exposure="1.2"
-          shadow-intensity="1"
-          shadow-softness="0.3"
-          animation-name="idle"
-          autoplay
-          interaction-prompt="none"
-          style={{
-            width: "100%",
-            height: "100%",
-            backgroundColor: "transparent",
-          }}
-        />
+        {hasModelError ? (
+          <img
+            src="/avt_tlu%20(remove).png"
+            alt="Capybara Mascot"
+            className="w-full h-full object-contain pointer-events-none select-none"
+            draggable={false}
+          />
+        ) : (
+          <model-viewer
+            key={resolvedSrc}
+            ref={modelRef as any}
+            src={resolvedSrc}
+            alt="Capybara Mascot 3D"
+            loading="eager"
+            camera-controls
+            disable-zoom
+            camera-orbit="0deg 78deg 100%"
+            min-camera-orbit="-30deg 70deg 100%"
+            max-camera-orbit="30deg 85deg 100%"
+            field-of-view="28deg"
+            environment-image="neutral"
+            tone-mapping="neutral"
+            exposure="1.2"
+            shadow-intensity="1"
+            shadow-softness="0.3"
+            animation-name="idle"
+            autoplay
+            interaction-prompt="none"
+            style={{
+              width: "100%",
+              height: "100%",
+              backgroundColor: "transparent",
+            }}
+          />
+        )}
       </div>
     </div>
   );
