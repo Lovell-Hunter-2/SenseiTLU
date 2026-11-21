@@ -37,10 +37,14 @@ import { HEADER_NAV_ROUTES } from "./navigationConfig";
 import { MobileBottomNav } from "./MobileBottomNav";
 import Mascot3D from "./Mascot3D";
 import FloatingMascot from "./FloatingMascot";
+import { useBannerConfig } from "../hooks/useBannerConfig";
+import { ChristmasNavbarGarland } from "./ChristmasThemeEngine";
 
 export default function Layout() {
   const { theme, setTheme } = useTheme();
   const { user, isAdmin, login, logout } = useAuth();
+  const bannerConfig = useBannerConfig();
+  const isChristmas = bannerConfig.webTheme === "christmas";
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -134,7 +138,7 @@ export default function Layout() {
               aria-label="SenseiTLU Trang chủ"
             >
               <span className="text-2xl md:text-3xl transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">
-                🎓
+                {isChristmas ? "🎄" : "🎓"}
               </span>
               <AnimatedBrandLogo size="nav" interactive={true} />
             </Link>
@@ -438,15 +442,16 @@ export default function Layout() {
             </div>
           </div>
         )}
+        {isChristmas && <ChristmasNavbarGarland />}
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-2 sm:px-4 py-3 sm:py-5 pb-24 md:pb-5">
+      <main className="flex-1 container mx-auto px-2 sm:px-4 py-3 sm:py-5 pb-24 md:pb-5 relative z-10">
         <Outlet />
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-8 text-center text-sm text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 mt-auto bg-transparent border-b">
+      <footer className="w-full py-8 text-center text-sm text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 mt-auto bg-transparent border-b relative z-10">
         <div className="container mx-auto px-8 sm:px-24 max-w-5xl flex flex-col md:flex-row items-center justify-between gap-4">
           <Link
             to="/privacy"
@@ -454,8 +459,11 @@ export default function Layout() {
           >
             Chính sách bảo mật
           </Link>
-          <p className="order-1 md:order-2">
-            © {new Date().getFullYear()} LovellTituss161. All rights reserved.
+          <p className="order-1 md:order-2 flex items-center justify-center gap-2 flex-wrap">
+            <span>© {new Date().getFullYear()} LovellTituss161. All rights reserved.</span>
+            {isChristmas && (
+              <span className="text-[#F5C842] font-medium">· Merry Christmas 🎄</span>
+            )}
           </p>
           <Link
             to="/terms"
@@ -505,12 +513,12 @@ export default function Layout() {
             </div>
           )}
 
-          {/* Orange Support Button */}
+          {/* Orange Support Button (Festive Cranberry & Gold in Christmas Theme) */}
           <a
             href="https://www.facebook.com/lovelltitussof1910"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-[#ff6b00] hover:bg-[#e66000] text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center gap-2"
+            className="xmas-support-btn bg-[#ff6b00] hover:bg-[#e66000] text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center gap-2"
           >
             <MessageCircle className="w-4 h-4" />
             <span className="font-bold">Hỗ trợ</span>
