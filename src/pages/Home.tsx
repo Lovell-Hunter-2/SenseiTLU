@@ -94,7 +94,7 @@ import {
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 import { getCachedData, setCachedData, invalidateCache, CacheTTL } from "../services/cacheService";
-import { getStaticSubjects } from "../services/catalogService";
+import { getStaticSubjects, loadCatalog } from "../services/catalogService";
 import { AnimatedHeroTitle } from "../components/AnimatedHeroTitle";
 import { SideBannerColumn } from "../components/SideBanners";
 import MobileHorizontalBanner from "../components/MobileHorizontalBanner";
@@ -302,6 +302,9 @@ export default function Home() {
   const [watermarkImgFailed, setWatermarkImgFailed] = useState(false);
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
   const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [flippedCards, setFlippedCards] = useState<Record<string, boolean>>({});
+  const [subjectDocCounts, setSubjectDocCounts] = useState<Record<string, number>>({});
 
   const [subjects, setSubjects] = useState<any[]>(() => {
     const cached = getCachedData<any[]>("home_subjects_list");
@@ -543,12 +546,26 @@ export default function Home() {
 
   // Auto-update subjects list when a newer catalog is deployed to Vercel CDN
   useEffect(() => {
+    const syncCounts = (cat: any) => {
+      if (!cat?.documents || typeof cat.documents !== 'object') return;
+      const counts: Record<string, number> = {};
+      for (const [subId, docs] of Object.entries(cat.documents)) {
+        if (Array.isArray(docs)) {
+          counts[subId] = docs.filter((d: any) => !d?.isHidden).length;
+        }
+      }
+      setSubjectDocCounts(counts);
+    };
+
+    loadCatalog().then(syncCounts).catch(() => {});
+
     const handleCatalogUpdated = (e: any) => {
       const newCat = e.detail;
       if (newCat && Array.isArray(newCat.subjects) && newCat.subjects.length > 0) {
         setSubjects(newCat.subjects);
         setTotalSubjectsCount(newCat.subjects.length);
         setQuotaExceeded(false);
+        syncCounts(newCat);
         try {
           localStorage.setItem("sensei_cached_subjects", JSON.stringify(newCat.subjects));
           localStorage.setItem("sensei_cached_subjects_count", String(newCat.subjects.length));
@@ -559,6 +576,98 @@ export default function Home() {
     window.addEventListener('sensei-catalog-updated', handleCatalogUpdated);
     return () => window.removeEventListener('sensei-catalog-updated', handleCatalogUpdated);
   }, []);
+
+  // Part 4 — Cursor Snow Trail (Hero section only, active ONLY in Christmas mode)
+  useEffect(() => {
+    const hero = heroRef.current;
+    if (!isChristmasTheme || !hero) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+
+    let lastSpawn = 0;
+    const MAX_FLAKES = 25;
+    const pool: HTMLDivElement[] = [];
+    const timeouts: number[] = [];
+
+    const handleHeroMouseMove = (e: MouseEvent) => {
+      const now = Date.now();
+      if (now - lastSpawn < 55) return;
+      lastSpawn = now;
+
+      const flake = document.createElement('div');
+      flake.className = 'xmas-trail-flake';
+      const size = Math.random() * 5 + 4;
+      const drift = `${(Math.random() * 30 - 15).toFixed(1)}px`;
+      flake.style.cssText = `
+        width: ${size}px;
+        height: ${size}px;
+        left: ${e.clientX - size / 2}px;
+        top: ${e.clientY - size / 2}px;
+        --drift: ${drift};
+      `;
+      document.body.appendChild(flake);
+      pool.push(flake);
+
+      if (pool.length > MAX_FLAKES) {
+        pool.shift()?.remove();
+      }
+
+      const timer = window.setTimeout(() => {
+        flake.remove();
+        const idx = pool.indexOf(flake);
+        if (idx > -1) pool.splice(idx, 1);
+      }, 650);
+      timeouts.push(timer);
+    };
+
+    hero.addEventListener('mousemove', handleHeroMouseMove);
+    return () => {
+      hero.removeEventListener('mousemove', handleHeroMouseMove);
+      timeouts.forEach((t) => window.clearTimeout(t));
+      pool.forEach((f) => f.remove());
+    };
+  }, [isChristmasTheme]);
+
+  // Part 1 & Part 3 — Snow Globe shake + 18 snow particles + Gift Flip Card toggle
+  const handleChristmasCardClick = (e: React.MouseEvent<HTMLDivElement>, subjectId: string) => {
+    if (!isChristmasTheme) return;
+    if ((e.target as HTMLElement).closest('a, button')) return;
+
+    const wrap = e.currentTarget;
+    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+    if (!prefersReducedMotion && !wrap.classList.contains('xmas-shake')) {
+      wrap.classList.add('xmas-shake');
+
+      const burstLayers = wrap.querySelectorAll<HTMLElement>('.xmas-snow-burst-layer');
+      burstLayers.forEach((layer, layerIdx) => {
+        const count = burstLayers.length > 1 ? 9 : 18;
+        for (let i = 0; i < count; i++) {
+          const flake = document.createElement('div');
+          flake.className = 'xmas-snow-particle';
+          const size = Math.random() * 5 + 3;
+          flake.style.cssText = `
+            width: ${size}px;
+            height: ${size}px;
+            left: ${Math.random() * 85 + 5}%;
+            top: ${Math.random() * 50 + 5}%;
+            animation-duration: ${(Math.random() * 0.6 + 0.5).toFixed(2)}s;
+            animation-delay: ${(Math.random() * 0.15 + layerIdx * 0.04).toFixed(2)}s;
+          `;
+          layer.appendChild(flake);
+          window.setTimeout(() => flake.remove(), 1300);
+        }
+      });
+
+      const clearShake = () => wrap.classList.remove('xmas-shake');
+      wrap.addEventListener('animationend', clearShake, { once: true });
+      window.setTimeout(clearShake, 550);
+    }
+
+    setFlippedCards((prev) => ({
+      ...prev,
+      [subjectId]: !prev[subjectId],
+    }));
+  };
 
   // Reset to page 1 whenever user searches
   useEffect(() => {
@@ -800,7 +909,11 @@ export default function Home() {
       </div>
 
       {/* Hero / Search Section */}
-      <div className="relative flex items-center justify-center py-6 sm:py-12 px-4 z-30">
+      <div
+        id="hero"
+        ref={heroRef}
+        className="hero relative flex items-center justify-center py-6 sm:py-12 px-4 z-30"
+      >
         {/* Left Image */}
         {heroImages.leftUrl && (
           <div className="hidden lg:block absolute left-8 xl:left-16 w-48 xl:w-64 z-10 animate-in fade-in zoom-in duration-700">
@@ -1010,44 +1123,49 @@ export default function Home() {
               const Icon = iconMap[subject.iconName] || Book;
               const isFav = favorites.includes(subject.id);
               const isPriority = Boolean(subject.isPriority);
-              return (
-                <div
-                  key={subject.id}
-                  className={`subject-card bg-white dark:bg-slate-900 border rounded-2xl p-5 shadow-sm hover:shadow-md dark:shadow-none dark:hover:shadow-none xl:hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full group relative focus:outline-none select-none md:select-auto ${
-                    isPriority
-                      ? "border-amber-300 dark:border-amber-700/60 ring-1 ring-amber-400/30"
-                      : "border-slate-200 dark:border-slate-800"
-                  }`}
-                  onTouchStart={() => {
-                    if (touchTimerRef.current)
-                      clearTimeout(touchTimerRef.current);
-                    touchTimerRef.current = setTimeout(() => {
-                      setActiveSubjectId(subject.id);
-                      if (window.navigator && window.navigator.vibrate) {
-                        window.navigator.vibrate(50);
-                      }
-                    }, 400); // 400ms long press threshold
-                  }}
-                  onTouchEnd={() => {
-                    if (touchTimerRef.current)
-                      clearTimeout(touchTimerRef.current);
-                  }}
-                  onTouchMove={() => {
-                    if (touchTimerRef.current)
-                      clearTimeout(touchTimerRef.current);
-                  }}
-                  onContextMenu={(e) => {
-                    if (activeSubjectId === subject.id) {
-                      e.preventDefault(); // Prevent native right click selection on long press
+              const isFlipped = Boolean(flippedCards[subject.id]);
+              const docCount = subjectDocCounts[subject.id] || 0;
+
+              const touchHandlers = {
+                onTouchStart: () => {
+                  if (touchTimerRef.current)
+                    clearTimeout(touchTimerRef.current);
+                  touchTimerRef.current = setTimeout(() => {
+                    setActiveSubjectId(subject.id);
+                    if (window.navigator && window.navigator.vibrate) {
+                      window.navigator.vibrate(50);
                     }
-                  }}
-                >
+                  }, 400); // 400ms long press threshold
+                },
+                onTouchEnd: () => {
+                  if (touchTimerRef.current)
+                    clearTimeout(touchTimerRef.current);
+                },
+                onTouchMove: () => {
+                  if (touchTimerRef.current)
+                    clearTimeout(touchTimerRef.current);
+                },
+                onContextMenu: (e: React.MouseEvent) => {
+                  if (activeSubjectId === subject.id) {
+                    e.preventDefault(); // Prevent native right click selection on long press
+                  }
+                },
+              };
+
+              const cardInnerContent = (
+                <>
                   {isChristmasTheme && (
-                    <ChristmasCardSticker
-                      variant={isPriority ? "hat" : undefined}
-                      index={idx}
-                      size="sm"
-                    />
+                    <>
+                      <div
+                        className="xmas-snow-burst-layer pointer-events-none absolute inset-0 overflow-hidden rounded-[20px] z-10"
+                        aria-hidden="true"
+                      />
+                      <ChristmasCardSticker
+                        variant={isPriority ? "hat" : undefined}
+                        index={idx}
+                        size="sm"
+                      />
+                    </>
                   )}
                   <button
                     onClick={(e) => toggleFavorite(subject.id, e)}
@@ -1113,6 +1231,81 @@ export default function Home() {
                   >
                     Xem ngay <span className="text-lg leading-none">→</span>
                   </Link>
+                  {isChristmasTheme && (
+                    <div className="text-[10px] text-[#B8C4BB]/65 mt-2.5 text-right select-none">
+                      click để xem thêm ▸
+                    </div>
+                  )}
+                </>
+              );
+
+              if (!isChristmasTheme) {
+                return (
+                  <div
+                    key={subject.id}
+                    className={`subject-card bg-white dark:bg-slate-900 border rounded-2xl p-5 shadow-sm hover:shadow-md dark:shadow-none dark:hover:shadow-none xl:hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full group relative focus:outline-none select-none md:select-auto ${
+                      isPriority
+                        ? "border-amber-300 dark:border-amber-700/60 ring-1 ring-amber-400/30"
+                        : "border-slate-200 dark:border-slate-800"
+                    }`}
+                    {...touchHandlers}
+                  >
+                    {cardInnerContent}
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={subject.id}
+                  onClick={(e) => handleChristmasCardClick(e, subject.id)}
+                  className={`xmas-flip-wrap h-full xl:hover:-translate-y-1.5 transition-transform duration-300 ${
+                    isFlipped ? "is-flipped" : ""
+                  }`}
+                  {...touchHandlers}
+                >
+                  <div className="xmas-flip-inner">
+                    {/* Mặt trước */}
+                    <div
+                      className={`subject-card xmas-flip-front bg-white dark:bg-slate-900 border rounded-2xl p-5 shadow-sm transition-all duration-300 flex flex-col h-full group relative focus:outline-none select-none md:select-auto ${
+                        isPriority
+                          ? "border-amber-300 dark:border-amber-700/60 ring-1 ring-amber-400/30"
+                          : "border-slate-200 dark:border-slate-800"
+                      }`}
+                    >
+                      {cardInnerContent}
+                    </div>
+
+                    {/* Mặt sau — Gift Flip Back */}
+                    <div className="xmas-flip-back border border-[#F5C842]/45">
+                      <div
+                        className="xmas-snow-burst-layer pointer-events-none absolute inset-0 overflow-hidden rounded-[20px] z-10"
+                        aria-hidden="true"
+                      />
+                      <div className="text-3xl mb-2.5 drop-shadow select-none" aria-hidden="true">
+                        🎁
+                      </div>
+                      <h4 className="xmas-display-font text-base font-bold text-[#F0EDE8] mb-1 line-clamp-2">
+                        {subject.name}
+                      </h4>
+                      <div className="text-xs font-medium text-[#A8D8EA] mb-2">
+                        {docCount > 0 ? `${docCount} tài liệu học tập` : "Kho tài liệu môn học"}
+                        {isPriority ? " · ⭐ Ưu tiên" : ""}
+                      </div>
+                      <p className="text-xs text-[#B8C4BB] line-clamp-2 mb-4 max-w-[92%]">
+                        {subject.description || `Tổng hợp tài liệu môn ${subject.name}`}
+                      </p>
+                      <Link
+                        to={`/subject/${subject.id}`}
+                        className="xmas-cta-pill inline-flex items-center justify-center gap-1.5 px-5 py-2 rounded-full bg-[#F5C842] hover:bg-[#FFD700] text-[#07160E] font-bold text-xs shadow-[0_0_16px_rgba(245,200,66,0.35)] transition-all"
+                      >
+                        Xem ngay <span className="leading-none">→</span>
+                      </Link>
+                      <span className="mt-3 text-[10px] text-[#B8C4BB]/60 select-none">
+                        nhấn lại để quay về ↺
+                      </span>
+                    </div>
+                  </div>
                 </div>
               );
             })
