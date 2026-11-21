@@ -852,3 +852,232 @@ html.theme-christmas .dark\:bg-blue-950\/70:not(.xmas-preview-preserve *) {
   }
 }
 
+/* ==========================================================================
+   CHRISTMAS UX MICRO-INTERACTIONS (Active ONLY in html.theme-christmas)
+   Spec from christmas-ux-guide.md:
+   1. Snow Globe Card (xmas-shake + xmas-snow-fall)
+   2. Bell Ripple Button (xmas-bell-ring + .xmas-ripple)
+   3. Gift Flip Card (.xmas-flip-wrap / .xmas-flip-inner / .xmas-flip-front / .xmas-flip-back)
+   4. Cursor Snow Trail (xmas-trail-fall + .xmas-trail-flake)
+   5. Navbar Easter Egg (xmas-confetti-fall + .xmas-confetti + .xmas-ho-toast)
+   ========================================================================== */
+
+@keyframes xmas-snow-fall {
+  0% {
+    opacity: 0.9;
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(80px) rotate(360deg) scale(0.4);
+  }
+}
+
+@keyframes xmas-shake {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  20% {
+    transform: translateX(-5px) rotate(-1.2deg);
+  }
+  40% {
+    transform: translateX(5px) rotate(1.2deg);
+  }
+  60% {
+    transform: translateX(-3px) rotate(-0.6deg);
+  }
+  80% {
+    transform: translateX(3px) rotate(0.6deg);
+  }
+}
+
+html.theme-christmas .xmas-shake {
+  animation: xmas-shake 0.45s ease-in-out;
+}
+
+html.theme-christmas .xmas-snow-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: #f0ede8;
+  pointer-events: none;
+  z-index: 15;
+  will-change: transform, opacity;
+  animation: xmas-snow-fall linear forwards;
+}
+
+/* Part 2 — Bell Ripple Button */
+@keyframes xmas-bell-ring {
+  0% {
+    width: 0;
+    height: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.75;
+  }
+  100% {
+    width: 220px;
+    height: 220px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+  }
+}
+
+html.theme-christmas .xmas-ripple-host {
+  overflow: hidden !important;
+}
+
+html.theme-christmas .xmas-ripple {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid rgba(245, 200, 66, 0.55);
+  pointer-events: none;
+  z-index: 1;
+  animation: xmas-bell-ring 0.65s ease-out forwards;
+}
+
+/* Part 3 — Gift Flip Card */
+html.theme-christmas .xmas-flip-wrap {
+  perspective: 900px;
+  cursor: pointer;
+  height: 100%;
+}
+
+html.theme-christmas .xmas-flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+html.theme-christmas .xmas-flip-wrap.is-flipped .xmas-flip-inner {
+  transform: rotateY(180deg);
+}
+
+html.theme-christmas .xmas-flip-front {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+html.theme-christmas .xmas-flip-back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: rotateY(180deg);
+  background: linear-gradient(155deg, #2d6a4f 0%, #1b4332 100%);
+  border-radius: var(--radius-lg, 20px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.25rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(240, 237, 232, 0.14);
+}
+
+html.theme-christmas .xmas-flip-wrap.is-flipped .xmas-flip-front {
+  pointer-events: none;
+}
+
+html.theme-christmas .xmas-flip-wrap:not(.is-flipped) .xmas-flip-back {
+  pointer-events: none;
+}
+
+/* Part 4 — Cursor Snow Trail */
+@keyframes xmas-trail-fall {
+  0% {
+    opacity: 0.85;
+    transform: translateY(0) translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(55px) translateX(var(--drift, 0px)) scale(0.2);
+  }
+}
+
+html.theme-christmas .xmas-trail-flake {
+  position: fixed;
+  border-radius: 50%;
+  background: #f0ede8;
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform, opacity;
+  animation: xmas-trail-fall 0.6s ease-out forwards;
+}
+
+/* Part 5 — Navbar Tree Logo Confetti + Toast */
+@keyframes xmas-confetti-fall {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(180px) rotate(720deg) scale(0.4);
+  }
+}
+
+html.theme-christmas .xmas-confetti {
+  position: fixed;
+  width: 7px;
+  height: 11px;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform, opacity;
+  animation: xmas-confetti-fall linear forwards;
+}
+
+.xmas-ho-toast {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(27, 67, 50, 0.95);
+  border: 1px solid rgba(245, 200, 66, 0.5);
+  color: #f5c842;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: 999px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 0 20px rgba(245, 200, 66, 0.25);
+  z-index: 10000;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.xmas-ho-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-christmas .xmas-shake,
+  html.theme-christmas .xmas-snow-particle,
+  html.theme-christmas .xmas-ripple,
+  html.theme-christmas .xmas-trail-flake,
+  html.theme-christmas .xmas-confetti {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+
+  html.theme-christmas .xmas-flip-inner {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+
