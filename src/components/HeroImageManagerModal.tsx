@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import "@google/model-viewer";
 import { 
   X, 
   UploadCloud, 
@@ -14,13 +15,24 @@ import {
   CheckCircle2,
   Columns,
   Ruler,
-  Eye
+  Eye,
+  Palette,
+  Snowflake,
+  RotateCcw,
+  Check,
+  AlertCircle
 } from "lucide-react";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { setCachedData, CacheTTL } from "../services/cacheService";
 import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
-import { BannerConfig, DEFAULT_BANNER_CONFIG } from "../types/banner";
+import {
+  BannerConfig,
+  DEFAULT_BANNER_CONFIG,
+  DEFAULT_MAIN_MASCOT,
+  MASCOT_OPTIONS,
+  WebTheme,
+} from "../types/banner";
 
 const CLIENT_ID = import.meta.env.VITE_OAUTH_CLIENT_ID || "";
 
@@ -367,6 +379,118 @@ const PopupLivePreview = ({
   </div>
 );
 
+// 5. Web UI Theme Live Comparison Preview (Immune to active page theme via .xmas-preview-preserve)
+const WebThemeLivePreview = ({ theme }: { theme: WebTheme }) => {
+  const isXmas = theme === "christmas";
+  return (
+    <div
+      className="xmas-preview-preserve w-full rounded-2xl overflow-hidden border select-none shadow-lg transition-all"
+      style={{
+        backgroundColor: isXmas ? "#0D2B1F" : "#020617",
+        borderColor: isXmas ? "#2D6A4F" : "#1E293B",
+        color: isXmas ? "#F0EDE8" : "#F8FAFC",
+      }}
+    >
+      {/* Mini Navbar */}
+      <div
+        className="px-3 py-2 flex items-center justify-between border-b"
+        style={{
+          backgroundColor: isXmas ? "#07160E" : "#0F172A",
+          borderColor: isXmas ? "#2D6A4F" : "#1E293B",
+        }}
+      >
+        <div className="flex items-center gap-1.5 text-[10px] font-bold">
+          <span>{isXmas ? "🎄" : "🎓"}</span>
+          <span
+            style={{
+              color: isXmas ? "#F5C842" : "#60A5FA",
+              fontFamily: isXmas ? "'Playfair Display', Georgia, serif" : undefined,
+            }}
+          >
+            SenseiTLU
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-[8.5px]" style={{ color: isXmas ? "#B8C4BB" : "#94A3B8" }}>
+          <span style={{ color: isXmas ? "#F5C842" : "#60A5FA", fontWeight: 600 }}>Trang chủ</span>
+          <span>Blog</span>
+          <span style={{ color: isXmas ? "#E74C3C" : "#FB7185", fontWeight: 700 }}>Ủng hộ</span>
+        </div>
+      </div>
+
+      {/* Festive Fairy Light Line for Christmas */}
+      {isXmas && (
+        <div className="flex items-center justify-around px-3 py-1" style={{ backgroundColor: "#07160E" }}>
+          {["#F5C842", "#E74C3C", "#A8D8EA", "#FFD700", "#2D6A4F", "#F5C842", "#C0392B", "#A8D8EA"].map((c, idx) => (
+            <span
+              key={idx}
+              className="w-1 h-1 rounded-full block"
+              style={{ backgroundColor: c, boxShadow: `0 0 6px ${c}` }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Mini Hero & Cards */}
+      <div className="p-3 space-y-2.5">
+        <div className="text-center space-y-1">
+          {isXmas && (
+            <div className="text-[8px] font-medium" style={{ color: "#F5C842" }}>
+              ✦ Merry &amp; Bright · Deep Forest Night ✦
+            </div>
+          )}
+          <div
+            className="text-xs font-bold"
+            style={{
+              fontFamily: isXmas ? "'Playfair Display', Georgia, serif" : undefined,
+              color: isXmas ? "#F0EDE8" : "#F8FAFC",
+            }}
+          >
+            {isXmas ? "🎄" : "📚"} Tài liệu{" "}
+            <span style={{ color: isXmas ? "#F5C842" : "#60A5FA" }}>SenseiTLU</span>
+          </div>
+          <div
+            className="mx-auto max-w-[200px] h-5 rounded-lg border px-2 flex items-center text-[8px]"
+            style={{
+              backgroundColor: isXmas ? "#07160E" : "#0F172A",
+              borderColor: isXmas ? "#2D6A4F" : "#334155",
+              color: isXmas ? "#B8C4BB" : "#64748B",
+            }}
+          >
+            Tìm môn học...
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          {["Tiếng Anh đầu ra", "Cơ sở dữ liệu"].map((title) => (
+            <div
+              key={title}
+              className="p-2 rounded-xl border space-y-1.5"
+              style={{
+                backgroundColor: isXmas ? "#1B4332" : "#0F172A",
+                borderColor: isXmas ? "#2D6A4F" : "#1E293B",
+              }}
+            >
+              <div className="text-[9px] font-bold truncate" style={{ color: isXmas ? "#F0EDE8" : "#F1F5F9" }}>
+                {title}
+              </div>
+              <div
+                className="w-full py-1 rounded-lg text-center text-[8.5px] font-bold"
+                style={{
+                  backgroundColor: isXmas ? "#F5C842" : "#22D3EE",
+                  color: isXmas ? "#07160E" : "#0F172A",
+                  boxShadow: isXmas ? "0 0 12px rgba(245,200,66,0.35)" : undefined,
+                }}
+              >
+                Xem ngay →
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* =========================================================================
    MAIN COMPONENT
    ========================================================================= */
@@ -388,11 +512,12 @@ function HeroImageManagerModalContent({
   onClose,
   inline,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<'sides' | 'hero' | 'mobile' | 'popup'>('sides');
+  const [activeTab, setActiveTab] = useState<'appearance' | 'sides' | 'hero' | 'mobile' | 'popup'>('appearance');
   
-  // Banner config state
+  // Banner & appearance config state
   const [form, setForm] = useState<BannerConfig>(DEFAULT_BANNER_CONFIG);
   const [saving, setSaving] = useState(false);
+  const [saveFeedback, setSaveFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
     if (isOpen || inline) {
@@ -405,6 +530,8 @@ function HeroImageManagerModalContent({
             setForm({
               ...DEFAULT_BANNER_CONFIG,
               ...data,
+              webTheme: data.webTheme === 'christmas' ? 'christmas' : 'default',
+              mainMascot: data.mainMascot || DEFAULT_MAIN_MASCOT,
               heroLeftUrl: data.heroLeftUrl || data.leftUrl || '',
               heroLeftLinkUrl: data.heroLeftLinkUrl || data.leftLinkUrl || '',
               heroRightUrl: data.heroRightUrl || data.rightUrl || '',
@@ -418,7 +545,7 @@ function HeroImageManagerModalContent({
               popupEnabled: Boolean(data.popupEnabled),
               popupImageUrl: data.popupImageUrl || '',
               popupLinkUrl: data.popupLinkUrl || '',
-              popupTitle: data.popupTitle || 'Thông tin tài trợ & Đối tác',
+              popupTitle: data.popupTitle || '',
               popupTriggerType: data.popupTriggerType || 'time',
               popupFrequency: Number(data.popupFrequency) || 15,
             });
@@ -436,9 +563,12 @@ function HeroImageManagerModalContent({
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setSaveFeedback(null);
     try {
       const payload: BannerConfig = {
         ...form,
+        webTheme: form.webTheme === 'christmas' ? 'christmas' : 'default',
+        mainMascot: form.mainMascot || DEFAULT_MAIN_MASCOT,
         // Keep legacy leftUrl / rightUrl in sync with hero images
         leftUrl: form.heroLeftUrl || form.leftUrl || '',
         leftLinkUrl: form.heroLeftLinkUrl || form.leftLinkUrl || '',
@@ -450,24 +580,32 @@ function HeroImageManagerModalContent({
       await setDoc(doc(db, "settings", "heroImages"), payload, { merge: true });
 
       // Instantly update cache and dispatch live event across all open windows/tabs
-      setCachedData("hero_images_settings", payload, CacheTTL.LONG);
-      setCachedData("sensei_banner_config_v2", payload, CacheTTL.LONG);
+      const broadcastPayload: BannerConfig = {
+        ...payload,
+        updatedAt: Date.now(),
+      };
+      setCachedData("hero_images_settings", broadcastPayload, CacheTTL.LONG);
+      setCachedData("sensei_banner_config_v2", broadcastPayload, CacheTTL.LONG);
       window.dispatchEvent(
         new CustomEvent("sensei_hero_images_updated", {
-          detail: payload,
+          detail: broadcastPayload,
         })
       );
 
       if (onClose) {
         onClose();
       } else {
-        alert(
-          "Lưu cài đặt banner & quảng cáo thành công! Mọi thay đổi hiển thị ngay lập tức mà không cần deploy."
-        );
+        setSaveFeedback({
+          type: 'success',
+          message: 'Đã lưu cấu hình Giao diện web, Mascot 3D & Banner thành công! Mọi thay đổi áp dụng ngay lập tức.',
+        });
       }
     } catch (error: any) {
-      console.error("Error saving banners:", error);
-      alert(`Đã xảy ra lỗi khi lưu: ${error.message || "Lỗi không xác định"}`);
+      console.error("Error saving appearance & banners:", error);
+      setSaveFeedback({
+        type: 'error',
+        message: `Đã xảy ra lỗi khi lưu: ${error.message || "Lỗi không xác định"}`,
+      });
     } finally {
       setSaving(false);
     }
@@ -523,16 +661,20 @@ function HeroImageManagerModalContent({
     reader.readAsDataURL(file);
   };
 
+  const selectedMascotObj =
+    MASCOT_OPTIONS.find((m) => m.src === (form.mainMascot || DEFAULT_MAIN_MASCOT)) ||
+    MASCOT_OPTIONS[0];
+
   const content = (
     <div className={`bg-white dark:bg-slate-900 ${inline ? "" : "rounded-2xl max-w-4xl w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto max-h-[92vh]"}`}>
       <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
         <div>
           <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-amber-500" />
-            Quản Lý Banner & Quảng Cáo Nhà Tài Trợ
+            Quản Lý Giao Diện, Mascot &amp; Banner
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Thiết lập link ảnh, link đích, kích thước chuẩn và xem trước màn hình thực tế (Live Preview).
+            Chuyển đổi chủ đề giao diện toàn web, chọn linh vật 3D chính và thiết lập banner quảng cáo kèm Live Preview.
           </p>
         </div>
         {!inline && onClose && (
@@ -545,12 +687,28 @@ function HeroImageManagerModalContent({
         )}
       </div>
 
-      {/* 4 Tabs tách biệt hoàn toàn */}
+      {/* 5 Tabs: Giao diện web đứng đầu tiên, tiếp theo là 4 tab Banner */}
       <div className="flex border-b border-slate-200 dark:border-slate-800 mt-4 mb-6 gap-1 overflow-x-auto">
         <button
           type="button"
+          onClick={() => setActiveTab('appearance')}
+          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors border-b-2 whitespace-nowrap shrink-0 cursor-pointer ${
+            activeTab === 'appearance'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
+              : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+          }`}
+        >
+          <Palette className="w-4 h-4" />
+          <span>Giao diện web</span>
+          {form.webTheme === 'christmas' && (
+            <span className="text-[11px] leading-none" aria-hidden="true">🎄</span>
+          )}
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab('sides')}
-          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors border-b-2 whitespace-nowrap ${
+          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors border-b-2 whitespace-nowrap shrink-0 cursor-pointer ${
             activeTab === 'sides'
               ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
               : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -563,7 +721,7 @@ function HeroImageManagerModalContent({
         <button
           type="button"
           onClick={() => setActiveTab('hero')}
-          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors border-b-2 whitespace-nowrap ${
+          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors border-b-2 whitespace-nowrap shrink-0 cursor-pointer ${
             activeTab === 'hero'
               ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
               : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -576,7 +734,7 @@ function HeroImageManagerModalContent({
         <button
           type="button"
           onClick={() => setActiveTab('mobile')}
-          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors border-b-2 whitespace-nowrap ${
+          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors border-b-2 whitespace-nowrap shrink-0 cursor-pointer ${
             activeTab === 'mobile'
               ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
               : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -589,7 +747,7 @@ function HeroImageManagerModalContent({
         <button
           type="button"
           onClick={() => setActiveTab('popup')}
-          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors border-b-2 whitespace-nowrap ${
+          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors border-b-2 whitespace-nowrap shrink-0 cursor-pointer ${
             activeTab === 'popup'
               ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
               : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -598,13 +756,255 @@ function HeroImageManagerModalContent({
           <Layers className="w-4 h-4" />
           <span>Quảng Cáo Pop-up</span>
           {form.popupEnabled && (
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-bold text-emerald-500">ON</span>
           )}
         </button>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
-        {/* ================= TAB 1: BANNER DỌC 2 BÊN LỀ (SKYSCRAPER SÁT LỀ) ================= */}
+        {/* ================= TAB 0: GIAO DIỆN WEB (CHỦ ĐỀ UI & MASCOT 3D) ================= */}
+        {activeTab === 'appearance' && (
+          <div className="space-y-6 animate-in fade-in duration-150">
+            {/* SECTION A: CHỦ ĐỀ GIAO DIỆN WEBSITE */}
+            <div className="p-4 sm:p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <Palette className="w-4 h-4 text-blue-500" />
+                    Chủ đề Giao diện Website (Đồng bộ toàn web &amp; Admin)
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Admin quyết định giao diện chung cho toàn bộ người dùng. Không làm tăng lượt đọc Firestore.
+                  </p>
+                </div>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-300 shrink-0">
+                  Đang chọn:{" "}
+                  <strong className="text-blue-600 dark:text-blue-400">
+                    {form.webTheme === 'christmas' ? 'Giáng Sinh (Deep Forest Night)' : 'Mặc định (Default)'}
+                  </strong>
+                </span>
+              </div>
+
+              {/* 2 Theme Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Option 1: Default Theme */}
+                <button
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, webTheme: 'default' }))}
+                  className={`text-left p-4 rounded-2xl border-2 transition-all space-y-3 cursor-pointer ${
+                    (form.webTheme || 'default') === 'default'
+                      ? 'border-blue-600 bg-blue-50/40 dark:bg-blue-900/15 shadow-md'
+                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/60 hover:border-slate-400 dark:hover:border-slate-500'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                        <span>Mặc định (Default)</span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Giao diện SenseiTLU nguyên bản hiện đại với sắc xanh dương &amp; cyan.
+                      </p>
+                    </div>
+                    <div
+                      className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border ${
+                        (form.webTheme || 'default') === 'default'
+                          ? 'bg-blue-600 border-blue-600 text-white'
+                          : 'border-slate-400 dark:border-slate-600'
+                      }`}
+                    >
+                      {(form.webTheme || 'default') === 'default' && <Check className="w-3.5 h-3.5" />}
+                    </div>
+                  </div>
+
+                  {/* Color Swatches */}
+                  <div className="xmas-preview-preserve flex items-center gap-1.5">
+                    {['#020617', '#0F172A', '#1E293B', '#2563EB', '#22D3EE', '#F8FAFC'].map((hex) => (
+                      <span
+                        key={hex}
+                        className="w-5 h-5 rounded-md border border-white/20 shadow-xs"
+                        style={{ backgroundColor: hex }}
+                        title={hex}
+                      />
+                    ))}
+                  </div>
+
+                  <WebThemeLivePreview theme="default" />
+                </button>
+
+                {/* Option 2: Christmas Deep Forest Night Theme */}
+                <button
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, webTheme: 'christmas' }))}
+                  className={`text-left p-4 rounded-2xl border-2 transition-all space-y-3 cursor-pointer ${
+                    form.webTheme === 'christmas'
+                      ? 'border-amber-400 bg-amber-500/10 shadow-md'
+                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/60 hover:border-slate-400 dark:hover:border-slate-500'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                        <Snowflake className="w-4 h-4 text-sky-400 shrink-0" />
+                        <span>Giáng Sinh — Deep Forest Night</span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Bảng màu rừng thông đêm đông, nút vàng kim, font Playfair Display, tuyết rơi &amp; đèn lễ hội.
+                      </p>
+                    </div>
+                    <div
+                      className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border ${
+                        form.webTheme === 'christmas'
+                          ? 'bg-amber-400 border-amber-400 text-slate-950'
+                          : 'border-slate-400 dark:border-slate-600'
+                      }`}
+                    >
+                      {form.webTheme === 'christmas' && <Check className="w-3.5 h-3.5" />}
+                    </div>
+                  </div>
+
+                  {/* Color Swatches from Christmas UI Kit */}
+                  <div className="xmas-preview-preserve flex items-center gap-1.5">
+                    {['#07160E', '#0D2B1F', '#1B4332', '#2D6A4F', '#F5C842', '#C0392B', '#A8D8EA', '#F0EDE8'].map((hex) => (
+                      <span
+                        key={hex}
+                        className="w-5 h-5 rounded-md border border-white/20 shadow-xs"
+                        style={{ backgroundColor: hex }}
+                        title={hex}
+                      />
+                    ))}
+                  </div>
+
+                  <WebThemeLivePreview theme="christmas" />
+                </button>
+              </div>
+            </div>
+
+            {/* SECTION B: CHỌN MASCOT 3D CHÍNH */}
+            <div className="p-4 sm:p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    Chọn Mascot 3D Chính ({MASCOT_OPTIONS.length} mẫu có sẵn)
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Áp dụng cho linh vật nổi ở góc màn hình Trang chủ (Desktop &amp; Mobile). Mặc định hiện tại là CapyTLU Măng Tô.
+                  </p>
+                </div>
+                {(form.mainMascot || DEFAULT_MAIN_MASCOT) !== DEFAULT_MAIN_MASCOT && (
+                  <button
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, mainMascot: DEFAULT_MAIN_MASCOT }))}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Về Măng Tô (Mặc định)
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+                {/* 7 Mascot Selection Cards */}
+                <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {MASCOT_OPTIONS.map((mascot) => {
+                    const isSelected = (form.mainMascot || DEFAULT_MAIN_MASCOT) === mascot.src;
+                    return (
+                      <button
+                        key={mascot.id}
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, mainMascot: mascot.src }))}
+                        className={`text-left p-3 rounded-xl border transition-all flex items-start justify-between gap-2.5 cursor-pointer ${
+                          isSelected
+                            ? 'border-blue-600 bg-blue-50/50 dark:bg-blue-900/20 shadow-sm'
+                            : 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-900/70 hover:border-slate-400 dark:hover:border-slate-500'
+                        }`}
+                      >
+                        <div className="min-w-0 space-y-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
+                              {mascot.name}
+                            </span>
+                            {mascot.tag && (
+                              <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                                · {mascot.tag}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug line-clamp-2">
+                            {mascot.description}
+                          </p>
+                          <div className="text-[10px] font-mono text-slate-400 truncate">
+                            {mascot.src.replace('/', '')}
+                          </div>
+                        </div>
+                        <div
+                          className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 border ${
+                            isSelected
+                              ? 'bg-blue-600 border-blue-600 text-white'
+                              : 'border-slate-300 dark:border-slate-600'
+                          }`}
+                        >
+                          {isSelected && <Check className="w-3 h-3" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Single Interactive 3D Live Preview Stage (1 WebGL context for smooth performance) */}
+                <div className="lg:col-span-5 flex flex-col rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-slate-950/90 p-4 justify-between min-h-[280px]">
+                  <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
+                    <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                      <Eye className="w-3.5 h-3.5 text-blue-400" />
+                      Xem trước 3D trực tiếp
+                    </span>
+                    <span className="text-[10px] text-slate-400">Kéo để xoay góc nhìn</span>
+                  </div>
+
+                  <div className="relative flex-1 flex items-center justify-center min-h-[200px] my-2">
+                    <model-viewer
+                      key={selectedMascotObj.src}
+                      src={selectedMascotObj.src}
+                      alt={selectedMascotObj.name}
+                      camera-controls
+                      auto-rotate
+                      rotation-per-second="18deg"
+                      disable-zoom
+                      camera-orbit="0deg 78deg 100%"
+                      field-of-view="28deg"
+                      environment-image="neutral"
+                      tone-mapping="neutral"
+                      exposure="1.2"
+                      shadow-intensity="1"
+                      shadow-softness="0.35"
+                      interaction-prompt="none"
+                      style={{
+                        width: "100%",
+                        height: "210px",
+                        backgroundColor: "transparent",
+                      }}
+                    />
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2 text-xs">
+                    <div className="min-w-0">
+                      <div className="font-bold text-slate-100 truncate">{selectedMascotObj.name}</div>
+                      <div className="text-[11px] text-slate-400 font-mono truncate">
+                        {selectedMascotObj.src}
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-semibold text-emerald-400 shrink-0">
+                      Sẵn sàng hiển thị
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================= TAB 2: BANNER DỌC 2 BÊN LỀ (SKYSCRAPER SÁT LỀ) ================= */}
         {activeTab === 'sides' && (
           <div className="space-y-6 animate-in fade-in duration-150">
             {/* Guide & Size Recommendation Box */}
@@ -1326,11 +1726,28 @@ function HeroImageManagerModalContent({
           </div>
         )}
 
+        {/* Inline Save Feedback */}
+        {saveFeedback && (
+          <div
+            className={`flex items-center gap-2 p-3 rounded-xl border text-xs font-medium ${
+              saveFeedback.type === 'success'
+                ? 'bg-emerald-500/10 border-emerald-500/35 text-emerald-600 dark:text-emerald-300'
+                : 'bg-red-500/10 border-red-500/35 text-red-600 dark:text-red-300'
+            }`}
+          >
+            {saveFeedback.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 shrink-0" />
+            )}
+            <span>{saveFeedback.message}</span>
+          </div>
+        )}
+
         {/* Real-time notice */}
         <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40 text-xs text-blue-700 dark:text-blue-300">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
           <span>
-            <strong>Cập nhật tức thì:</strong> Mọi banner và popup cài đặt tại đây sẽ hiển thị ngay lập tức trên web mà <em>không cần bấm Đồng bộ hay Deploy</em>.
+            <strong>Cập nhật tức thì:</strong> Mọi cài đặt giao diện, mascot 3D, banner và popup tại đây sẽ đồng bộ ngay lập tức lên toàn web mà <em>không cần bấm Đồng bộ hay Deploy</em>.
           </span>
         </div>
 
@@ -1340,7 +1757,7 @@ function HeroImageManagerModalContent({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium text-slate-700 dark:text-slate-300"
+              className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
             >
               Hủy
             </button>
@@ -1348,10 +1765,10 @@ function HeroImageManagerModalContent({
           <button
             type="submit"
             disabled={saving}
-            className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-semibold shadow-md shadow-blue-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-semibold shadow-md shadow-blue-500/20 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
           >
             <CheckCircle2 className="w-4 h-4" />
-            {saving ? "Đang lưu cài đặt..." : "Lưu cài đặt banner & quảng cáo"}
+            {saving ? "Đang lưu cài đặt..." : "Lưu cài đặt giao diện & banner"}
           </button>
         </div>
       </form>
