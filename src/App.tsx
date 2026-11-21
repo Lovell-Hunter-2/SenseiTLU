@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import MaintenanceGuard from './components/MaintenanceGuard';
 import PopupBanner from './components/PopupBanner';
+import ChristmasThemeEngine from './components/ChristmasThemeEngine';
 
 import Home from './pages/Home';
 // Lazy loading secondary pages for better performance
@@ -101,6 +102,7 @@ export default function App() {
           <ScrollToTopOnRouteChange />
           <ActivityTracker />
           <ErrorTracker />
+          <ChristmasThemeEngine />
           <PopupBanner />
           <MaintenanceGuard>
             <Suspense fallback={<PageLoadingFallback />}>
