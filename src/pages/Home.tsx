@@ -299,6 +299,7 @@ const emojiMap: Record<string, string> = {
 export default function Home() {
   const bannerConfig = useBannerConfig();
   const isChristmasTheme = bannerConfig.webTheme === "christmas";
+  const [watermarkImgFailed, setWatermarkImgFailed] = useState(false);
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
   const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -723,15 +724,79 @@ export default function Home() {
           <ClockWidget isMobileView={true} />
         </div>
       {/* Background Capybara Watermark */}
-      <div className="fixed inset-0 pointer-events-none flex justify-center items-center z-0 opacity-[0.04] dark:opacity-[0.08] mt-20">
-        <img
-          src="/avt_tlu (remove).png"
-          alt=""
-          onError={(e) => {
-            e.currentTarget.style.display = "none";
-          }}
-          className="w-[80vw] max-w-[600px] object-contain object-bottom"
-        />
+      <div
+        className={`fixed inset-0 pointer-events-none flex justify-center items-center z-0 mt-20 select-none ${
+          isChristmasTheme
+            ? "opacity-[0.11]"
+            : "opacity-[0.04] dark:opacity-[0.08]"
+        }`}
+        aria-hidden="true"
+      >
+        {!watermarkImgFailed ? (
+          <img
+            src="/avt_tlu%20(remove).png"
+            alt=""
+            onError={() => setWatermarkImgFailed(true)}
+            className={`w-[80vw] max-w-[600px] object-contain object-bottom ${
+              isChristmasTheme ? "brightness-110 saturate-90" : ""
+            }`}
+          />
+        ) : (
+          <svg
+            viewBox="0 0 360 390"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-[75vw] max-w-[520px] h-auto"
+          >
+            {/* Optional festive Santa Hat in Christmas theme */}
+            {isChristmasTheme && (
+              <g>
+                <path
+                  d="M118 92C128 40 174 14 226 22C258 27 278 48 282 78C262 64 238 66 226 82C220 90 226 98 236 106H118Z"
+                  fill="#E74C3C"
+                />
+                <rect x="108" y="88" width="136" height="24" rx="12" fill="#F0EDE8" />
+                <circle cx="282" cy="80" r="15" fill="#F0EDE8" />
+              </g>
+            )}
+            {/* Ears */}
+            <circle cx="118" cy="112" r="24" fill="#D8A77E" />
+            <circle cx="118" cy="112" r="12" fill="#8C5B38" />
+            <circle cx="242" cy="112" r="24" fill="#D8A77E" />
+            <circle cx="242" cy="112" r="12" fill="#8C5B38" />
+            {/* Head */}
+            <rect x="86" y="96" width="188" height="148" rx="74" fill="#E2B58D" />
+            {/* Eyes */}
+            <circle cx="136" cy="148" r="7.5" fill="#1E1B18" />
+            <circle cx="224" cy="148" r="7.5" fill="#1E1B18" />
+            {/* Blush cheeks */}
+            <ellipse cx="118" cy="166" rx="16" ry="9" fill="#F29CB0" fillOpacity="0.8" />
+            <ellipse cx="242" cy="166" rx="16" ry="9" fill="#F29CB0" fillOpacity="0.8" />
+            {/* Snout */}
+            <rect x="150" y="150" width="60" height="66" rx="28" fill="#C9946A" />
+            <path d="M168 168H192M180 168V198M180 198L169 208M180 198L191 208" stroke="#1E1B18" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+            {/* Body & Uniform */}
+            <path
+              d="M96 236C96 218 118 212 180 212C242 212 264 218 264 236L278 318C280 352 246 372 180 372C114 372 80 352 82 318L96 236Z"
+              fill={isChristmasTheme ? "#C0392B" : "#DC2626"}
+            />
+            {/* White Collar */}
+            <path
+              d="M114 226C136 254 224 254 246 226L258 262C230 288 130 288 102 262L114 226Z"
+              fill="#F8FAFC"
+            />
+            {/* Gold/Yellow Accent Stripe */}
+            <path
+              d="M99 272C140 296 220 296 261 272"
+              stroke="#F5C842"
+              strokeWidth="10"
+              strokeLinecap="round"
+            />
+            {/* Paws */}
+            <ellipse cx="94" cy="276" rx="20" ry="30" transform="rotate(14 94 276)" fill="#D8A77E" />
+            <ellipse cx="266" cy="276" rx="20" ry="30" transform="rotate(-14 266 276)" fill="#D8A77E" />
+          </svg>
+        )}
       </div>
 
       {/* Hero / Search Section */}
