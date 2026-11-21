@@ -167,3 +167,684 @@
   }
 }
 
+/* ==========================================================================
+   CHRISTMAS UI KIT — DEEP FOREST NIGHT THEME
+   Activated globally when Admin sets webTheme = 'christmas' (html.theme-christmas)
+   100% aligned with Christmas UI Kit — Deep Forest Night specification tokens.
+   ========================================================================== */
+
+html.theme-christmas {
+  --xmas-forest: #0d2b1f;
+  --xmas-pine: #1b4332;
+  --xmas-sage: #2d6a4f;
+  --xmas-night: #07160e;
+  --xmas-gold: #f5c842;
+  --xmas-star: #ffd700;
+  --xmas-red: #c0392b;
+  --xmas-holly: #e74c3c;
+  --xmas-snow: #f0ede8;
+  --xmas-snow-dim: #b8c4bb;
+  --xmas-ice: #a8d8ea;
+  --xmas-copper: #b87333;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --radius-pill: 9999px;
+  --radius-lg: 20px;
+  --shadow-gold: 0 0 24px rgba(245, 200, 66, 0.4);
+  color-scheme: dark;
+}
+
+/* Snowfall & Fairy Lights Keyframes (GPU compositor-only properties) */
+@keyframes xmasSnowfall {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(var(--xmas-drift, 20px), 50vh, 0) rotate(180deg);
+  }
+  100% {
+    transform: translate3d(0, 112vh, 0) rotate(360deg);
+  }
+}
+
+@keyframes xmasTwinkle {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.88);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.18);
+  }
+}
+
+.xmas-snowflake {
+  position: absolute;
+  top: -24px;
+  border-radius: 9999px;
+  will-change: transform;
+  animation-name: xmasSnowfall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  line-height: 1;
+  text-shadow: 0 0 8px rgba(240, 237, 232, 0.45);
+}
+
+.xmas-fairy-bulb {
+  animation: xmasTwinkle 2.6s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xmas-snowfall-layer {
+    display: none;
+  }
+  .xmas-fairy-bulb {
+    animation: none;
+    opacity: 0.85;
+  }
+}
+
+/* Base Canvas, Body Font & Selection */
+html.theme-christmas,
+html.theme-christmas body,
+html.theme-christmas #root {
+  background-color: var(--xmas-forest);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(45, 106, 79, 0.38), transparent 65%),
+    linear-gradient(180deg, #07160e 0%, #0d2b1f 28%, #0a2218 100%);
+  background-attachment: fixed;
+  color: var(--xmas-snow);
+  font-family: var(--font-body);
+}
+
+html.theme-christmas ::selection {
+  background-color: var(--xmas-gold);
+  color: var(--xmas-night);
+}
+
+/* Custom Scrollbar in Deep Forest Night */
+html.theme-christmas .custom-scrollbar::-webkit-scrollbar-thumb,
+html.theme-christmas ::-webkit-scrollbar-thumb {
+  background: rgba(45, 106, 79, 0.8);
+  border-radius: 9999px;
+}
+
+html.theme-christmas .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+html.theme-christmas ::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 200, 66, 0.8);
+}
+
+/* Editorial Playfair Display Typography (--font-display) for Major & Card Headings */
+html.theme-christmas h1:not(.xmas-preview-preserve *),
+html.theme-christmas h2:not(.xmas-preview-preserve *),
+html.theme-christmas h3:not(.xmas-preview-preserve *),
+html.theme-christmas .xmas-display-font {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Header / Top Navigation Bar -> Deep Night (#07160E) + Sage Border */
+html.theme-christmas header:not(.xmas-preview-preserve *) {
+  background-color: rgba(7, 22, 14, 0.92) !important;
+  border-color: rgba(45, 106, 79, 0.78) !important;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.38);
+}
+
+/* Footer */
+html.theme-christmas footer:not(.xmas-preview-preserve *) {
+  background-color: rgba(7, 22, 14, 0.68) !important;
+  border-color: rgba(45, 106, 79, 0.58) !important;
+  color: var(--xmas-snow-dim);
+}
+
+/* Main App Shell & Deep Canvas Wrappers -> Forest (#0D2B1F) */
+html.theme-christmas .bg-slate-50:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-950:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-950:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
+  background-color: var(--xmas-forest);
+}
+
+html.theme-christmas .bg-slate-950\/40:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-950\/50:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-950\/60:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-950\/80:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-950\/90:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-950\/40:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-950\/50:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-950\/60:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-950\/80:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-950\/90:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-\[\#0a1120\]\/95:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-\[\#0b1324\]\/90:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-\[\#0c1425\]\/95:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-\[\#0c1427\]:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-\[\#151723\]:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-\[\#0f111a\]:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
+  background-color: rgba(7, 22, 14, 0.92);
+}
+
+/* Structural Cards, Panels, Modals & Sidebars -> Pine (#1B4332) */
+html.theme-christmas .bg-white:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-white\/60:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-white\/70:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-white\/80:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-white\/90:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-900:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-900:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-900\/90:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-900\/90:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-900\/95:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-900\/95:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-900\/80:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-900\/80:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-900\/70:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-900\/70:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-900\/60:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-900\/60:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-\[\#0d1527\]:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-\[\#24283b\]:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-\[\#1a1d2d\]:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
+  background-color: var(--xmas-pine);
+}
+
+/* Nested Wells, Sub-Panels & Secondary Chips -> Deep Forest (#0D2B1F) */
+html.theme-christmas .bg-slate-900\/50:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-900\/50:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-50\/70:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-50\/80:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-100:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-200:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-800:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-800:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-800\/40:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-800\/50:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-800\/60:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-800\/70:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-800\/80:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-800\/90:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-800\/40:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-800\/50:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-800\/60:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-800\/70:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-800\/80:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-800\/90:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-slate-700:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-slate-700:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
+  background-color: rgba(13, 43, 31, 0.9);
+}
+
+/* Admin Alert Stat Cards (Hardcoded dark tints -> Deep Forest Cranberry & Copper) */
+html.theme-christmas .bg-\[\#1c1015\]:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
+  background-color: rgba(192, 57, 43, 0.22);
+  border-color: rgba(231, 76, 60, 0.5);
+}
+
+html.theme-christmas .bg-\[\#201c10\]:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
+  background-color: rgba(184, 115, 51, 0.22);
+  border-color: rgba(245, 200, 66, 0.45);
+}
+
+/* Hover States -> Sage (#2D6A4F) */
+html.theme-christmas .hover\:bg-slate-50:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover,
+html.theme-christmas .hover\:bg-slate-100:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover,
+html.theme-christmas .hover\:bg-slate-200:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover,
+html.theme-christmas .hover\:bg-slate-800:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover,
+html.theme-christmas .dark\:hover\:bg-slate-800:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover,
+html.theme-christmas .dark\:hover\:bg-slate-800\/60:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover,
+html.theme-christmas .dark\:hover\:bg-slate-700:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover,
+html.theme-christmas .hover\:bg-slate-700:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover,
+html.theme-christmas .hover\:bg-\[\#121c33\]:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover,
+html.theme-christmas .hover\:bg-\[\#2f344d\]:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover {
+  background-color: rgba(45, 106, 79, 0.65);
+}
+
+/* Hairline Borders -> Sage (#2D6A4F) across all light & dark opacity classes */
+html.theme-christmas .border-slate-100:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .border-slate-200:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .border-slate-200\/60:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .border-slate-200\/80:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .border-slate-300:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .border-slate-700:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .border-slate-700\/50:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .border-slate-700\/60:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .border-slate-700\/80:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .border-slate-800:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .border-slate-800\/50:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .border-slate-800\/60:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .border-slate-800\/80:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .border-slate-800\/90:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:border-slate-700:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:border-slate-700\/50:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:border-slate-700\/60:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:border-slate-700\/80:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:border-slate-800:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:border-slate-800\/50:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:border-slate-800\/60:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:border-slate-800\/80:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:border-slate-800\/90:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
+  border-color: rgba(45, 106, 79, 0.8);
+}
+
+/* Primary & Secondary Typography -> Snow (#F0EDE8) & Frost (#B8C4BB) */
+html.theme-christmas .text-slate-900:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):not(.bg-cyan-400):not(.bg-blue-600):not(.bg-indigo-600):not(.bg-violet-600):not(.bg-purple-600),
+html.theme-christmas .text-slate-800:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):not(.bg-cyan-400):not(.bg-blue-600):not(.bg-indigo-600):not(.bg-violet-600):not(.bg-purple-600),
+html.theme-christmas .text-slate-700:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):not(.bg-cyan-400):not(.bg-blue-600):not(.bg-indigo-600):not(.bg-violet-600):not(.bg-purple-600),
+html.theme-christmas .dark\:text-slate-50:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:text-slate-100:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:text-slate-200:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:text-white:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
+  color: var(--xmas-snow);
+}
+
+html.theme-christmas .text-slate-600:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .text-slate-500:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .text-slate-400:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .text-slate-300:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:text-slate-300:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:text-slate-400:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
+  color: var(--xmas-snow-dim);
+}
+
+/* Gradient Display Text (Blue/Purple/Indigo -> Christmas Gold-Star-Snow Gradient) */
+html.theme-christmas .bg-clip-text.text-transparent:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
+  background-image: linear-gradient(135deg, #f5c842 0%, #ffd700 55%, #f0ede8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Inputs, Selects & Textareas -> Deep Night (#07160E) with Sage Border & Gold Focus */
+html.theme-christmas input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.xmas-preview-preserve *),
+html.theme-christmas textarea:not(.xmas-preview-preserve *),
+html.theme-christmas select:not(.xmas-preview-preserve *) {
+  background-color: var(--xmas-night) !important;
+  border-color: rgba(45, 106, 79, 0.9) !important;
+  color: var(--xmas-snow) !important;
+}
+
+html.theme-christmas input::placeholder,
+html.theme-christmas textarea::placeholder {
+  color: rgba(184, 196, 187, 0.65);
+}
+
+html.theme-christmas input:focus:not(.xmas-preview-preserve *),
+html.theme-christmas textarea:focus:not(.xmas-preview-preserve *),
+html.theme-christmas select:focus:not(.xmas-preview-preserve *) {
+  border-color: var(--xmas-gold) !important;
+  box-shadow: 0 0 0 2px rgba(245, 200, 66, 0.25);
+}
+
+/* Primary CTA Buttons -> Christmas Gold (#F5C842) + Deep Night Text + Pill Radius + Gold Glow */
+html.theme-christmas .bg-cyan-400:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-blue-600:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-indigo-600:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-violet-600:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-purple-600:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-\[\#6b4cff\]:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
+  background-color: var(--xmas-gold);
+  color: var(--xmas-night);
+  font-weight: 700;
+  border-color: rgba(255, 215, 0, 0.6);
+  box-shadow: 0 0 14px rgba(245, 200, 66, 0.22);
+}
+
+html.theme-christmas a.bg-cyan-400:not(.xmas-preview-preserve *),
+html.theme-christmas a.bg-blue-600:not(.xmas-preview-preserve *),
+html.theme-christmas button.bg-cyan-400:not(.xmas-preview-preserve *),
+html.theme-christmas button.bg-blue-600:not(.xmas-preview-preserve *),
+html.theme-christmas button.bg-indigo-600:not(.xmas-preview-preserve *),
+html.theme-christmas button.bg-violet-600:not(.xmas-preview-preserve *),
+html.theme-christmas button.bg-\[\#6b4cff\]:not(.xmas-preview-preserve *) {
+  border-radius: var(--radius-pill);
+}
+
+html.theme-christmas .bg-cyan-400:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover,
+html.theme-christmas .bg-blue-600:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover,
+html.theme-christmas .bg-indigo-600:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover,
+html.theme-christmas .bg-violet-600:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover,
+html.theme-christmas .bg-purple-600:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover,
+html.theme-christmas .bg-\[\#6b4cff\]:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover {
+  background-color: var(--xmas-star);
+  color: var(--xmas-night);
+  box-shadow: var(--shadow-gold);
+}
+
+/* Ensure icons & spans inside gold CTA buttons inherit Deep Night contrast */
+html.theme-christmas .bg-cyan-400:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) *,
+html.theme-christmas .bg-blue-600:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) *,
+html.theme-christmas .bg-indigo-600:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) *,
+html.theme-christmas .bg-violet-600:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) *,
+html.theme-christmas .bg-purple-600:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) *,
+html.theme-christmas .bg-\[\#6b4cff\]:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) * {
+  color: var(--xmas-night);
+}
+
+/* Accent Links, Active Tabs, Section Indicators & Active Nav Items -> Gold (#F5C842) */
+html.theme-christmas .bg-blue-500:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-indigo-500:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
+  background-color: var(--xmas-gold);
+}
+
+html.theme-christmas .text-blue-600:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .text-blue-500:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .text-blue-400:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:text-blue-400:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .text-indigo-500:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .text-indigo-400:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:text-indigo-400:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .text-purple-500:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .text-purple-400:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:text-purple-400:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .text-violet-400:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:text-violet-400:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .hover\:text-blue-600:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover,
+html.theme-christmas .dark\:hover\:text-blue-400:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover {
+  color: var(--xmas-gold);
+}
+
+html.theme-christmas .text-cyan-400:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .text-cyan-300:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:text-cyan-400:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:text-cyan-300:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
+  color: var(--xmas-ice);
+}
+
+html.theme-christmas .border-blue-600:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .border-blue-500:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .border-indigo-500:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .border-violet-500:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
+  border-color: var(--xmas-gold);
+}
+
+/* Info, Badge & Soft Accent Chips -> Gold / Ice on Deep Forest */
+html.theme-christmas .bg-blue-50:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-blue-50\/50:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-blue-50\/70:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-blue-100:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-blue-900\/10:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-blue-900\/20:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-blue-900\/30:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-blue-900\/40:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-blue-950\/30:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-blue-900\/20:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-blue-900\/30:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-blue-900\/40:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-blue-950\/30:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-indigo-100:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-indigo-900\/30:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-indigo-900\/40:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .bg-purple-100:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-purple-900\/30:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-purple-900\/40:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
+  background-color: rgba(245, 200, 66, 0.13);
+  border-color: rgba(245, 200, 66, 0.38);
+}
+
+html.theme-christmas .text-blue-700:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:text-blue-300:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
+  color: var(--xmas-ice);
+}
+
+/* Priority / Featured Tags -> Christmas Gold Pill */
+html.theme-christmas .bg-amber-100:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-amber-900\/40:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-amber-950\/70:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
+  background-color: rgba(245, 200, 66, 0.16);
+  border-color: rgba(245, 200, 66, 0.45);
+  color: var(--xmas-gold);
+}
+
+/* Cranberry / Holly Festive Accents (Donate, Support & Danger Highlights) */
+html.theme-christmas .text-rose-500:not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:text-rose-400:not(.xmas-preview-preserve *) {
+  color: var(--xmas-holly);
+}
+
+html.theme-christmas .xmas-support-btn {
+  background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+  border: 1px solid rgba(245, 200, 66, 0.55);
+  box-shadow: 0 8px 24px rgba(192, 57, 43, 0.45), 0 0 14px rgba(245, 200, 66, 0.25);
+  color: var(--xmas-snow);
+  border-radius: var(--radius-pill);
+}
+
+html.theme-christmas .xmas-support-btn:hover {
+  background: linear-gradient(135deg, #d64536 0%, #c0392b 100%);
+  box-shadow: 0 10px 28px rgba(192, 57, 43, 0.6), 0 0 22px rgba(245, 200, 66, 0.4);
+}
+
+/* Cards & Subject Cards -> --radius-lg (20px), subtle Snow top rim & Gold Hover Glow */
+html.theme-christmas .subject-card {
+  border-radius: var(--radius-lg);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(240, 237, 232, 0.08);
+}
+
+html.theme-christmas .subject-card:hover,
+html.theme-christmas .group.rounded-2xl:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover,
+html.theme-christmas .rounded-2xl.border:not(.xmas-preview-preserve):not(.xmas-preview-preserve *):hover {
+  border-color: rgba(245, 200, 66, 0.55);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.34), 0 0 18px rgba(245, 200, 66, 0.14);
+}
+
+/* Icon Badges inside Subject Cards -> Deep Forest + Gold Rim */
+html.theme-christmas .bg-gradient-to-br.from-slate-100:not(.xmas-preview-preserve *) {
+  background-image: linear-gradient(135deg, #07160e 0%, #0d2b1f 100%);
+  border-color: rgba(245, 200, 66, 0.38);
+}
+
+/* Mobile Bottom Nav & Floating Center FAB in Christmas Theme */
+html.theme-christmas nav.fixed.bottom-0 {
+  background-color: rgba(7, 22, 14, 0.95) !important;
+  border-color: rgba(45, 106, 79, 0.8) !important;
+}
+
+html.theme-christmas .from-\[\#00c6ff\]:not(.xmas-preview-preserve *) {
+  background-image: linear-gradient(135deg, #f5c842 0%, #ffd700 100%) !important;
+  border-color: var(--xmas-night) !important;
+  box-shadow: var(--shadow-gold);
+}
+
+html.theme-christmas .from-\[\#00c6ff\]:not(.xmas-preview-preserve *) * {
+  color: var(--xmas-night) !important;
+}
+
+/* Override remaining blue/indigo/purple gradient buttons & bars (Chatbot, Mở rộng, Admin Sync, etc.) */
+html.theme-christmas .bg-gradient-to-r.from-indigo-500:not(.xmas-preview-preserve *),
+html.theme-christmas .bg-gradient-to-r.from-blue-600:not(.xmas-preview-preserve *),
+html.theme-christmas .bg-gradient-to-br.from-blue-500:not(.xmas-preview-preserve *) {
+  background-image: linear-gradient(135deg, #f5c842 0%, #ffd700 100%);
+  color: var(--xmas-night);
+  border-color: rgba(255, 215, 0, 0.6);
+  box-shadow: 0 0 16px rgba(245, 200, 66, 0.28);
+}
+
+html.theme-christmas a.bg-gradient-to-r.from-indigo-500:not(.xmas-preview-preserve *),
+html.theme-christmas button.bg-gradient-to-r.from-blue-600:not(.xmas-preview-preserve *) {
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+}
+
+html.theme-christmas a.bg-gradient-to-r.from-indigo-500:not(.xmas-preview-preserve *) *,
+html.theme-christmas button.bg-gradient-to-r.from-blue-600:not(.xmas-preview-preserve *) *,
+html.theme-christmas .bg-gradient-to-br.from-blue-500:not(.xmas-preview-preserve *) * {
+  color: var(--xmas-night);
+}
+
+html.theme-christmas .bg-gradient-to-r.from-indigo-500:not(.xmas-preview-preserve *):hover,
+html.theme-christmas .bg-gradient-to-r.from-blue-600:not(.xmas-preview-preserve *):hover {
+  background-image: linear-gradient(135deg, #ffd700 0%, #f5c842 100%);
+  box-shadow: var(--shadow-gold);
+}
+
+/* Override neon blue-indigo-purple card outer glow wrapper -> Gold-Copper-Holly festive shimmer */
+html.theme-christmas .bg-gradient-to-r.from-blue-500.via-indigo-500.to-purple-500:not(.xmas-preview-preserve *) {
+  background-image: linear-gradient(135deg, #f5c842 0%, #b87333 50%, #e74c3c 100%);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.35), 0 0 18px rgba(245, 200, 66, 0.16);
+}
+
+html.theme-christmas .text-indigo-700:not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:text-indigo-300:not(.xmas-preview-preserve *) {
+  color: var(--xmas-gold);
+}
+
+html.theme-christmas .bg-blue-950\/40:not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-blue-950\/40:not(.xmas-preview-preserve *),
+html.theme-christmas .dark\:bg-blue-950\/70:not(.xmas-preview-preserve *) {
+  background-color: rgba(13, 43, 31, 0.9);
+  border-color: rgba(45, 106, 79, 0.85);
+}
+
+/* ==========================================================================
+   CHRISTMAS DECORATION ELEMENTS — INLINE SVG STICKER KIT ANIMATIONS & ANCHORS
+   Directly mapped from Christmas Decoration Elements — Sticker Kit.md
+   ========================================================================== */
+
+@keyframes xmasDecoBounce {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-6deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(-2deg);
+  }
+}
+
+@keyframes xmasDecoSpinSlow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes xmasDecoSway {
+  0%,
+  100% {
+    transform: rotate(-7deg);
+  }
+  50% {
+    transform: rotate(7deg);
+  }
+}
+
+@keyframes xmasDecoHangSwing {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes xmasSleighGlide {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(-1.5deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(1.5deg);
+  }
+}
+
+.deco-corner-hat {
+  position: absolute;
+  top: -15px;
+  right: -11px;
+  z-index: 20;
+  transform: rotate(15deg);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45));
+}
+
+.deco-topleft {
+  position: absolute;
+  top: -12px;
+  left: -10px;
+  z-index: 20;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+}
+
+.deco-stocking {
+  transform: rotate(-10deg);
+}
+
+.deco-topright {
+  position: absolute;
+  top: -14px;
+  right: -10px;
+  z-index: 20;
+  transform-origin: bottom center;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+}
+
+.deco-bottomright {
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.deco-bottomleft {
+  position: absolute;
+  bottom: -6px;
+  left: -6px;
+  z-index: 20;
+  transform: rotate(-14deg);
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35));
+}
+
+.deco-hang {
+  position: absolute;
+  top: -2px;
+  right: 14px;
+  z-index: 20;
+  transform-origin: top center;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+}
+
+.deco-sleigh-corner {
+  position: absolute;
+  top: -16px;
+  right: 10px;
+  z-index: 20;
+  animation: xmasSleighGlide 4.2s ease-in-out infinite;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45));
+}
+
+.bounce-anim {
+  animation: xmasDecoBounce 3.4s ease-in-out infinite;
+}
+
+.spin-slow {
+  animation: xmasDecoSpinSlow 24s linear infinite;
+}
+
+.sway-anim {
+  animation: xmasDecoSway 3.8s ease-in-out infinite;
+}
+
+.string-hang {
+  animation: xmasDecoHangSwing 4.4s ease-in-out infinite;
+}
+
+.sleigh-glide {
+  animation: xmasSleighGlide 4.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bounce-anim,
+  .spin-slow,
+  .sway-anim,
+  .string-hang,
+  .sleigh-glide,
+  .deco-sleigh-corner {
+    animation: none;
+  }
+}
+
