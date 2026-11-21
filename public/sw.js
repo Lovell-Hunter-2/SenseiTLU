@@ -1,4 +1,4 @@
-const CACHE_NAME = 'senseitlu-cache-v2';
+const CACHE_NAME = 'senseitlu-cache-v3';
 const STATIC_ASSETS = [
   '/manifest.json',
   '/favicon.ico',
@@ -28,13 +28,14 @@ self.addEventListener('fetch', (e) => {
   // Chỉ cache các request GET
   if (e.request.method !== 'GET') return;
 
-  // Bỏ qua các request từ chrome-extension, API firebase, googleapis, ads
+  // Bỏ qua các request từ chrome-extension, API firebase, googleapis, ads, và file 3D .glb lớn
   if (
     e.request.url.startsWith('chrome-extension') ||
     e.request.url.includes('firestore.googleapis.com') ||
     e.request.url.includes('identitytoolkit.googleapis.com') ||
     e.request.url.includes('googlesyndication') ||
-    e.request.url.includes('doubleclick')
+    e.request.url.includes('doubleclick') ||
+    e.request.url.endsWith('.glb')
   ) {
     return;
   }
@@ -55,13 +56,15 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Static Assets: Cache-First with Network Fallback
+  // Static Assets: Cache-First with Network Fallback (never cache text/html SPA rewrites!)
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
-      if (cachedResponse) {
+      const cachedType = cachedResponse?.headers.get('content-type') || '';
+      if (cachedResponse && !cachedType.includes('text/html')) {
         // Cập nhật ngầm cache
         fetch(e.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
+          const netType = networkResponse?.headers.get('content-type') || '';
+          if (networkResponse && networkResponse.status === 200 && !netType.includes('text/html')) {
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(e.request, responseToCache);
@@ -72,7 +75,13 @@ self.addEventListener('fetch', (e) => {
       }
 
       return fetch(e.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+        const netType = networkResponse?.headers.get('content-type') || '';
+        if (
+          !networkResponse ||
+          networkResponse.status !== 200 ||
+          networkResponse.type !== 'basic' ||
+          netType.includes('text/html')
+        ) {
           return networkResponse;
         }
 
