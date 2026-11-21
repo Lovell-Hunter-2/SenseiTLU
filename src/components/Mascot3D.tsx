@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import "@google/model-viewer";
+import { useBannerConfig } from "../hooks/useBannerConfig";
+import { DEFAULT_MAIN_MASCOT } from "../types/banner";
 
 // Đảm bảo không lỗi trong môi trường build/SSR
 if (typeof window !== "undefined" && typeof customElements !== "undefined") {
@@ -79,6 +81,7 @@ declare module "react" {
 interface Mascot3DProps {
   className?: string;
   trackMouse?: boolean;
+  src?: string;
 }
 
 // Hàm gia tốc mượt mà sinh động tự nhiên (smooth ease-in-out)
@@ -86,7 +89,9 @@ function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
-export const Mascot3D: React.FC<Mascot3DProps> = ({ className = "", trackMouse = true }) => {
+export const Mascot3D: React.FC<Mascot3DProps> = ({ className = "", trackMouse = true, src }) => {
+  const bannerConfig = useBannerConfig();
+  const activeMascotSrc = src || bannerConfig.mainMascot || DEFAULT_MAIN_MASCOT;
   const modelRef = useRef<HTMLElement | null>(null);
   const tiltRef = useRef<HTMLDivElement | null>(null);
 
@@ -318,7 +323,7 @@ export const Mascot3D: React.FC<Mascot3DProps> = ({ className = "", trackMouse =
       >
         <model-viewer
           ref={modelRef as any}
-          src="/capytlu.glb"
+          src={activeMascotSrc}
           alt="Capybara Mascot 3D"
           camera-controls
           disable-zoom
