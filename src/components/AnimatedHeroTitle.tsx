@@ -1,7 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { AnimatedTextWord } from './AnimatedTextWord';
+import { useBannerConfig } from '../hooks/useBannerConfig';
 
 export const AnimatedHeroTitle: React.FC = () => {
+  const bannerConfig = useBannerConfig();
+  const isChristmas = bannerConfig.webTheme === 'christmas';
   const [triggerCount, setTriggerCount] = useState(0);
   const lastTriggerRef = useRef(0);
 
@@ -17,10 +20,10 @@ export const AnimatedHeroTitle: React.FC = () => {
     <h1
       className="text-4xl md:text-5xl font-bold tracking-tight inline-flex items-center justify-center flex-wrap cursor-pointer select-none group"
       onMouseEnter={handleMouseEnter}
-      aria-label="📚 Tài liệu SenseiTLU"
+      aria-label={isChristmas ? '🎄 Tài liệu SenseiTLU' : '📚 Tài liệu SenseiTLU'}
     >
       <span className="mr-2 sm:mr-3 inline-block transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
-        📚
+        {isChristmas ? '🎄' : '📚'}
       </span>
 
       {/* Từ 1: "Tài" (chạy từ 0.0s) */}
