@@ -19,10 +19,76 @@ function seededValue(seed: number): number {
   return x - Math.floor(x);
 }
 
+const XMAS_CONFETTI_COLORS = [
+  '#F5C842',
+  '#E74C3C',
+  '#2980B9',
+  '#27AE60',
+  '#F0EDE8',
+  '#A8D8EA',
+  '#8E44AD',
+  '#E67E22',
+];
+
+let easterEggCooldownUntil = 0;
+
+/**
+ * Part 5 — Easter Egg on Navbar Tree Logo (🎄 SenseiTLU)
+ * Triggers 42 Christmas confetti pieces + top-center frosted pill toast with 4000ms cooldown.
+ */
+export function triggerChristmasNavbarEasterEgg(logoEl: HTMLElement) {
+  const now = Date.now();
+  if (now < easterEggCooldownUntil) return;
+  easterEggCooldownUntil = now + 4000;
+
+  let toast = document.body.querySelector<HTMLDivElement>('.xmas-ho-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.className = 'xmas-ho-toast';
+    toast.textContent = '🎅 Ho ho ho! Chúc mừng Giáng Sinh!';
+    document.body.appendChild(toast);
+  }
+
+  // Trigger smooth CSS transition
+  requestAnimationFrame(() => {
+    toast?.classList.add('show');
+  });
+  window.setTimeout(() => {
+    toast?.classList.remove('show');
+  }, 2500);
+
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    return;
+  }
+
+  const logoRect = logoEl.getBoundingClientRect();
+  const startX = logoRect.left + logoRect.width / 2;
+  const startY = logoRect.bottom;
+
+  for (let i = 0; i < 42; i++) {
+    window.setTimeout(() => {
+      if (!document.documentElement.classList.contains('theme-christmas')) return;
+      const c = document.createElement('div');
+      c.className = 'xmas-confetti';
+      const color = XMAS_CONFETTI_COLORS[Math.floor(Math.random() * XMAS_CONFETTI_COLORS.length)];
+      c.style.cssText = `
+        left: ${startX + (Math.random() * 160 - 80)}px;
+        top: ${startY}px;
+        background: ${color};
+        animation-duration: ${(Math.random() * 0.7 + 0.7).toFixed(2)}s;
+        animation-delay: 0s;
+        transform: rotate(${Math.random() * 360}deg);
+      `;
+      document.body.appendChild(c);
+      window.setTimeout(() => c.remove(), 1600);
+    }, i * 25);
+  }
+}
+
 /**
  * Global synchronizer for Web Theme (Default vs Christmas Deep Forest Night).
  * - Toggles `html.theme-christmas` class and updates theme-color meta tag.
- * - Mounts lightweight GPU-composited snowfall when Christmas theme is active.
+ * - Mounts lightweight GPU-composited snowfall and Bell Ripple UX when Christmas theme is active.
  */
 export function ChristmasThemeEngine() {
   const config = useBannerConfig();
@@ -46,6 +112,59 @@ export function ChristmasThemeEngine() {
 
     return () => {
       root.classList.remove('theme-christmas');
+    };
+  }, [isChristmas]);
+
+  // Part 2 — Bell Ripple Button (Active ONLY in Christmas mode)
+  useEffect(() => {
+    if (!isChristmas) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+
+    const handleBellRipple = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      const btn = target.closest<HTMLElement>(
+        'button, .btn, a.bg-cyan-400, a.bg-blue-600, a.xmas-support-btn, a.xmas-cta-pill'
+      );
+      if (!btn) return;
+      if (btn.closest('.xmas-preview-preserve') || btn.hasAttribute('data-no-ripple')) return;
+      if ((btn as HTMLButtonElement).disabled) return;
+
+      const computedPos = window.getComputedStyle(btn).position;
+      const addedPositionRelative = computedPos === 'static';
+      if (addedPositionRelative) {
+        btn.style.position = 'relative';
+      }
+      btn.classList.add('xmas-ripple-host');
+
+      const spawnRing = () => {
+        if (!btn.isConnected) return;
+        const ring = document.createElement('div');
+        ring.className = 'xmas-ripple';
+        btn.appendChild(ring);
+        window.setTimeout(() => {
+          ring.remove();
+        }, 700);
+      };
+
+      spawnRing();
+      window.setTimeout(spawnRing, 110);
+
+      window.setTimeout(() => {
+        if (!btn.isConnected) return;
+        if (!btn.querySelector('.xmas-ripple')) {
+          btn.classList.remove('xmas-ripple-host');
+          if (addedPositionRelative) {
+            btn.style.position = '';
+          }
+        }
+      }, 860);
+    };
+
+    document.addEventListener('click', handleBellRipple, true);
+    return () => {
+      document.removeEventListener('click', handleBellRipple, true);
     };
   }, [isChristmas]);
 
