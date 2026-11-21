@@ -6,6 +6,8 @@ import { getCachedData, setCachedData, CacheTTL } from '../services/cacheService
 import { useAuth } from '../contexts/AuthContext';
 
 const CACHE_KEY = 'sensei_banner_config_v2';
+const THROTTLE_MS = 60 * 60 * 1000; // 1 hour per session
+let inflightStudentFetch: Promise<BannerConfig | null> | null = null;
 
 function normalizeBannerConfig(raw?: Partial<BannerConfig> | null): BannerConfig {
   const merged = { ...DEFAULT_BANNER_CONFIG, ...(raw || {}) };
@@ -14,6 +16,36 @@ function normalizeBannerConfig(raw?: Partial<BannerConfig> | null): BannerConfig
     webTheme: merged.webTheme === 'christmas' ? 'christmas' : 'default',
     mainMascot: merged.mainMascot || DEFAULT_MAIN_MASCOT,
   };
+}
+
+function fetchStudentBannerConfigOnce(): Promise<BannerConfig | null> {
+  if (inflightStudentFetch) {
+    return inflightStudentFetch;
+  }
+
+  inflightStudentFetch = getDoc(doc(db, 'settings', 'heroImages'))
+    .then((snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as BannerConfig;
+        const merged = normalizeBannerConfig(data);
+        setCachedData(CACHE_KEY, merged, CacheTTL.LONG);
+        try {
+          sessionStorage.setItem('sensei_banner_last_check', String(Date.now()));
+        } catch (e) {}
+        window.dispatchEvent(new CustomEvent('sensei_hero_images_updated', { detail: merged }));
+        return merged;
+      }
+      return null;
+    })
+    .catch((err) => {
+      console.warn('Student banner fetch error, fallback to cache:', err);
+      return null;
+    })
+    .finally(() => {
+      inflightStudentFetch = null;
+    });
+
+  return inflightStudentFetch;
 }
 
 export function useBannerConfig() {
@@ -48,27 +80,21 @@ export function useBannerConfig() {
       );
     } else {
       const now = Date.now();
-      const lastCheck = Number(sessionStorage.getItem('sensei_banner_last_check') || 0);
-      const THROTTLE_MS = 60 * 60 * 1000; // 1 hour per session
+      let lastCheck = 0;
+      try {
+        lastCheck = Number(sessionStorage.getItem('sensei_banner_last_check') || 0);
+      } catch (e) {}
 
       if (!cached || now - lastCheck > THROTTLE_MS) {
-        getDoc(doc(db, 'settings', 'heroImages'))
-          .then((snap) => {
-            if (snap.exists()) {
-              const data = snap.data() as BannerConfig;
-              const merged = normalizeBannerConfig(data);
-              setConfig(merged);
-              setCachedData(CACHE_KEY, merged, CacheTTL.LONG);
-              sessionStorage.setItem('sensei_banner_last_check', String(now));
-            }
-          })
-          .catch((err) => {
-            console.warn('Student banner fetch error, fallback to cache:', err);
-          });
+        fetchStudentBannerConfigOnce().then((merged) => {
+          if (merged) {
+            setConfig(merged);
+          }
+        });
       }
     }
 
-    // 3. Local custom event listener for instant reflection across tabs
+    // 3. Local custom event listener for instant reflection across hooks/tabs
     const handleLocalUpdate = (e: any) => {
       if (e.detail) {
         setConfig((prev) => normalizeBannerConfig({ ...prev, ...e.detail }));
