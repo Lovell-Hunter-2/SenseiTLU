@@ -518,6 +518,29 @@ function HeroImageManagerModalContent({
   const [form, setForm] = useState<BannerConfig>(DEFAULT_BANNER_CONFIG);
   const [saving, setSaving] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [mascotFileMissing, setMascotFileMissing] = useState(false);
+
+  const selectedMascotSrc = form.mainMascot || DEFAULT_MAIN_MASCOT;
+
+  useEffect(() => {
+    if (!isOpen && !inline) return;
+    let cancelled = false;
+    setMascotFileMissing(false);
+    if (selectedMascotSrc.startsWith('/')) {
+      fetch(selectedMascotSrc, { method: 'HEAD' })
+        .then((res) => {
+          if (cancelled) return;
+          const ct = res.headers.get('content-type') || '';
+          if (!res.ok || ct.includes('text/html')) {
+            setMascotFileMissing(true);
+          }
+        })
+        .catch(() => {});
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, inline, selectedMascotSrc]);
 
   useEffect(() => {
     if (isOpen || inline) {
@@ -967,6 +990,7 @@ function HeroImageManagerModalContent({
                       key={selectedMascotObj.src}
                       src={selectedMascotObj.src}
                       alt={selectedMascotObj.name}
+                      loading="eager"
                       camera-controls
                       auto-rotate
                       rotation-per-second="18deg"
@@ -985,6 +1009,11 @@ function HeroImageManagerModalContent({
                         backgroundColor: "transparent",
                       }}
                     />
+                    {mascotFileMissing && (
+                      <div className="absolute inset-x-2 bottom-1 p-2 rounded-lg bg-amber-950/90 border border-amber-500/50 text-[11px] text-amber-200 text-center">
+                        File <code>{selectedMascotObj.src}</code> chưa có trên server hiện tại (ngoài web sẽ tự fallback về <code>/capytlu.glb</code>). Hãy đẩy đủ file lên <code>public/</code> và deploy lại.
+                      </div>
+                    )}
                   </div>
 
                   <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2 text-xs">
@@ -994,8 +1023,8 @@ function HeroImageManagerModalContent({
                         {selectedMascotObj.src}
                       </div>
                     </div>
-                    <span className="text-[10px] font-semibold text-emerald-400 shrink-0">
-                      Sẵn sàng hiển thị
+                    <span className={`text-[10px] font-semibold shrink-0 ${mascotFileMissing ? 'text-amber-400' : 'text-emerald-400'}`}>
+                      {mascotFileMissing ? 'Chưa có file trên server' : 'Sẵn sàng hiển thị'}
                     </span>
                   </div>
                 </div>
