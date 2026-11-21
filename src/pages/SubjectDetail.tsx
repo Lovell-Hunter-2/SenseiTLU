@@ -10,7 +10,8 @@ import { getCachedData, setCachedData, invalidateCache, CacheTTL } from '../serv
 import { getStaticSubjects, getStaticDocuments } from '../services/catalogService';
 import { SideBannerColumn } from '../components/SideBanners';
 import MobileHorizontalBanner from '../components/MobileHorizontalBanner';
-import { incrementDocViewCounter } from '../hooks/useBannerConfig';
+import { incrementDocViewCounter, useBannerConfig } from '../hooks/useBannerConfig';
+import { ChristmasCardSticker, ChristmasSnowCap, SantaHatSvg, SantaSleighSvg } from '../components/ChristmasDecorations';
 
 const typeIcons: Record<string, React.ElementType> = {
   'Chatbot': Bot,
@@ -32,6 +33,8 @@ export default function SubjectDetail() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [docLimit, setDocLimit] = useState(50);
   const { isAdmin, user, login, loading } = useAuth();
+  const bannerConfig = useBannerConfig();
+  const isChristmas = bannerConfig.webTheme === 'christmas';
   
   // Admin stats state
   const [subjectStats, setSubjectStats] = useState<{ today: number; total: number }>({ today: 0, total: 0 });
@@ -664,8 +667,21 @@ export default function SubjectDetail() {
   if (!user) {
     return (
       <div className="py-12 max-w-3xl mx-auto px-4">
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-8 sm:p-12 text-center shadow-lg relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+        <div
+          className={
+            isChristmas
+              ? "bg-gradient-to-br from-[#1B4332] to-[#0D2B1F] border border-[#F5C842]/40 rounded-[20px] p-8 sm:p-12 text-center shadow-xl relative overflow-visible"
+              : "bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-8 sm:p-12 text-center shadow-lg relative overflow-hidden"
+          }
+        >
+          {isChristmas && <ChristmasCardSticker variant="sleigh" />}
+          <div
+            className={
+              isChristmas
+                ? "absolute top-0 left-0 w-full h-1.5 rounded-t-[20px] bg-gradient-to-r from-[#F5C842] via-[#FFD700] to-[#E74C3C]"
+                : "absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-400 to-indigo-500"
+            }
+          />
           <div className="flex flex-col items-center gap-5 relative z-10">
             <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-blue-600 dark:text-blue-400 mb-2 border border-slate-100 dark:border-slate-700">
               <Lock className="w-8 h-8" />
@@ -731,16 +747,57 @@ export default function SubjectDetail() {
     const docStat = docStatsMap[doc.id] || { today: 0, total: 0 };
 
     return (
-    <div key={doc.id} className={`${isChatbot ? "relative group rounded-xl p-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 shadow-sm hover:shadow-lg transition-all" : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow transform-gpu"} ${wrapperClassName || ""}`}>
-      <div className={isChatbot ? "bg-white dark:bg-slate-900 rounded-[10px] p-4 flex flex-col gap-4 h-full" : "contents"}>
+    <div
+      key={doc.id}
+      className={`${
+        isChatbot
+          ? isChristmas
+            ? "relative group rounded-[20px] p-[1.5px] bg-gradient-to-r from-[#F5C842] via-[#B87333] to-[#E74C3C] shadow-[0_8px_28px_rgba(0,0,0,0.35),0_0_20px_rgba(245,200,66,0.16)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.45),0_0_26px_rgba(245,200,66,0.28)] transition-all"
+            : "relative group rounded-xl p-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 shadow-sm hover:shadow-lg transition-all"
+          : isChristmas
+            ? "relative bg-[#1B4332] border border-[#2D6A4F] hover:border-[#F5C842]/55 rounded-[20px] p-4 flex flex-col gap-4 shadow-[0_6px_22px_rgba(0,0,0,0.28)] hover:shadow-[0_10px_28px_rgba(0,0,0,0.36)] transition-all transform-gpu"
+            : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow transform-gpu"
+      } ${wrapperClassName || ""}`}
+    >
+      {isChristmas && isChatbot && <ChristmasCardSticker variant="reindeer" size="sm" />}
+      {isChristmas && !isChatbot && doc.isFolder && <ChristmasCardSticker variant="gift" size="sm" />}
+      {isChristmas && !isChatbot && !doc.isFolder && <ChristmasCardSticker variant="snowflake" size="sm" />}
+      <div
+        className={
+          isChatbot
+            ? isChristmas
+              ? "bg-[#1B4332] rounded-[18.5px] p-4 flex flex-col gap-4 h-full"
+              : "bg-white dark:bg-slate-900 rounded-[10px] p-4 flex flex-col gap-4 h-full"
+            : "contents"
+        }
+      >
         <div className="flex items-start gap-4">
-          <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${isChatbot ? 'bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 text-indigo-600 dark:text-indigo-400' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'}`}>
+          <div
+            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+              isChatbot
+                ? isChristmas
+                  ? 'bg-[#0D2B1F] border border-[#F5C842]/45 text-[#F5C842]'
+                  : 'bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 text-indigo-600 dark:text-indigo-400'
+                : isChristmas
+                  ? 'bg-[#0D2B1F] border border-[#2D6A4F] text-[#F5C842]'
+                  : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+            }`}
+          >
             <Icon className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
-                <h4 className={`font-medium text-sm sm:text-base leading-snug break-words ${isChatbot ? 'text-indigo-700 dark:text-indigo-300 font-bold' : 'text-slate-900 dark:text-slate-100'}`} title={doc.title}>
+                <h4
+                  className={`font-medium text-sm sm:text-base leading-snug break-words ${
+                    isChatbot
+                      ? isChristmas
+                        ? 'text-[#F5C842] font-bold'
+                        : 'text-indigo-700 dark:text-indigo-300 font-bold'
+                      : 'text-slate-900 dark:text-slate-100'
+                  }`}
+                  title={doc.title}
+                >
                   {doc.title}
                   {isChatbot && <Sparkles className="inline-block w-4 h-4 text-amber-500 ml-1.5 align-text-bottom" />}
                   {isAdmin && doc.isHidden && (
@@ -767,10 +824,14 @@ export default function SubjectDetail() {
               {doc.isFolder && (
                 <button 
                   onClick={() => toggleFolder(doc.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all shrink-0 shadow-sm active:scale-95 ${
-                    expandedFolders[doc.id]
-                      ? 'text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800/80'
-                      : 'text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:from-blue-700 hover:via-indigo-700 hover:to-blue-700 shadow-blue-500/20'
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs sm:text-sm font-bold transition-all shrink-0 shadow-sm active:scale-95 cursor-pointer ${
+                    isChristmas
+                      ? expandedFolders[doc.id]
+                        ? 'rounded-full text-[#F5C842] bg-[#0D2B1F] hover:bg-[#2D6A4F]/60 border border-[#F5C842]/45'
+                        : 'rounded-full text-[#07160E] bg-[#F5C842] hover:bg-[#FFD700] shadow-[0_0_18px_rgba(245,200,66,0.32)]'
+                      : expandedFolders[doc.id]
+                        ? 'rounded-lg text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800/80'
+                        : 'rounded-lg text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:from-blue-700 hover:via-indigo-700 hover:to-blue-700 shadow-blue-500/20'
                   }`}
                 >
                   {expandedFolders[doc.id] ? (
@@ -790,7 +851,15 @@ export default function SubjectDetail() {
                     onClick={isChatbot ? undefined : (e) => handleDocumentClick(e, doc.title, doc.url)}
                     target={isChatbot ? "_blank" : undefined}
                     rel={isChatbot ? "noopener noreferrer" : undefined}
-                    className={`inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-white rounded-lg transition-colors shadow-sm ${isChatbot ? 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                    className={`inline-flex items-center gap-1.5 px-4 py-1.5 text-sm transition-all shadow-sm ${
+                      isChristmas
+                        ? isChatbot
+                          ? 'rounded-full font-bold bg-gradient-to-r from-[#C0392B] to-[#E74C3C] hover:from-[#D64536] hover:to-[#C0392B] text-[#F0EDE8] border border-[#F5C842]/55 shadow-[0_0_18px_rgba(231,76,60,0.35)]'
+                          : 'rounded-full font-bold bg-[#F5C842] hover:bg-[#FFD700] text-[#07160E] shadow-[0_0_16px_rgba(245,200,66,0.28)]'
+                        : isChatbot
+                          ? 'rounded-lg font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700'
+                          : 'rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700'
+                    }`}
                   >
                     {isChatbot ? <><Bot className="w-4 h-4" /> Mở Chatbot</> : <><ExternalLink className="w-4 h-4" /> Xem tài liệu</>}
                   </a>
@@ -857,18 +926,40 @@ export default function SubjectDetail() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => handleDocumentClick(e, item.title, item.url)}
-                  className="group flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-slate-50 hover:bg-white dark:bg-slate-800/30 dark:hover:bg-slate-800 border border-slate-200/50 dark:border-slate-700/30 hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-sm transition-all"
+                  className={
+                    isChristmas
+                      ? "group flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-[#0D2B1F]/90 hover:bg-[#143929] border border-[#2D6A4F]/80 hover:border-[#F5C842]/60 hover:shadow-sm transition-all"
+                      : "group flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-slate-50 hover:bg-white dark:bg-slate-800/30 dark:hover:bg-slate-800 border border-slate-200/50 dark:border-slate-700/30 hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-sm transition-all"
+                  }
                   title={item.title}
                 >
                   <div className="flex items-center gap-3 min-w-0 pr-2">
-                    <div className="w-8 h-8 rounded-lg bg-blue-100/50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-colors">
+                    <div
+                      className={
+                        isChristmas
+                          ? "w-8 h-8 rounded-lg bg-[#1B4332] border border-[#2D6A4F] text-[#F5C842] flex items-center justify-center shrink-0 transition-colors"
+                          : "w-8 h-8 rounded-lg bg-blue-100/50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-colors"
+                      }
+                    >
                       <FileText className="w-4 h-4" />
                     </div>
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors">
+                    <span
+                      className={
+                        isChristmas
+                          ? "text-sm font-medium text-[#F0EDE8] truncate group-hover:text-[#F5C842] transition-colors"
+                          : "text-sm font-medium text-slate-700 dark:text-slate-300 truncate group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors"
+                      }
+                    >
                       {item.title}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-800/50 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all shrink-0 shadow-2xs">
+                  <div
+                    className={
+                      isChristmas
+                        ? "flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-[#F5C842] bg-[#1B4332] border border-[#F5C842]/40 group-hover:bg-[#F5C842] group-hover:text-[#07160E] group-hover:border-[#FFD700] transition-all shrink-0 shadow-2xs"
+                        : "flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-800/50 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all shrink-0 shadow-2xs"
+                    }
+                  >
                     <Eye className="w-3.5 h-3.5" />
                     <span>Xem</span>
                   </div>
@@ -892,6 +983,11 @@ export default function SubjectDetail() {
         {/* Header */}
       <div className="text-center space-y-2 sm:space-y-3 py-3 sm:py-6 relative">
         <div className="flex flex-col items-center justify-center gap-2">
+          {isChristmas && (
+            <div className="inline-flex items-center gap-2 sleigh-glide mb-0.5" aria-hidden="true">
+              <SantaSleighSvg className="w-24 h-10 drop-shadow-md" />
+            </div>
+          )}
           <h1 className="text-3xl md:text-4xl font-bold flex items-center justify-center gap-3">
             <Book className="w-8 h-8 text-blue-500" /> {subject.name}
           </h1>
@@ -920,6 +1016,16 @@ export default function SubjectDetail() {
         {/* Thin Search Bar */}
         <div className="max-w-md mx-auto mt-4 sm:mt-6 relative z-30 text-left" ref={searchContainerRef}>
           <div className="relative">
+            {isChristmas && (
+              <>
+                <span className="pointer-events-none select-none absolute -top-3.5 -right-2 z-20 rotate-[14deg]" aria-hidden="true">
+                  <SantaHatSvg className="w-8 h-8 drop-shadow-md" />
+                </span>
+                <span className="pointer-events-none select-none absolute -top-1 left-6 right-10 z-10 opacity-75" aria-hidden="true">
+                  <ChristmasSnowCap className="w-full h-2.5" />
+                </span>
+              </>
+            )}
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-4 w-4 text-slate-400" />
             </div>
