@@ -38,7 +38,7 @@ import { MobileBottomNav } from "./MobileBottomNav";
 import Mascot3D from "./Mascot3D";
 import FloatingMascot from "./FloatingMascot";
 import { useBannerConfig } from "../hooks/useBannerConfig";
-import { ChristmasNavbarGarland } from "./ChristmasThemeEngine";
+import { ChristmasNavbarGarland, triggerChristmasNavbarEasterEgg } from "./ChristmasThemeEngine";
 
 export default function Layout() {
   const { theme, setTheme } = useTheme();
@@ -128,13 +128,17 @@ export default function Layout() {
               </button>
             )}
             <Link
+              id="navbar-logo"
               to="/"
-              onClick={() => {
+              onClick={(e) => {
                 window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
                 document.documentElement.scrollTo?.({ top: 0, behavior: 'smooth' });
                 document.body.scrollTo?.({ top: 0, behavior: 'smooth' });
+                if (isChristmas) {
+                  triggerChristmasNavbarEasterEgg(e.currentTarget);
+                }
               }}
-              className="flex items-center gap-1.5 md:gap-2 whitespace-nowrap focus:outline-hidden group cursor-pointer"
+              className="nav-logo flex items-center gap-1.5 md:gap-2 whitespace-nowrap focus:outline-hidden group cursor-pointer"
               aria-label="SenseiTLU Trang chủ"
             >
               <span className="text-2xl md:text-3xl transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">
