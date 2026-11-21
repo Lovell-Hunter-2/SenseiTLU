@@ -1,25 +1,33 @@
 import { useState, useEffect } from 'react';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
-import { BannerConfig, DEFAULT_BANNER_CONFIG } from '../types/banner';
+import { BannerConfig, DEFAULT_BANNER_CONFIG, DEFAULT_MAIN_MASCOT } from '../types/banner';
 import { getCachedData, setCachedData, CacheTTL } from '../services/cacheService';
 import { useAuth } from '../contexts/AuthContext';
 
 const CACHE_KEY = 'sensei_banner_config_v2';
 
+function normalizeBannerConfig(raw?: Partial<BannerConfig> | null): BannerConfig {
+  const merged = { ...DEFAULT_BANNER_CONFIG, ...(raw || {}) };
+  return {
+    ...merged,
+    webTheme: merged.webTheme === 'christmas' ? 'christmas' : 'default',
+    mainMascot: merged.mainMascot || DEFAULT_MAIN_MASCOT,
+  };
+}
+
 export function useBannerConfig() {
   const { isAdmin } = useAuth();
   const [config, setConfig] = useState<BannerConfig>(() => {
     const cached = getCachedData<BannerConfig>(CACHE_KEY, true);
-    if (cached) return { ...DEFAULT_BANNER_CONFIG, ...cached };
-    return DEFAULT_BANNER_CONFIG;
+    return normalizeBannerConfig(cached);
   });
 
   useEffect(() => {
     // 1. Instant Cache Hydration
     const cached = getCachedData<BannerConfig>(CACHE_KEY, true);
     if (cached) {
-      setConfig({ ...DEFAULT_BANNER_CONFIG, ...cached });
+      setConfig(normalizeBannerConfig(cached));
     }
 
     // 2. Admin Live Listener vs Student Session Throttle (Exam Shield)
@@ -31,7 +39,7 @@ export function useBannerConfig() {
         (snap) => {
           if (snap.exists()) {
             const data = snap.data() as BannerConfig;
-            const merged = { ...DEFAULT_BANNER_CONFIG, ...data };
+            const merged = normalizeBannerConfig(data);
             setConfig(merged);
             setCachedData(CACHE_KEY, merged, CacheTTL.LONG);
           }
@@ -48,7 +56,7 @@ export function useBannerConfig() {
           .then((snap) => {
             if (snap.exists()) {
               const data = snap.data() as BannerConfig;
-              const merged = { ...DEFAULT_BANNER_CONFIG, ...data };
+              const merged = normalizeBannerConfig(data);
               setConfig(merged);
               setCachedData(CACHE_KEY, merged, CacheTTL.LONG);
               sessionStorage.setItem('sensei_banner_last_check', String(now));
@@ -63,7 +71,7 @@ export function useBannerConfig() {
     // 3. Local custom event listener for instant reflection across tabs
     const handleLocalUpdate = (e: any) => {
       if (e.detail) {
-        setConfig((prev) => ({ ...prev, ...e.detail }));
+        setConfig((prev) => normalizeBannerConfig({ ...prev, ...e.detail }));
       }
     };
     window.addEventListener('sensei_hero_images_updated', handleLocalUpdate);
