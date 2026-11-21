@@ -301,6 +301,10 @@ html.theme-christmas footer:not(.xmas-preview-preserve *) {
 }
 
 /* Main App Shell & Deep Canvas Wrappers -> Forest (#0D2B1F) */
+html.theme-christmas #root > div.min-h-screen {
+  background-color: transparent !important;
+}
+
 html.theme-christmas .bg-slate-50:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
 html.theme-christmas .bg-slate-950:not(.xmas-preview-preserve):not(.xmas-preview-preserve *),
 html.theme-christmas .dark\:bg-slate-950:not(.xmas-preview-preserve):not(.xmas-preview-preserve *) {
