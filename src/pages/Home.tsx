@@ -98,6 +98,9 @@ import { getStaticSubjects } from "../services/catalogService";
 import { AnimatedHeroTitle } from "../components/AnimatedHeroTitle";
 import { SideBannerColumn } from "../components/SideBanners";
 import MobileHorizontalBanner from "../components/MobileHorizontalBanner";
+import { ChristmasHeroBannerBadge } from "../components/ChristmasThemeEngine";
+import { ChristmasCardSticker, ChristmasSnowCap, SantaHatSvg } from "../components/ChristmasDecorations";
+import { useBannerConfig } from "../hooks/useBannerConfig";
 
 // Icon mapping helper
 const iconLabels: Record<string, string> = {
@@ -294,6 +297,8 @@ const emojiMap: Record<string, string> = {
 };
 
 export default function Home() {
+  const bannerConfig = useBannerConfig();
+  const isChristmasTheme = bannerConfig.webTheme === "christmas";
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
   const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -719,7 +724,14 @@ export default function Home() {
         </div>
       {/* Background Capybara Watermark */}
       <div className="fixed inset-0 pointer-events-none flex justify-center items-center z-0 opacity-[0.04] dark:opacity-[0.08] mt-20">
-        <img src="/avt_tlu (remove).png" alt="" className="w-[80vw] max-w-[600px] object-contain object-bottom" />
+        <img
+          src="/avt_tlu (remove).png"
+          alt=""
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+          }}
+          className="w-[80vw] max-w-[600px] object-contain object-bottom"
+        />
       </div>
 
       {/* Hero / Search Section */}
@@ -759,6 +771,7 @@ export default function Home() {
 
         {/* Main Center Content */}
         <div className="flex flex-col items-center justify-center space-y-4 sm:space-y-6 text-center z-10 w-full max-w-xl">
+          {isChristmasTheme && <ChristmasHeroBannerBadge />}
           <AnimatedHeroTitle />
           <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">
             Nền tảng chia sẻ tài liệu học tập, giáo trình, đề cương và thi thử
@@ -766,6 +779,16 @@ export default function Home() {
           </p>
 
           <div className="relative w-full mt-2 sm:mt-4 z-50" ref={searchContainerRef}>
+            {isChristmasTheme && (
+              <>
+                <span className="pointer-events-none select-none absolute -top-4 -right-2.5 z-20 rotate-[15deg]" aria-hidden="true">
+                  <SantaHatSvg className="w-10 h-10 drop-shadow-md" />
+                </span>
+                <span className="pointer-events-none select-none absolute -top-1 left-5 right-11 z-10 opacity-80" aria-hidden="true">
+                  <ChristmasSnowCap className="w-full h-3" />
+                </span>
+              </>
+            )}
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-slate-400" />
             </div>
@@ -918,7 +941,7 @@ export default function Home() {
               </p>
             </div>
           ) : (
-            displayedSubjects.map((subject) => {
+            displayedSubjects.map((subject, idx) => {
               const Icon = iconMap[subject.iconName] || Book;
               const isFav = favorites.includes(subject.id);
               const isPriority = Boolean(subject.isPriority);
@@ -954,6 +977,13 @@ export default function Home() {
                     }
                   }}
                 >
+                  {isChristmasTheme && (
+                    <ChristmasCardSticker
+                      variant={isPriority ? "hat" : undefined}
+                      index={idx}
+                      size="sm"
+                    />
+                  )}
                   <button
                     onClick={(e) => toggleFavorite(subject.id, e)}
                     className={`absolute top-4 right-4 p-2 rounded-xl transition-all z-10 ${
