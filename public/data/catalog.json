@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-11-22T13:55:19.778Z",
-  "version": 1795355719778,
+  "lastUpdated": "2026-11-22T15:41:16.913Z",
+  "version": 1795362076913,
   "totalSubjects": 97,
-  "totalDocuments": 337,
+  "totalDocuments": 341,
   "subjects": [
     {
       "id": "R8V9VRVMcMU5xuOZRIv7",
@@ -3123,6 +3123,161 @@
         "createdAt": "2026-04-14T16:53:28.915Z"
       }
     ],
+    "Ij4qscK9eg5ARm7BfqYj": [
+      {
+        "id": "4WFhFcnErsCTyQ5IvqWA",
+        "subjectId": "Ij4qscK9eg5ARm7BfqYj",
+        "title": "Slide bài giảng Luật thương mại",
+        "type": "Slide",
+        "url": "",
+        "chapter": "",
+        "isHidden": true,
+        "isFolder": true,
+        "items": [
+          {
+            "title": "Chương 1 - Khái quát về luật thương mại",
+            "url": "https://drive.google.com/file/d/1tDOfNpI2h1mvNKbpCnD8XtXpLc-TFAJ0/view?usp=drivesdk"
+          },
+          {
+            "title": "Chương 2 - Pháp luật về chủ thể kinh doanh",
+            "url": "https://drive.google.com/file/d/1rayyyX_MSoKSF4R_Q5baACiccIbYmjmO/view?usp=drivesdk"
+          },
+          {
+            "title": "Chương 3 - Pháp luật về hợp đồng và hoạt động thương mại",
+            "url": "https://drive.google.com/file/d/1kRT4IrRR3314lDIfSN1UelndgQSsOAgs/view?usp=drivesdk"
+          },
+          {
+            "title": "Chương 4 - Phục hồi, phá sản và giải quyết tranh chấp kinh doanh",
+            "url": "https://drive.google.com/file/d/1cZ4-xK3NOuBIIQQ_5TagGRgKyNPHH8_A/view?usp=drivesdk"
+          },
+          {
+            "title": "Slide bài giảng Luật thương mại",
+            "url": "https://drive.google.com/file/d/1wvXSonuUvsH4Guy_SdzpcaVmnyxyd89z/view?usp=drivesdk"
+          }
+        ],
+        "createdAt": "2026-11-22T15:38:41.242Z"
+      },
+      {
+        "id": "Db11kkGeE52YCadSHLVT",
+        "subjectId": "Ij4qscK9eg5ARm7BfqYj",
+        "title": "Slide chuyên ngành",
+        "type": "Slide",
+        "url": "",
+        "chapter": "",
+        "isHidden": true,
+        "isFolder": true,
+        "items": [
+          {
+            "title": "Slide bài giảng Luật thương mại 1",
+            "url": "https://drive.google.com/file/d/1s_qLx9XmuLZAnpfknOv74s9nmC4FRJHP/view?usp=sharing"
+          },
+          {
+            "title": "Slide bài giảng Luật thương mại 2",
+            "url": "https://drive.google.com/file/d/1xsAvuDDvpIODhY8GqbWq9jYh8iUaH0Yt/view?usp=sharing"
+          }
+        ],
+        "createdAt": "2026-11-22T15:37:50.826Z"
+      },
+      {
+        "id": "Y0b5Sl5FjqYeouSseMMh",
+        "subjectId": "Ij4qscK9eg5ARm7BfqYj",
+        "title": "Khái quát kiến thức",
+        "type": "Tips",
+        "url": "",
+        "chapter": "(Docx)",
+        "isHidden": true,
+        "isFolder": true,
+        "items": [
+          {
+            "title": "Chương 1 - Khái quát về luật thương mại",
+            "url": "https://docs.google.com/document/d/1jWJ19Zzp4-BCMB8rSuYCVZckTOWg0vGc/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "Chương 2 - Pháp luật về chủ thể kinh doanh",
+            "url": "https://docs.google.com/document/d/1x7LIp_8rSKTpS_pm7NKuqRj5LInuFeuV/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "Chương 3 - Pháp luật về hợp đồng và hoạt động thương mại",
+            "url": "https://docs.google.com/document/d/1iiybRZklqrQxTW6eoBqkeEiZUO109gAA/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "Chương 4 - Phục hồi, phá sản & giải quyết tranh chấp thương mại",
+            "url": "https://docs.google.com/document/d/12G3_ZaB-eMmh-MIaCv6eSbeDBaZKnyu9/edit?usp=drivesdk&rtpof=true&sd=true"
+          }
+        ],
+        "createdAt": "2026-11-22T15:40:08.536Z"
+      },
+      {
+        "id": "vv8jSJ7lKl6Be1OqfYwH",
+        "subjectId": "Ij4qscK9eg5ARm7BfqYj",
+        "title": "Khái quát kiến thưccs",
+        "type": "Tips",
+        "url": "",
+        "chapter": "(PDF)",
+        "isHidden": true,
+        "isFolder": true,
+        "items": [
+          {
+            "title": "Chương 1 - Khái quát về luật thương mại",
+            "url": "https://drive.google.com/file/d/1WF-TT7b4tXIsD7eFQaLzsMmp3u6lx7i4/view?usp=drivesdk"
+          },
+          {
+            "title": "Chương 2 - Pháp luật về chủ thể kinh doanh",
+            "url": "https://drive.google.com/file/d/1LvR9ifYOEf5xazth4n10YlXgXSS_pZD0/view?usp=drivesdk"
+          },
+          {
+            "title": "Chương 3 - Pháp luật về hợp đồng và hoạt động thương mại",
+            "url": "https://drive.google.com/file/d/14VN3OdxI0Cj66V80rt_6aSoJeXmwWsjd/view?usp=drivesdk"
+          },
+          {
+            "title": "Chương 4 - Phục hồi, phá sản & giải quyết tranh chấp thương mại",
+            "url": "https://drive.google.com/file/d/1F-kJTaD1_ldK8UXen_S7i8ZCmT0fwdvI/view?usp=drivesdk"
+          }
+        ],
+        "createdAt": "2026-11-22T15:40:40.185Z"
+      },
+      {
+        "id": "w8Z1G5Ly3jskFFZNbC5v",
+        "subjectId": "Ij4qscK9eg5ARm7BfqYj",
+        "title": "Tài liệu tham khảo",
+        "type": "Khác",
+        "url": "",
+        "chapter": "",
+        "isHidden": true,
+        "isFolder": true,
+        "items": [
+          {
+            "title": "29_2026_VBHN-ND-BTC_724513 đăng ký doanh nghiệp",
+            "url": "https://docs.google.com/document/d/1yLf7caL3eMR2PQ-blydwZDTxjU-kyox5/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "67_VBHN-VPQH_671127 luật doanh nghiệp",
+            "url": "https://docs.google.com/document/d/1OCLdgPw0CXXefNSxcVMTyp8AzGxr3DQ-/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "Bộ Luật Dân sự 2015",
+            "url": "https://drive.google.com/file/d/1HEWBPvnrilZCu8v7oOC6Bi1Dkrkc6Gan/view?usp=drivesdk"
+          },
+          {
+            "title": "Luật Thương mại số 36-2005-QH11",
+            "url": "https://drive.google.com/file/d/1JmeGWSHi7uhgPjNlcusswKjE8qFzie82/view?usp=drivesdk"
+          },
+          {
+            "title": "Lý Thuyết Luật Thương Mại 1 - Thương Nhân và Hoạt Động Thương Mại",
+            "url": "https://drive.google.com/file/d/17fZchTi74vxKTg-jiCkmJTUviITax2Hd/view?usp=drivesdk"
+          },
+          {
+            "title": "Lý Thuyết Luật Thương Mại 2",
+            "url": "https://drive.google.com/file/d/1DjZ27UiuEjZ0AJcCqt5EcGKH5ZUSNcwo/view?usp=drivesdk"
+          },
+          {
+            "title": "Tóm tắt GT Luật Thương mại 2",
+            "url": "https://drive.google.com/file/d/1tkGOEw8RX7m9CTEgsnM16M5WdZbEnk4K/view?usp=drivesdk"
+          }
+        ],
+        "createdAt": "2026-11-22T15:39:19.054Z"
+      }
+    ],
     "JOxAdScy576RvRzXZH3s": [
       {
         "id": "4XSSDJ86VaptP4E15c7Y",
@@ -5386,12 +5541,12 @@
             "url": "https://drive.google.com/file/d/16iE-Vb-NKNIrKfHshQPKRZSetcgRnnKr/view?usp=drivesdk"
           },
           {
-            "title": "Slide Chương 3",
-            "url": "https://drive.google.com/file/d/13udsYd3EtsB47kvIwpdbOWxPQZw_F5Tr/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/13udsYd3EtsB47kvIwpdbOWxPQZw_F5Tr/view?usp=drivesdk",
+            "title": "Slide Chương 3"
           },
           {
-            "title": "Slide Chương 4",
-            "url": "https://drive.google.com/file/d/18YgI91Mr75TEoPs1--R2O9yD4mcnXIdR/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/18YgI91Mr75TEoPs1--R2O9yD4mcnXIdR/view?usp=drivesdk",
+            "title": "Slide Chương 4"
           }
         ],
         "createdAt": "2026-11-22T13:55:10.941Z"
@@ -6563,32 +6718,32 @@
             "url": "https://drive.google.com/file/d/1JHtZ-0K7ulomXzBEMGPoRG7ndLVGcXd2/view?usp=drivesdk"
           },
           {
-            "title": "Chương 1 - Bài giảng An toàn và bảo mật thông tin",
-            "url": "https://drive.google.com/file/d/1lV2hWa4JDI972-nw_apYJ1qATbXg_kb3/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1lV2hWa4JDI972-nw_apYJ1qATbXg_kb3/view?usp=drivesdk",
+            "title": "Chương 1 - Bài giảng An toàn và bảo mật thông tin"
           },
           {
             "title": "Chương 2 - Bài giảng An toàn và bảo mật thông tin",
             "url": "https://drive.google.com/file/d/18izOTId8dffO8adzXFOaJa5KKdr0mLcY/view?usp=drivesdk"
           },
           {
-            "title": "Chương 3 - Bài giảng An toàn và bảo mật thông tin",
-            "url": "https://drive.google.com/file/d/1KQ3kpmUIhuLYAhe0MbnnyijzK0iYglBZ/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1KQ3kpmUIhuLYAhe0MbnnyijzK0iYglBZ/view?usp=drivesdk",
+            "title": "Chương 3 - Bài giảng An toàn và bảo mật thông tin"
           },
           {
             "title": "Chương 4 - Bài giảng An toàn và bảo mật thông tin",
             "url": "https://drive.google.com/file/d/1jeUGEMRU0SHnH-IFcH5Cr05bJOtM_Heq/view?usp=drivesdk"
           },
           {
-            "title": "Chương 5 - Bài giảng An toàn và bảo mật thông tin",
-            "url": "https://drive.google.com/file/d/1lpjUgVVFPjVDW4RW4d5zry2ncPNpTtAU/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1lpjUgVVFPjVDW4RW4d5zry2ncPNpTtAU/view?usp=drivesdk",
+            "title": "Chương 5 - Bài giảng An toàn và bảo mật thông tin"
           },
           {
-            "title": "Chương 6 - Bài giảng An toàn và bảo mật thông tin",
-            "url": "https://drive.google.com/file/d/1Lisbq3JeXmcjhS5-xCf2ESMGAC0MIQre/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1Lisbq3JeXmcjhS5-xCf2ESMGAC0MIQre/view?usp=drivesdk",
+            "title": "Chương 6 - Bài giảng An toàn và bảo mật thông tin"
           },
           {
-            "title": "Phụ lục Wireshark - Bài giảng An toàn và bảo mật thông tin",
-            "url": "https://drive.google.com/file/d/1CLgVd6iLuf63graoM1caruIUIAOnz3eo/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1CLgVd6iLuf63graoM1caruIUIAOnz3eo/view?usp=drivesdk",
+            "title": "Phụ lục Wireshark - Bài giảng An toàn và bảo mật thông tin"
           }
         ],
         "createdAt": "2026-11-22T13:44:03.477Z"
@@ -6604,16 +6759,16 @@
         "isFolder": true,
         "items": [
           {
-            "title": "Chương 1 - Slide An toàn và bảo mật thông tin",
-            "url": "https://drive.google.com/file/d/1mwd-cbhqm7uhFmB8VMyxSCVyRqIEqAh-/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1mwd-cbhqm7uhFmB8VMyxSCVyRqIEqAh-/view?usp=drivesdk",
+            "title": "Chương 1 - Slide An toàn và bảo mật thông tin"
           },
           {
-            "title": "Chương 2 - Slide An toàn và bảo mật thông tin",
-            "url": "https://drive.google.com/file/d/1n83HeR6qnlbJeP3FsfXcSodkqlsNh6vc/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1n83HeR6qnlbJeP3FsfXcSodkqlsNh6vc/view?usp=drivesdk",
+            "title": "Chương 2 - Slide An toàn và bảo mật thông tin"
           },
           {
-            "title": "Chương 3 - Slide An toàn và bảo mật thông tin",
-            "url": "https://drive.google.com/file/d/1HOTLr9t58L0g3KSgfN1eTbmS3gOJ64qE/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1HOTLr9t58L0g3KSgfN1eTbmS3gOJ64qE/view?usp=drivesdk",
+            "title": "Chương 3 - Slide An toàn và bảo mật thông tin"
           },
           {
             "title": "Chương 4 - Slide An toàn và bảo mật thông tin",
@@ -6624,12 +6779,12 @@
             "url": "https://drive.google.com/file/d/1OXLg6mPThc6MXKvdzmiBbKjIJSIBsqcY/view?usp=drivesdk"
           },
           {
-            "title": "Chương 6 - Slide An toàn và bảo mật thông tin",
-            "url": "https://drive.google.com/file/d/1blip98KS8NYYdY0k2534ENRJsd3a2MAi/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1blip98KS8NYYdY0k2534ENRJsd3a2MAi/view?usp=drivesdk",
+            "title": "Chương 6 - Slide An toàn và bảo mật thông tin"
           },
           {
-            "title": "Slide An toàn và bảo mật thông tin (Full 6 chương)",
-            "url": "https://drive.google.com/file/d/1pOBCKxobAAN5tsloX6JB9oXY2WQWoDVM/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1pOBCKxobAAN5tsloX6JB9oXY2WQWoDVM/view?usp=drivesdk",
+            "title": "Slide An toàn và bảo mật thông tin (Full 6 chương)"
           }
         ],
         "createdAt": "2026-11-22T13:43:21.724Z"
@@ -7329,20 +7484,6 @@
         "isFolder": false,
         "items": [],
         "createdAt": "2026-08-23T17:51:22.520Z"
-      }
-    ],
-    "Ij4qscK9eg5ARm7BfqYj": [
-      {
-        "id": "h3arjKVL6QCjC0hwepJP",
-        "subjectId": "Ij4qscK9eg5ARm7BfqYj",
-        "title": "Slide bài giảng Luật thương mại",
-        "type": "Slide",
-        "url": "https://drive.google.com/file/d/1wvXSonuUvsH4Guy_SdzpcaVmnyxyd89z/view?usp=sharing",
-        "chapter": "",
-        "isHidden": true,
-        "isFolder": false,
-        "items": [],
-        "createdAt": "2026-11-09T14:38:57.156Z"
       }
     ],
     "KaI5yAxMMmaduki2ABmU": [
