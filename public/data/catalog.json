@@ -1,9 +1,17 @@
 {
-  "lastUpdated": "2026-11-22T13:15:26.692Z",
-  "version": 1795353326692,
-  "totalSubjects": 93,
-  "totalDocuments": 330,
+  "lastUpdated": "2026-11-22T13:55:19.778Z",
+  "version": 1795355719778,
+  "totalSubjects": 97,
+  "totalDocuments": 337,
   "subjects": [
+    {
+      "id": "R8V9VRVMcMU5xuOZRIv7",
+      "name": "An toàn và bảo mật thông tin",
+      "iconName": "Server",
+      "description": "",
+      "isPriority": false,
+      "createdAt": "2026-11-22T13:41:59.388Z"
+    },
     {
       "id": "b3yvnb7J7pmzeHhIydyd",
       "name": "An toàn và bảo mật thông tin Thương mại điện tử",
@@ -421,6 +429,14 @@
       "createdAt": "2026-08-24T08:03:31.758Z"
     },
     {
+      "id": "aEw6yhuZZDQj5JbEKA1h",
+      "name": "Quản trị chuỗi cung ứng",
+      "iconName": "ShoppingCart",
+      "description": "",
+      "isPriority": false,
+      "createdAt": "2026-11-22T13:50:19.229Z"
+    },
+    {
       "id": "rBI4CoKUfuZjACW60We6",
       "name": "Quản trị hậu cần và chuỗi cung ứng",
       "iconName": "Globe",
@@ -605,6 +621,14 @@
       "createdAt": "2026-04-14T16:22:51.875Z"
     },
     {
+      "id": "s0f1dKZ8lwNCkvuf4j4A",
+      "name": "Toán rời rạc",
+      "iconName": "Calculator",
+      "description": "",
+      "isPriority": false,
+      "createdAt": "2026-11-22T13:45:23.744Z"
+    },
+    {
       "id": "JOxAdScy576RvRzXZH3s",
       "name": "Triết học Mác-Lênin",
       "iconName": "Book",
@@ -731,6 +755,14 @@
       "description": "",
       "isPriority": false,
       "createdAt": "2026-08-23T17:35:10.403Z"
+    },
+    {
+      "id": "IsE5rTr4Y8apH3rmm7cj",
+      "name": "Đại số tuyến tính",
+      "iconName": "Calculator",
+      "description": "",
+      "isPriority": false,
+      "createdAt": "2026-11-22T13:47:07.310Z"
     },
     {
       "id": "c5WZ5PM3h9BJBgPQcmBQ",
@@ -5334,6 +5366,49 @@
         "createdAt": "2026-09-29T14:43:02.298Z"
       }
     ],
+    "aEw6yhuZZDQj5JbEKA1h": [
+      {
+        "id": "8gBbH8CTN81ar3mCkcfV",
+        "subjectId": "aEw6yhuZZDQj5JbEKA1h",
+        "title": "Slides bài giảng Quản trị chuỗi cung ứng ",
+        "type": "Slide",
+        "url": "",
+        "chapter": "(Thầy Minh)",
+        "isHidden": false,
+        "isFolder": true,
+        "items": [
+          {
+            "title": "Slide Chương 1",
+            "url": "https://drive.google.com/file/d/1k3fq6M57UqyK0fLzVo-3RKgKlKIAb_Yb/view?usp=drivesdk"
+          },
+          {
+            "title": "Slide Chương 2",
+            "url": "https://drive.google.com/file/d/16iE-Vb-NKNIrKfHshQPKRZSetcgRnnKr/view?usp=drivesdk"
+          },
+          {
+            "title": "Slide Chương 3",
+            "url": "https://drive.google.com/file/d/13udsYd3EtsB47kvIwpdbOWxPQZw_F5Tr/view?usp=drivesdk"
+          },
+          {
+            "title": "Slide Chương 4",
+            "url": "https://drive.google.com/file/d/18YgI91Mr75TEoPs1--R2O9yD4mcnXIdR/view?usp=drivesdk"
+          }
+        ],
+        "createdAt": "2026-11-22T13:55:10.941Z"
+      },
+      {
+        "id": "mLd20uLZ4twVrzpBTnnk",
+        "subjectId": "aEw6yhuZZDQj5JbEKA1h",
+        "title": "Slide bài giảng Quản trị chuỗi cung ứng",
+        "type": "Slide",
+        "url": "https://drive.google.com/file/d/1xEm0cy811UqL9lqB9dCO8eFaOzlkaHHk/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-22T13:50:45.589Z"
+      }
+    ],
     "3sR5wn9H4LOoCSMmCRyA": [
       {
         "id": "9H4IpOcrjmUsGme1zYjs",
@@ -6255,6 +6330,20 @@
         "createdAt": "2026-10-25T07:31:21.952Z"
       }
     ],
+    "IsE5rTr4Y8apH3rmm7cj": [
+      {
+        "id": "Ep2KZSLx93nJp0ogWW1m",
+        "subjectId": "IsE5rTr4Y8apH3rmm7cj",
+        "title": "Bài tập Đại số tuyến tính",
+        "type": "Giáo trình",
+        "url": "https://drive.google.com/file/d/1OgkXsNqM8Bn8YMiHuTHCVI5Q8PQ4u6Ld/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-22T13:47:35.228Z"
+      }
+    ],
     "VGGH7Hj7Gpx6FCcSPSdf": [
       {
         "id": "F1aNeAxs98vksfqCKNNf",
@@ -6444,6 +6533,106 @@
           }
         ],
         "createdAt": "2026-11-19T15:10:41.055Z"
+      }
+    ],
+    "R8V9VRVMcMU5xuOZRIv7": [
+      {
+        "id": "FgIb4FXQDnvdspUm3O0B",
+        "subjectId": "R8V9VRVMcMU5xuOZRIv7",
+        "title": "Index An toàn và bảo mật thông tin",
+        "type": "Khác",
+        "url": "https://drive.google.com/file/d/1Ub1ay9XII249MGk0agksGMBDd16-k-kL/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-22T13:42:28.684Z"
+      },
+      {
+        "id": "c12raF4YwRLxwOM2JMxv",
+        "subjectId": "R8V9VRVMcMU5xuOZRIv7",
+        "title": "Bài giảng An toàn và bảo mật thông tin",
+        "type": "Giáo trình",
+        "url": "",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": true,
+        "items": [
+          {
+            "title": "Bài giảng An toàn và bảo mật thông tin (Full 6 chương)",
+            "url": "https://drive.google.com/file/d/1JHtZ-0K7ulomXzBEMGPoRG7ndLVGcXd2/view?usp=drivesdk"
+          },
+          {
+            "title": "Chương 1 - Bài giảng An toàn và bảo mật thông tin",
+            "url": "https://drive.google.com/file/d/1lV2hWa4JDI972-nw_apYJ1qATbXg_kb3/view?usp=drivesdk"
+          },
+          {
+            "title": "Chương 2 - Bài giảng An toàn và bảo mật thông tin",
+            "url": "https://drive.google.com/file/d/18izOTId8dffO8adzXFOaJa5KKdr0mLcY/view?usp=drivesdk"
+          },
+          {
+            "title": "Chương 3 - Bài giảng An toàn và bảo mật thông tin",
+            "url": "https://drive.google.com/file/d/1KQ3kpmUIhuLYAhe0MbnnyijzK0iYglBZ/view?usp=drivesdk"
+          },
+          {
+            "title": "Chương 4 - Bài giảng An toàn và bảo mật thông tin",
+            "url": "https://drive.google.com/file/d/1jeUGEMRU0SHnH-IFcH5Cr05bJOtM_Heq/view?usp=drivesdk"
+          },
+          {
+            "title": "Chương 5 - Bài giảng An toàn và bảo mật thông tin",
+            "url": "https://drive.google.com/file/d/1lpjUgVVFPjVDW4RW4d5zry2ncPNpTtAU/view?usp=drivesdk"
+          },
+          {
+            "title": "Chương 6 - Bài giảng An toàn và bảo mật thông tin",
+            "url": "https://drive.google.com/file/d/1Lisbq3JeXmcjhS5-xCf2ESMGAC0MIQre/view?usp=drivesdk"
+          },
+          {
+            "title": "Phụ lục Wireshark - Bài giảng An toàn và bảo mật thông tin",
+            "url": "https://drive.google.com/file/d/1CLgVd6iLuf63graoM1caruIUIAOnz3eo/view?usp=drivesdk"
+          }
+        ],
+        "createdAt": "2026-11-22T13:44:03.477Z"
+      },
+      {
+        "id": "jnAvtYQjlU3RCRjjwIYr",
+        "subjectId": "R8V9VRVMcMU5xuOZRIv7",
+        "title": "Slides bài giảng An toàn và bảo mật thông tin",
+        "type": "Slide",
+        "url": "",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": true,
+        "items": [
+          {
+            "title": "Chương 1 - Slide An toàn và bảo mật thông tin",
+            "url": "https://drive.google.com/file/d/1mwd-cbhqm7uhFmB8VMyxSCVyRqIEqAh-/view?usp=drivesdk"
+          },
+          {
+            "title": "Chương 2 - Slide An toàn và bảo mật thông tin",
+            "url": "https://drive.google.com/file/d/1n83HeR6qnlbJeP3FsfXcSodkqlsNh6vc/view?usp=drivesdk"
+          },
+          {
+            "title": "Chương 3 - Slide An toàn và bảo mật thông tin",
+            "url": "https://drive.google.com/file/d/1HOTLr9t58L0g3KSgfN1eTbmS3gOJ64qE/view?usp=drivesdk"
+          },
+          {
+            "title": "Chương 4 - Slide An toàn và bảo mật thông tin",
+            "url": "https://drive.google.com/file/d/1e2o83wI84OR1ZxS74UsFD3Z1qFq6qnJL/view?usp=drivesdk"
+          },
+          {
+            "title": "Chương 5 - Slide An toàn và bảo mật thông tin",
+            "url": "https://drive.google.com/file/d/1OXLg6mPThc6MXKvdzmiBbKjIJSIBsqcY/view?usp=drivesdk"
+          },
+          {
+            "title": "Chương 6 - Slide An toàn và bảo mật thông tin",
+            "url": "https://drive.google.com/file/d/1blip98KS8NYYdY0k2534ENRJsd3a2MAi/view?usp=drivesdk"
+          },
+          {
+            "title": "Slide An toàn và bảo mật thông tin (Full 6 chương)",
+            "url": "https://drive.google.com/file/d/1pOBCKxobAAN5tsloX6JB9oXY2WQWoDVM/view?usp=drivesdk"
+          }
+        ],
+        "createdAt": "2026-11-22T13:43:21.724Z"
       }
     ],
     "oMYkxDk84ixbPyeIXuKd": [
@@ -7356,6 +7545,20 @@
         "isFolder": false,
         "items": [],
         "createdAt": "2026-08-23T15:15:01.773Z"
+      }
+    ],
+    "s0f1dKZ8lwNCkvuf4j4A": [
+      {
+        "id": "tqZNJvrWEkGUipsCnzmn",
+        "subjectId": "s0f1dKZ8lwNCkvuf4j4A",
+        "title": "Giáo trình Toán rời rạc",
+        "type": "Giáo trình",
+        "url": "https://drive.google.com/file/d/1mglhV8LoLIiXQNtOlSRk3bceyae_Qt1P/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-22T13:45:46.794Z"
       }
     ],
     "Igs1O0Y1FRl0oNqFDwMo": [
