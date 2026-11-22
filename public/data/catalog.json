@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-11-22T07:26:00.102Z",
-  "version": 1795332360102,
-  "totalSubjects": 91,
-  "totalDocuments": 327,
+  "lastUpdated": "2026-11-22T13:15:26.692Z",
+  "version": 1795353326692,
+  "totalSubjects": 93,
+  "totalDocuments": 330,
   "subjects": [
     {
       "id": "b3yvnb7J7pmzeHhIydyd",
@@ -67,6 +67,14 @@
       "description": "",
       "isPriority": false,
       "createdAt": "2026-04-30T18:16:55.081Z"
+    },
+    {
+      "id": "ZZa0gPnTP4qm0r4XIHbu",
+      "name": "Dữ liệu lớn",
+      "iconName": "Database",
+      "description": "",
+      "isPriority": false,
+      "createdAt": "2026-11-22T13:13:45.451Z"
     },
     {
       "id": "Cdr0s7U9lJVGcrbVY3cd",
@@ -315,6 +323,14 @@
       "description": "",
       "isPriority": false,
       "createdAt": "2026-04-14T16:13:03.856Z"
+    },
+    {
+      "id": "JehMlm4oWbfzFElYiB9r",
+      "name": "Ngành Ngôn ngữ Trung Quốc",
+      "iconName": "Globe",
+      "description": "",
+      "isPriority": false,
+      "createdAt": "2026-11-22T13:14:48.701Z"
     },
     {
       "id": "kUroeB6LxmsXWmx37yCF",
@@ -936,6 +952,20 @@
         "createdAt": "2026-07-25T10:47:00.818Z"
       }
     ],
+    "ZZa0gPnTP4qm0r4XIHbu": [
+      {
+        "id": "09VUb8gM71d4zlmXC4cx",
+        "subjectId": "ZZa0gPnTP4qm0r4XIHbu",
+        "title": "Giáo trình Dữ liệu lớn",
+        "type": "Giáo trình",
+        "url": "https://drive.google.com/file/d/1gsOhYQE4DJYZ629UeuyicTA2Kg1WdxfJ/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-22T13:14:16.293Z"
+      }
+    ],
     "zGnZhd4OLARTsXGLJkqE": [
       {
         "id": "0AGuAIyb4egujPdLW5iN",
@@ -1248,6 +1278,18 @@
         "isFolder": false,
         "items": [],
         "createdAt": "2026-08-23T17:08:18.382Z"
+      },
+      {
+        "id": "DB2aoIuXS1Ga2xJWVV2i",
+        "subjectId": "TEdnB7hEl32nP9Em8ls3",
+        "title": "Slide bài giảng Kinh tế phát triển",
+        "type": "Slide",
+        "url": "https://drive.google.com/file/d/1Sp9mnfnOGSZlgLy5BHE-ciw4dzVqNidS/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-22T13:12:22.651Z"
       }
     ],
     "oK8rFcBZYwI87oegjCio": [
@@ -1582,28 +1624,28 @@
             "url": "https://docs.google.com/document/d/1TKZ4zAvmPeqsjfrUjpSP1NBYKp-403dx/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "url": "https://docs.google.com/document/d/1aTx7x37ln85mslaisqJrWOVW9v7sX6tX/edit?usp=drivesdk&rtpof=true&sd=true",
-            "title": "Đề 3 - Đề Thi Kiểm Tra Đầu Vào Tiếng Anh"
+            "title": "Đề 3 - Đề Thi Kiểm Tra Đầu Vào Tiếng Anh",
+            "url": "https://docs.google.com/document/d/1aTx7x37ln85mslaisqJrWOVW9v7sX6tX/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "Đề 4 - Đề Thi Kiểm Tra Đầu Vào Tiếng Anh",
-            "url": "https://docs.google.com/document/d/1zDsz_53S_3kBxbOY0cBx2nDOiuwQhqWN/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1zDsz_53S_3kBxbOY0cBx2nDOiuwQhqWN/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Đề 4 - Đề Thi Kiểm Tra Đầu Vào Tiếng Anh"
           },
           {
-            "title": "Đề 5 - Đề Thi Kiểm Tra Đầu Vào Tiếng Anh",
-            "url": "https://docs.google.com/document/d/1DN5Zoe3hYHhjFXdhTWgrJQa6XQGeeaUf/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1DN5Zoe3hYHhjFXdhTWgrJQa6XQGeeaUf/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Đề 5 - Đề Thi Kiểm Tra Đầu Vào Tiếng Anh"
           },
           {
-            "title": "Đề 6 - Đề Thi Kiểm Tra Đầu Vào Tiếng Anh",
-            "url": "https://docs.google.com/document/d/1QUEvKG6TzqbsTqsTMAs_BE4Ec1-VBMxN/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1QUEvKG6TzqbsTqsTMAs_BE4Ec1-VBMxN/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Đề 6 - Đề Thi Kiểm Tra Đầu Vào Tiếng Anh"
           },
           {
             "title": "Đề 7 - Đề Thi Kiểm Tra Đầu Vào Tiếng Anh",
             "url": "https://docs.google.com/document/d/1Du7RwMnpL1LpfvAf8lDk0rHa6nRG_etl/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "Đề 8 - Đề Thi Kiểm Tra Đầu Vào Tiếng Anh",
-            "url": "https://docs.google.com/document/d/1KTHppJTGIOh7PTgi3FPsE_hIwCSYuc3G/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1KTHppJTGIOh7PTgi3FPsE_hIwCSYuc3G/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Đề 8 - Đề Thi Kiểm Tra Đầu Vào Tiếng Anh"
           }
         ],
         "createdAt": "2026-11-17T19:20:29.839Z"
@@ -1623,8 +1665,8 @@
             "url": "https://docs.google.com/document/d/1gSK_m33C356zUKRMRNT-i_y5JwqEeW_K/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "Đề 2 - Đề mẫu thi Tiếng Anh đầu vào",
-            "url": "https://docs.google.com/document/d/1p_DOGQrwwwRNoCYLXVw1ZqN-x4i0Z-qM/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1p_DOGQrwwwRNoCYLXVw1ZqN-x4i0Z-qM/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Đề 2 - Đề mẫu thi Tiếng Anh đầu vào"
           },
           {
             "title": "Đề 3 - Đề mẫu thi Tiếng Anh đầu vào",
@@ -1639,16 +1681,16 @@
             "url": "https://docs.google.com/document/d/1fhLiUD1wvWHWoaxp2NkFs9H-zNCR8OzM/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "Đề 6 - Đề mẫu thi Tiếng Anh đầu vào",
-            "url": "https://docs.google.com/document/d/1zWrCewU6jLmCKpcPeiIHzblhyB-m3mq8/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1zWrCewU6jLmCKpcPeiIHzblhyB-m3mq8/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Đề 6 - Đề mẫu thi Tiếng Anh đầu vào"
           },
           {
-            "title": "Đề 7 - Đề mẫu thi Tiếng Anh đầu vào",
-            "url": "https://docs.google.com/document/d/1NhxsCHvAWmiNkTgiuKs9iRAcJxqUA3c_/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1NhxsCHvAWmiNkTgiuKs9iRAcJxqUA3c_/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Đề 7 - Đề mẫu thi Tiếng Anh đầu vào"
           },
           {
-            "title": "Đề 8 - Đề mẫu thi Tiếng Anh đầu vào",
-            "url": "https://docs.google.com/document/d/1VZilsqFTNAR-jIfplGei4Y8ze0Uhsyhp/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1VZilsqFTNAR-jIfplGei4Y8ze0Uhsyhp/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Đề 8 - Đề mẫu thi Tiếng Anh đầu vào"
           }
         ],
         "createdAt": "2026-11-22T07:24:46.257Z"
@@ -7342,6 +7384,20 @@
         "isFolder": false,
         "items": [],
         "createdAt": "2026-08-28T17:27:07.851Z"
+      }
+    ],
+    "JehMlm4oWbfzFElYiB9r": [
+      {
+        "id": "yzDBhvc9EHzx7ROu3lrN",
+        "subjectId": "JehMlm4oWbfzFElYiB9r",
+        "title": "Bài tập Tiếng Trung Sơ cấp 1",
+        "type": "Giáo trình",
+        "url": "https://drive.google.com/file/d/1hf10RZxIynC233zSYwctm0zLaeX_YBS5/view?usp=sharing",
+        "chapter": "",
+        "isHidden": false,
+        "isFolder": false,
+        "items": [],
+        "createdAt": "2026-11-22T13:15:16.726Z"
       }
     ],
     "kUEC8TZCnxftaAUhYZ47": [
