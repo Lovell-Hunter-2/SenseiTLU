@@ -111,7 +111,7 @@ export default function ClockWidget({ isMobileView = false }: { isMobileView?: b
          <div className={pill1Class}>
             <span className="relative flex items-center justify-center w-4 h-4 min-[375px]:w-5 min-[375px]:h-5 md:w-5 md:h-5 overflow-visible z-10">
               <span className={`z-10 relative ${isMobileView ? 'text-sm min-[375px]:text-base flower-icon' : 'text-lg group-hover:animate-bounce'}`}>
-                {isChristmas ? '🎄' : '🌸'}
+                {isChristmas ? '❄️' : '🌸'}
               </span>
             </span>
             <div className={`absolute inset-0 pointer-events-none z-0 opacity-60 ${isMobileView ? 'petals-container' : 'hidden group-hover:block'}`}>
@@ -131,7 +131,7 @@ export default function ClockWidget({ isMobileView = false }: { isMobileView?: b
              <div className={pill2Class}>
                 <span className={`relative flex items-center justify-center w-5 h-5 min-[375px]:w-6 min-[375px]:h-6 md:w-5 md:h-5 overflow-visible origin-bottom ${isMobileView ? '' : 'group-hover:animate-sway'}`}>
                   <span className={`absolute z-10 ${isMobileView ? 'text-sm min-[375px]:text-base transition-transform duration-500 cloud-icon-inner' : 'text-[18px] transition-transform duration-500 group-hover:-translate-x-1.5'}`}>
-                    {isChristmas ? '❄️' : '☁️'}
+                    {isChristmas ? '🎄' : '☁️'}
                   </span>
                   <span className={`absolute z-0 opacity-0 scale-50 -translate-x-2 translate-y-1 transition-all duration-500 ease-out ${isMobileView ? 'text-xs min-[375px]:text-sm sun-icon' : 'text-base group-hover:opacity-100 group-hover:scale-100 group-hover:translate-x-2 group-hover:-translate-y-1 group-hover:rotate-12'}`}>
                     {isChristmas ? '⭐' : '☀️'}
