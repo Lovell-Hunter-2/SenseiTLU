@@ -241,38 +241,47 @@ export async function logSubjectView(subjectId: string, subjectName: string) {
   }
 }
 
-export async function logDocumentView(docTitle: string, subjectName: string) {
+export async function logDocumentView(
+  docTitle: string,
+  subjectName: string,
+  customDocId?: string
+): Promise<boolean> {
   try {
-    if (!docTitle) return;
+    if (!docTitle && !customDocId) return false;
     const today = getVietnamDateString();
     const now = new Date();
     const vnTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
     const hour = vnTime.getUTCHours().toString().padStart(2, '0');
 
-    // Generate a safe id from document title
-    const docId = docTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    if (!docId) return;
+    // Use customDocId when provided (e.g. folder_<id>), otherwise generate safe id from title
+    const docId = customDocId
+      ? customDocId.replace(/\//g, '_')
+      : docTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    if (!docId || docId === '-') return false;
 
     // Deduplicate per document in session (1 view counted per 15 minutes)
     const sessionKey = `sess_doc_${docId}`;
     const lastView = sessionStorage.getItem(sessionKey);
     const currentTime = Date.now();
     if (lastView && currentTime - Number(lastView) < 15 * 60 * 1000) {
-      return;
+      return false;
     }
     sessionStorage.setItem(sessionKey, String(currentTime));
 
-    // Total and timeframe document views stored directly on doc doc (1 single write!)
+    // Total and timeframe document views stored directly on doc (1 single write!)
     const docRef = doc(db, 'analytics_documents', docId);
     await setDoc(docRef, {
-      title: docTitle,
+      title: docTitle || docId,
       subjectName,
       views: increment(1),
       [`daily_${today}`]: increment(1),
       [`hourly_${today}_${hour}`]: increment(1),
       lastUpdated: serverTimestamp()
     }, { merge: true });
+
+    return true;
   } catch (error) {
     console.error('Error logging document view:', error);
+    return false;
   }
 }
