@@ -33,15 +33,25 @@ export async function logActivityEvent(userUid: string | undefined, action: stri
 }
 
 // Hàm log riêng cho việc xem tài liệu để gom nhóm chung theo môn học trong ngày (0 Firestore reads!)
-export async function logSubjectDocumentView(userUid: string | undefined, subjectId: string, subjectName: string, docTitle: string, path: string = '') {
+export async function logSubjectDocumentView(
+  userUid: string | undefined,
+  subjectId: string,
+  subjectName: string,
+  docTitle: string,
+  path: string = '',
+  skipGlobalLog: boolean = false,
+  customDocId?: string
+) {
   if (!userUid || !subjectId) return;
   try {
     const today = new Date().toISOString().split('T')[0];
     const actDocId = `doc_view_${subjectId}_${today}`;
     const activityRef = doc(db, 'users', userUid, 'activities', actDocId);
-    
-    // Log document globally (increment counter with session deduplication)
-    logDocumentView(docTitle, subjectName);
+
+    // Log document globally unless caller already invoked logDocumentView directly
+    if (!skipGlobalLog) {
+      logDocumentView(docTitle, subjectName, customDocId);
+    }
 
     // Write with merge - ZERO document reads required!
     await setDoc(activityRef, {
