@@ -4,8 +4,8 @@ import { doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, s
 import { Book, FileText, Presentation, FileQuestion, Folder, Plus, ExternalLink, Zap, Trash2, Edit2, ChevronDown, ChevronUp, Link as LinkIcon, ClipboardList, ScrollText, Lightbulb, Sigma, X, LayoutTemplate, Lock, LogIn, Bot, Sparkles, Flag, Search, Pin, Eye, RefreshCw } from 'lucide-react';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { logActivityEvent, logSubjectDocumentView } from '../useActivityLogger';
-import { getVietnamDateString, logFirestoreWrite, logFirestoreDelete } from '../services/analyticsService';
+import { logActivityEvent, logSubjectDocumentView, isLikelyBot } from '../useActivityLogger';
+import { getVietnamDateString, logFirestoreWrite, logFirestoreDelete, logDocumentView } from '../services/analyticsService';
 import { getCachedData, setCachedData, invalidateCache, CacheTTL } from '../services/cacheService';
 import { getStaticSubjects, getStaticDocuments } from '../services/catalogService';
 import { SideBannerColumn } from '../components/SideBanners';
@@ -66,13 +66,40 @@ export default function SubjectDetail() {
   const [showChoiceModal, setShowChoiceModal] = useState(false);
   const [showIframeModal, setShowIframeModal] = useState(false);
 
-  const handleDocumentClick = (e: React.MouseEvent, title: string, url: string) => {
+  const recordDocumentRead = (docItem: any, subItemTitle?: string) => {
+    if (!subject || !docItem || isLikelyBot()) return;
+    const isFolder = Boolean(docItem.isFolder && docItem.id);
+    const customDocId = isFolder ? `folder_${docItem.id}` : undefined;
+    const displayTitle = isFolder && docItem.chapter
+      ? `${docItem.title} (${docItem.chapter})`
+      : docItem.title;
+
+    logDocumentView(displayTitle, subject.name, customDocId).then((counted) => {
+      if (counted && docItem.id) {
+        setDocStatsMap(prev => {
+          const cur = prev[docItem.id] || { today: 0, total: 0 };
+          return {
+            ...prev,
+            [docItem.id]: {
+              today: cur.today + 1,
+              total: cur.total + 1,
+            },
+          };
+        });
+      }
+    });
+
+    if (user) {
+      const activityTitle = subItemTitle ? `${docItem.title} - ${subItemTitle}` : displayTitle;
+      logSubjectDocumentView(user.uid, subject.id, subject.name, activityTitle, window.location.pathname, true, customDocId);
+    }
+  };
+
+  const handleDocumentClick = (e: React.MouseEvent, title: string, url: string, docItem?: any) => {
     e.preventDefault();
     incrementDocViewCounter();
     setSelectedDocument({ title, url });
-    if (subject && user) {
-      logSubjectDocumentView(user.uid, subject.id, subject.name, title, window.location.pathname);
-    }
+    recordDocumentRead(docItem || { title }, docItem?.isFolder ? title : undefined);
     setShowChoiceModal(true);
   };
 
@@ -200,8 +227,13 @@ export default function SubjectDetail() {
     }
   }, [user, isAdmin]);
 
-  const toggleFolder = (docId: string) => {
-    setExpandedFolders(prev => ({ ...prev, [docId]: !prev[docId] }));
+  const toggleFolder = (folderDoc: any) => {
+    const isOpening = !expandedFolders[folderDoc.id];
+    setExpandedFolders(prev => ({ ...prev, [folderDoc.id]: isOpening }));
+    if (isOpening) {
+      incrementDocViewCounter();
+      recordDocumentRead(folderDoc);
+    }
   };
 
   const handleEditClick = (doc: any) => {
@@ -471,9 +503,11 @@ export default function SubjectDetail() {
         const stats: Record<string, { today: number; total: number }> = {};
         await Promise.all(
           documents.map(async (d) => {
-            if (!d.title) return;
-            const docId = d.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-            if (!docId) return;
+            if (!d.title && !(d.isFolder && d.id)) return;
+            const docId = d.isFolder && d.id
+              ? `folder_${d.id}`
+              : d.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            if (!docId || docId === '-') return;
 
             try {
               const snap = await getDoc(doc(db, 'analytics_documents', docId));
@@ -823,7 +857,7 @@ export default function SubjectDetail() {
               </div>
               {doc.isFolder && (
                 <button 
-                  onClick={() => toggleFolder(doc.id)}
+                  onClick={() => toggleFolder(doc)}
                   className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs sm:text-sm font-bold transition-all shrink-0 shadow-sm active:scale-95 cursor-pointer ${
                     isChristmas
                       ? expandedFolders[doc.id]
@@ -848,7 +882,7 @@ export default function SubjectDetail() {
                 {!doc.isFolder ? (
                   <a
                     href={doc.url}
-                    onClick={isChatbot ? undefined : (e) => handleDocumentClick(e, doc.title, doc.url)}
+                    onClick={isChatbot ? undefined : (e) => handleDocumentClick(e, doc.title, doc.url, doc)}
                     target={isChatbot ? "_blank" : undefined}
                     rel={isChatbot ? "noopener noreferrer" : undefined}
                     className={`inline-flex items-center gap-1.5 px-4 py-1.5 text-sm transition-all shadow-sm ${
@@ -925,7 +959,7 @@ export default function SubjectDetail() {
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={(e) => handleDocumentClick(e, item.title, item.url)}
+                  onClick={(e) => handleDocumentClick(e, item.title, item.url, doc)}
                   className={
                     isChristmas
                       ? "group flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-[#0D2B1F]/90 hover:bg-[#143929] border border-[#2D6A4F]/80 hover:border-[#F5C842]/60 hover:shadow-sm transition-all"
