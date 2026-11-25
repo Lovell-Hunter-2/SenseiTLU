@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-11-22T15:41:16.913Z",
-  "version": 1795362076913,
+  "lastUpdated": "2026-11-25T09:52:53.493Z",
+  "version": 1795600373493,
   "totalSubjects": 97,
-  "totalDocuments": 341,
+  "totalDocuments": 342,
   "subjects": [
     {
       "id": "R8V9VRVMcMU5xuOZRIv7",
@@ -86,9 +86,9 @@
     },
     {
       "id": "Cdr0s7U9lJVGcrbVY3cd",
-      "name": "English Books",
+      "name": "English Documents",
       "iconName": "Book",
-      "description": "(Some useful English books I've collected)",
+      "description": "(Some useful English documents I've collected)",
       "isPriority": true,
       "createdAt": "2026-09-29T08:13:03.655Z"
     },
@@ -3135,8 +3135,8 @@
         "isFolder": true,
         "items": [
           {
-            "title": "Chương 1 - Khái quát về luật thương mại",
-            "url": "https://drive.google.com/file/d/1tDOfNpI2h1mvNKbpCnD8XtXpLc-TFAJ0/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1tDOfNpI2h1mvNKbpCnD8XtXpLc-TFAJ0/view?usp=drivesdk",
+            "title": "Chương 1 - Khái quát về luật thương mại"
           },
           {
             "title": "Chương 2 - Pháp luật về chủ thể kinh doanh",
@@ -3147,8 +3147,8 @@
             "url": "https://drive.google.com/file/d/1kRT4IrRR3314lDIfSN1UelndgQSsOAgs/view?usp=drivesdk"
           },
           {
-            "title": "Chương 4 - Phục hồi, phá sản và giải quyết tranh chấp kinh doanh",
-            "url": "https://drive.google.com/file/d/1cZ4-xK3NOuBIIQQ_5TagGRgKyNPHH8_A/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1cZ4-xK3NOuBIIQQ_5TagGRgKyNPHH8_A/view?usp=drivesdk",
+            "title": "Chương 4 - Phục hồi, phá sản và giải quyết tranh chấp kinh doanh"
           },
           {
             "title": "Slide bài giảng Luật thương mại",
@@ -3168,12 +3168,12 @@
         "isFolder": true,
         "items": [
           {
-            "title": "Slide bài giảng Luật thương mại 1",
-            "url": "https://drive.google.com/file/d/1s_qLx9XmuLZAnpfknOv74s9nmC4FRJHP/view?usp=sharing"
+            "url": "https://drive.google.com/file/d/1s_qLx9XmuLZAnpfknOv74s9nmC4FRJHP/view?usp=sharing",
+            "title": "Slide bài giảng Luật thương mại 1"
           },
           {
-            "title": "Slide bài giảng Luật thương mại 2",
-            "url": "https://drive.google.com/file/d/1xsAvuDDvpIODhY8GqbWq9jYh8iUaH0Yt/view?usp=sharing"
+            "url": "https://drive.google.com/file/d/1xsAvuDDvpIODhY8GqbWq9jYh8iUaH0Yt/view?usp=sharing",
+            "title": "Slide bài giảng Luật thương mại 2"
           }
         ],
         "createdAt": "2026-11-22T15:37:50.826Z"
@@ -3201,8 +3201,8 @@
             "url": "https://docs.google.com/document/d/1iiybRZklqrQxTW6eoBqkeEiZUO109gAA/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "Chương 4 - Phục hồi, phá sản & giải quyết tranh chấp thương mại",
-            "url": "https://docs.google.com/document/d/12G3_ZaB-eMmh-MIaCv6eSbeDBaZKnyu9/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/12G3_ZaB-eMmh-MIaCv6eSbeDBaZKnyu9/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "Chương 4 - Phục hồi, phá sản & giải quyết tranh chấp thương mại"
           }
         ],
         "createdAt": "2026-11-22T15:40:08.536Z"
@@ -3226,12 +3226,12 @@
             "url": "https://drive.google.com/file/d/1LvR9ifYOEf5xazth4n10YlXgXSS_pZD0/view?usp=drivesdk"
           },
           {
-            "title": "Chương 3 - Pháp luật về hợp đồng và hoạt động thương mại",
-            "url": "https://drive.google.com/file/d/14VN3OdxI0Cj66V80rt_6aSoJeXmwWsjd/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/14VN3OdxI0Cj66V80rt_6aSoJeXmwWsjd/view?usp=drivesdk",
+            "title": "Chương 3 - Pháp luật về hợp đồng và hoạt động thương mại"
           },
           {
-            "title": "Chương 4 - Phục hồi, phá sản & giải quyết tranh chấp thương mại",
-            "url": "https://drive.google.com/file/d/1F-kJTaD1_ldK8UXen_S7i8ZCmT0fwdvI/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1F-kJTaD1_ldK8UXen_S7i8ZCmT0fwdvI/view?usp=drivesdk",
+            "title": "Chương 4 - Phục hồi, phá sản & giải quyết tranh chấp thương mại"
           }
         ],
         "createdAt": "2026-11-22T15:40:40.185Z"
@@ -3251,28 +3251,28 @@
             "url": "https://docs.google.com/document/d/1yLf7caL3eMR2PQ-blydwZDTxjU-kyox5/edit?usp=drivesdk&rtpof=true&sd=true"
           },
           {
-            "title": "67_VBHN-VPQH_671127 luật doanh nghiệp",
-            "url": "https://docs.google.com/document/d/1OCLdgPw0CXXefNSxcVMTyp8AzGxr3DQ-/edit?usp=drivesdk&rtpof=true&sd=true"
+            "url": "https://docs.google.com/document/d/1OCLdgPw0CXXefNSxcVMTyp8AzGxr3DQ-/edit?usp=drivesdk&rtpof=true&sd=true",
+            "title": "67_VBHN-VPQH_671127 luật doanh nghiệp"
           },
           {
             "title": "Bộ Luật Dân sự 2015",
             "url": "https://drive.google.com/file/d/1HEWBPvnrilZCu8v7oOC6Bi1Dkrkc6Gan/view?usp=drivesdk"
           },
           {
-            "title": "Luật Thương mại số 36-2005-QH11",
-            "url": "https://drive.google.com/file/d/1JmeGWSHi7uhgPjNlcusswKjE8qFzie82/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1JmeGWSHi7uhgPjNlcusswKjE8qFzie82/view?usp=drivesdk",
+            "title": "Luật Thương mại số 36-2005-QH11"
           },
           {
-            "title": "Lý Thuyết Luật Thương Mại 1 - Thương Nhân và Hoạt Động Thương Mại",
-            "url": "https://drive.google.com/file/d/17fZchTi74vxKTg-jiCkmJTUviITax2Hd/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/17fZchTi74vxKTg-jiCkmJTUviITax2Hd/view?usp=drivesdk",
+            "title": "Lý Thuyết Luật Thương Mại 1 - Thương Nhân và Hoạt Động Thương Mại"
           },
           {
-            "title": "Lý Thuyết Luật Thương Mại 2",
-            "url": "https://drive.google.com/file/d/1DjZ27UiuEjZ0AJcCqt5EcGKH5ZUSNcwo/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1DjZ27UiuEjZ0AJcCqt5EcGKH5ZUSNcwo/view?usp=drivesdk",
+            "title": "Lý Thuyết Luật Thương Mại 2"
           },
           {
-            "title": "Tóm tắt GT Luật Thương mại 2",
-            "url": "https://drive.google.com/file/d/1tkGOEw8RX7m9CTEgsnM16M5WdZbEnk4K/view?usp=drivesdk"
+            "url": "https://drive.google.com/file/d/1tkGOEw8RX7m9CTEgsnM16M5WdZbEnk4K/view?usp=drivesdk",
+            "title": "Tóm tắt GT Luật Thương mại 2"
           }
         ],
         "createdAt": "2026-11-22T15:39:19.054Z"
@@ -5437,6 +5437,59 @@
         "createdAt": "2026-09-29T08:21:13.302Z"
       },
       {
+        "id": "C9ymhVj4yv8icXZRUQfk",
+        "subjectId": "Cdr0s7U9lJVGcrbVY3cd",
+        "title": "English in use ",
+        "type": "Tips",
+        "url": "",
+        "chapter": "(Docx)",
+        "isHidden": false,
+        "isFolder": true,
+        "items": [
+          {
+            "title": "Essential phrasal verbs in daily life",
+            "url": "https://docs.google.com/document/d/1QJiP82oONA4Skz5JwNYb55MICrab8ask/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "Filler words & Natural conversational phrases",
+            "url": "https://docs.google.com/document/d/1PeZJQFpn8WI4RyJU1dEo9Z149xxA8EJo/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "Health, energy & mood in daily conversation ",
+            "url": "https://docs.google.com/document/d/1a_dvrva1eXJu6BKoXG8qVgn2sBq5jbbD/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "Instant reactions & exclamations",
+            "url": "https://docs.google.com/document/d/1zNuGQU5v0YKDNArR0pHyR9y24KE-gXOS/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "Money, shopping & splitting bills",
+            "url": "https://docs.google.com/document/d/1uSeVDrY6bvnWeBwPFzJxM7-OEPPHIiRv/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "Social media, texting slang & Internet culture",
+            "url": "https://docs.google.com/document/d/1XtscvTmkn0sbcc81R0wXvniiI6mEPtlS/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "Storytelling & conversation transitions",
+            "url": "https://docs.google.com/document/d/1vZoAiT_YxCIi4ievSkYbK7Ty_FN34_dG/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "Textbook vs Native English",
+            "url": "https://docs.google.com/document/d/1kDJdenZd8V2Otp-4YaKyI-cqC-aB4Ygh/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "The art of softening & polite disagreement",
+            "url": "https://docs.google.com/document/d/1VA6_g0eXfjQqbCqBK4vki5HFq9nFifSC/edit?usp=drivesdk&rtpof=true&sd=true"
+          },
+          {
+            "title": "Workplace, teamwork & deadline survival",
+            "url": "https://docs.google.com/document/d/1C_9X22YHhUptvgpJ1BlphUmtcvmmwu8-/edit?usp=drivesdk&rtpof=true&sd=true"
+          }
+        ],
+        "createdAt": "2026-11-25T09:46:25.023Z"
+      },
+      {
         "id": "G6Ji8rtDr5McPsMTAFAY",
         "subjectId": "Cdr0s7U9lJVGcrbVY3cd",
         "title": "English Vocabulary In Use",
@@ -5497,18 +5550,6 @@
         "createdAt": "2026-09-29T14:40:49.283Z"
       },
       {
-        "id": "juIlCvWRRgDhSXERlNjb",
-        "subjectId": "Cdr0s7U9lJVGcrbVY3cd",
-        "title": ".",
-        "type": "Giáo trình",
-        "url": "htttps://youtube.com",
-        "chapter": "",
-        "isHidden": false,
-        "isFolder": false,
-        "items": [],
-        "createdAt": "2026-10-17T17:21:45.037Z"
-      },
-      {
         "id": "qYjehlvVHnqRhUGFCR3T",
         "subjectId": "Cdr0s7U9lJVGcrbVY3cd",
         "title": "Destination C1&C2 (With answer key)",
@@ -5519,6 +5560,59 @@
         "isFolder": false,
         "items": [],
         "createdAt": "2026-09-29T14:43:02.298Z"
+      },
+      {
+        "id": "z1hSfB4SbkXn2eOvCOMr",
+        "subjectId": "Cdr0s7U9lJVGcrbVY3cd",
+        "title": "English in use",
+        "type": "Tips",
+        "url": "",
+        "chapter": "(PDF)",
+        "isHidden": false,
+        "isFolder": true,
+        "items": [
+          {
+            "title": "Essential phrasal verbs in daily life",
+            "url": "https://drive.google.com/file/d/1amQpFp_UXPcG4Ppf4FU7gM4BmsLIZb7v/view?usp=drivesdk"
+          },
+          {
+            "title": "Filler words & Natural conversational phrases",
+            "url": "https://drive.google.com/file/d/1PXp4t0cmNYYQLX6LyaENXDp1YvCx66BN/view?usp=drivesdk"
+          },
+          {
+            "title": "Health, energy & mood in daily conversation ",
+            "url": "https://drive.google.com/file/d/1dXCZbqQ8g9E77oPqR9zU2y2ePeuYU-xv/view?usp=drivesdk"
+          },
+          {
+            "title": "Instant reactions & exclamations",
+            "url": "https://drive.google.com/file/d/1a4kuor0FrhUyDvdYHciaH65wAQyNq6ar/view?usp=drivesdk"
+          },
+          {
+            "title": "Money, shopping & splitting bills",
+            "url": "https://drive.google.com/file/d/1l7tJ-_ayZYankmBHQtbx7Nm8RrCgtknX/view?usp=drivesdk"
+          },
+          {
+            "title": "Social media, texting slang & Internet culture",
+            "url": "https://drive.google.com/file/d/1tmqeAkj1UanePK14LYwLOEnX4OVdFbAA/view?usp=drivesdk"
+          },
+          {
+            "title": "Storytelling & conversation transitions",
+            "url": "https://drive.google.com/file/d/1_Q9hA1Oy-k9NWqwaT42lx3ffkLmg0j7x/view?usp=drivesdk"
+          },
+          {
+            "title": "Textbook vs Native English",
+            "url": "https://drive.google.com/file/d/12OQuBYZeBpGthFHn3viTP-aH-c0VNUrn/view?usp=drivesdk"
+          },
+          {
+            "title": "The art of softening & polite disagreement",
+            "url": "https://drive.google.com/file/d/1ZyJXL8cS59pZWIefOZOZ25vskk42q_oO/view?usp=drivesdk"
+          },
+          {
+            "title": "Workplace, teamwork & deadline survival",
+            "url": "https://drive.google.com/file/d/1iWjF-9v_lRL4jrDd9V-wtN1LmbHPjz9C/view?usp=drivesdk"
+          }
+        ],
+        "createdAt": "2026-11-25T09:47:26.181Z"
       }
     ],
     "aEw6yhuZZDQj5JbEKA1h": [
